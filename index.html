@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>PokéNoël : Attrapez-les tous !</title>
+  </head>
+  <body>
+    <main class="gba-shell" id="gba-shell">
+      <header class="shell-topbar">
+        <div class="brand">
+          <span class="power-led" aria-hidden="true"></span>
+          <span class="brand-title">POKÉNOËL</span>
+          <span class="brand-sub">ÉDITION FAMILLE • GBA</span>
+        </div>
+        <div class="shell-actions">
+          <button type="button" class="pill-btn" id="btn-toggle-pad" title="Afficher/Masquer la manette tactile">
+            Manette
+          </button>
+          <button type="button" class="pill-btn" id="btn-sound" title="Couper/Activer le son (M)">
+            Son : ON
+          </button>
+        </div>
+      </header>
+
+      <section class="screen-bezel">
+        <div class="screen-frame">
+          <canvas
+            id="game-canvas"
+            width="384"
+            height="240"
+            aria-label="Écran de jeu PokéNoël"
+          ></canvas>
+        </div>
+        <div class="keyboard-strip" aria-label="Raccourcis clavier">
+          <span><strong>Flèches / ZQSD</strong> Bouger</span>
+          <span><strong>Espace / Entrée</strong> Valider (A)</span>
+          <span><strong>Échap / X</strong> Retour / Menu (B)</span>
+          <span><strong>Maj</strong> Courir</span>
+          <span><strong>C / Tab</strong> Échanger meneur</span>
+          <span><strong>M</strong> Son</span>
+        </div>
+      </section>
+
+      <section class="touch-controls" id="touch-controls" aria-label="Contrôles tactiles Game Boy Advance">
+        <div class="dpad-cluster">
+          <button type="button" class="dpad-btn dpad-up" data-btn="up" aria-label="Haut">▲</button>
+          <button type="button" class="dpad-btn dpad-left" data-btn="left" aria-label="Gauche">◀</button>
+          <div class="dpad-center" aria-hidden="true">●</div>
+          <button type="button" class="dpad-btn dpad-right" data-btn="right" aria-label="Droite">▶</button>
+          <button type="button" class="dpad-btn dpad-down" data-btn="down" aria-label="Bas">▼</button>
+        </div>
+
+        <div class="center-cluster">
+          <button type="button" class="meta-btn" data-btn="swap">ÉCHANGE</button>
+          <button type="button" class="meta-btn" data-btn="menu">MENU</button>
+          <button type="button" class="meta-btn" data-btn="run">COURIR</button>
+        </div>
+
+        <div class="ab-cluster">
+          <button type="button" class="action-btn btn-b" data-btn="b" aria-label="Bouton B">B</button>
+          <button type="button" class="action-btn btn-a" data-btn="a" aria-label="Bouton A">A</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal d'import/export de code de sauvegarde (accessible via bouton dans le jeu) -->
+    <dialog id="save-code-dialog" class="save-dialog">
+      <form method="dialog" class="save-dialog-box">
+        <h2>Sauvegarde &amp; Code</h2>
+        <p class="save-desc">
+          Copiez ce code pour transférer votre partie entre téléphone et ordinateur, ou collez un code existant ci-dessous.
+        </p>
+        <label for="save-code-textarea" class="save-label">Votre code de sauvegarde :</label>
+        <textarea id="save-code-textarea" rows="4" spellcheck="false"></textarea>
+        <p id="save-code-feedback" class="save-feedback" aria-live="polite"></p>
+        <div class="save-dialog-buttons">
+          <button type="button" id="btn-copy-save">Copier</button>
+          <button type="button" id="btn-import-save" class="primary">Charger ce code</button>
+          <button type="submit" id="btn-close-save">Fermer</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
