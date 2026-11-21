@@ -969,7 +969,7 @@ body[data-theme='aj'] {
   }
 }
 
-/* Nintendo Switch full-height landscape layout on mobile phones */
+/* Nintendo Switch full-height landscape layout on mobile phones (maxed-out 100dvh canvas + translucent floating edge controls) */
 @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
   html,
   body {
@@ -982,21 +982,13 @@ body[data-theme='aj'] {
     height: 100dvh;
     min-height: 100dvh;
     margin: 0;
+    padding: 0;
     border-radius: 0;
     border: none;
     box-shadow: none;
-    padding:
-      max(6px, env(safe-area-inset-top))
-      max(8px, env(safe-area-inset-right))
-      max(6px, env(safe-area-inset-bottom))
-      max(8px, env(safe-area-inset-left));
-    display: grid;
-    grid-template-columns: minmax(118px, 1fr) auto minmax(118px, 1fr);
-    grid-template-rows: auto 1fr auto;
+    display: flex;
     align-items: center;
-    justify-items: center;
-    column-gap: 8px;
-    row-gap: 4px;
+    justify-content: center;
   }
 
   .gba-shell::before,
@@ -1012,61 +1004,91 @@ body[data-theme='aj'] {
   }
 
   .screen-frame {
-    grid-column: 2;
-    grid-row: 1 / -1;
-    --frame-h: min(
-      calc(100dvh - 14px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)),
-      calc((100vw - 268px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) * 240 / 384)
-    );
+    position: relative;
+    z-index: 1;
+    --frame-h: calc(100dvh - 4px);
     height: var(--frame-h);
-    width: calc(var(--frame-h) * 384 / 240);
+    width: min(100vw, calc(var(--frame-h) * 384 / 240));
+    max-height: 100dvh;
     min-width: 240px;
     min-height: 150px;
-    border-radius: 9px;
+    border-radius: 7px;
   }
 
   .dpad-cluster {
-    grid-column: 1;
-    grid-row: 1 / 3;
-    align-self: center;
-    justify-self: center;
+    position: fixed;
+    z-index: 10;
+    left: max(8px, env(safe-area-inset-left, 0px));
+    top: 50%;
+    transform: translateY(-54%);
     grid-template-columns: repeat(3, 38px);
     grid-template-rows: repeat(3, 38px);
     gap: 2px;
+    pointer-events: none;
+  }
+
+  .dpad-cluster .dpad-btn {
+    pointer-events: auto;
+    opacity: 0.84;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .dpad-cluster .dpad-center {
+    opacity: 0.72;
+  }
+
+  .dpad-cluster .dpad-btn.active,
+  .dpad-cluster .dpad-btn:active {
+    opacity: 1;
   }
 
   .meta-btn-menu {
-    grid-column: 1;
-    grid-row: 3;
-    align-self: end;
-    justify-self: center;
-    margin-bottom: 4px;
+    position: fixed;
+    z-index: 10;
+    left: max(18px, calc(env(safe-area-inset-left, 0px) + 10px));
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
     padding: 6px 14px;
+    opacity: 0.84;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 
   .bezel-corner-bar {
-    grid-column: 3;
-    grid-row: 1;
-    align-self: start;
-    justify-self: end;
-    margin-top: 2px;
-    margin-right: 2px;
+    position: fixed;
+    z-index: 10;
+    right: max(8px, env(safe-area-inset-right, 0px));
+    top: max(6px, env(safe-area-inset-top, 0px));
+    margin: 0;
     gap: 6px;
   }
 
   .ab-cluster {
-    grid-column: 3;
-    grid-row: 2;
-    align-self: center;
-    justify-self: center;
+    position: fixed;
+    z-index: 10;
+    right: max(8px, env(safe-area-inset-right, 0px));
+    top: 50%;
+    transform: translateY(-50%);
     gap: 8px;
     padding-right: 0;
+    pointer-events: none;
   }
 
   .action-btn {
+    pointer-events: auto;
     width: 50px;
     height: 50px;
     font-size: 1.05rem;
+    opacity: 0.84;
+  }
+
+  .action-btn.active,
+  .action-btn:active,
+  .meta-btn-menu.active,
+  .meta-btn-menu:active,
+  .meta-btn-run.active,
+  .meta-btn-run:active {
+    opacity: 1;
   }
 
   .action-btn.btn-b {
@@ -1078,11 +1100,13 @@ body[data-theme='aj'] {
   }
 
   .meta-btn-run {
-    grid-column: 3;
-    grid-row: 3;
-    align-self: end;
-    justify-self: center;
-    margin-bottom: 4px;
+    position: fixed;
+    z-index: 10;
+    right: max(18px, calc(env(safe-area-inset-right, 0px) + 10px));
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
     padding: 6px 14px;
+    opacity: 0.84;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 }
