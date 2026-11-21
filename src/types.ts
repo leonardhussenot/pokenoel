@@ -70,7 +70,10 @@ export type HairStyle =
   | 'sidepart'
   | 'pompadour'
   | 'afro'
-  | 'wig';
+  | 'wig'
+  | 'receding'
+  | 'tousled_curls'
+  | 'bangs_wavy';
 
 export type Headwear =
   | 'none'
@@ -87,7 +90,7 @@ export type Headwear =
   | 'feathered_hat'
   | 'turban';
 
-export type GlassesStyle = 'none' | 'round' | 'square' | 'sunglasses' | 'monocle';
+export type GlassesStyle = 'none' | 'round' | 'square' | 'sunglasses' | 'monocle' | 'clear';
 
 export type FacialHair = 'none' | 'mustache' | 'goatee' | 'beard' | 'stubble';
 
@@ -110,7 +113,9 @@ export interface SpriteAppearance {
   headwear?: Headwear;
   headwearColor?: string;
   glasses?: GlassesStyle;
+  glassesColor?: string;
   facialHair?: FacialHair;
+  facialHairColor?: string;
   topColor: string;
   bottomColor: string;
   accentColor?: string;
@@ -152,6 +157,7 @@ export interface PortraitSpec {
   prop?: PortraitProp;
   collar?: CollarStyle;
   blush?: boolean;
+  smile?: 'normal' | 'wide';
 }
 
 export type FamilyMemberId =
@@ -253,169 +259,28 @@ export interface BadgeDef {
   description: string;
 }
 
-export interface RhythmChallengeConfig {
-  kind: 'rhythm';
-  title: string;
-  instructions: string;
-  themeStyle:
-    | 'poetry'
-    | 'theater'
-    | 'samba'
-    | 'bossa'
-    | 'jazz'
-    | 'tap'
-    | 'chanson'
-    | 'football'
-    | 'dribble'
-    | 'kitchen';
-  bpm: number;
-  durationSec: number;
-  requiredScoreRatio: number;
-  laneLabels: [string, string, string, string];
-  laneColors: [string, string, string, string];
-  notes: [number, number, number, number];
-  density: 'medium' | 'brisk' | 'intense';
-}
-
-export interface DodgeCollectChallengeConfig {
-  kind: 'dodge_collect';
-  title: string;
-  instructions: string;
-  themeStyle:
-    | 'boat'
-    | 'factory'
-    | 'train'
-    | 'carnival'
-    | 'film_run'
-    | 'war_photo'
-    | 'football_dribble'
-    | 'court_drive'
-    | 'birds'
-    | 'kitchen_rush';
-  durationSec: number;
-  targetCount: number;
-  lives: number;
-  hazardSpeed: number;
-  spawnRate: number;
-  playerLabel: string;
-  collectLabel: string;
-  hazardLabel: string;
-}
-
-export interface TimingShotChallengeConfig {
-  kind: 'timing_shot';
-  title: string;
-  instructions: string;
-  themeStyle:
-    | 'freekick'
-    | 'threepoint'
-    | 'macaron'
-    | 'souffle'
-    | 'buzzer'
-    | 'duel_pen'
-    | 'cinema_clap';
-  totalAttempts: number;
-  requiredHits: number;
-  needleSpeed: number;
-  sweetSpotWidth: number;
-  movingTarget: boolean;
-  dualAxis?: boolean;
-}
-
-export interface ViewfinderChallengeConfig {
-  kind: 'viewfinder';
-  title: string;
-  instructions: string;
-  themeStyle:
-    | 'paris_street'
-    | 'nature_bw'
-    | 'red_carpet'
-    | 'wildlife'
-    | 'puddle_jump'
-    | 'spotlight'
-    | 'thriller_birds';
-  durationSec: number;
-  requiredShots: number;
-  maxFilm: number;
-  subjectSpeed: number;
-  frameSize: number;
-  requiresPeakMoment: boolean;
-}
-
-export interface ReactionDuelChallengeConfig {
-  kind: 'reaction_duel';
-  title: string;
-  instructions: string;
-  themeStyle:
-    | 'sword'
-    | 'stage_cue'
-    | 'block_shot'
-    | 'chase_block'
-    | 'penalty_save'
-    | 'cinema_draw';
-  rounds: number;
-  requiredWins: number;
-  windowMs: number;
-  directional: boolean;
-  fakeouts: boolean;
-}
-
-export interface SortOrderItem {
-  label: string;
-  color: string;
-}
-
-export interface KitchenSortChallengeConfig {
-  kind: 'kitchen_sort';
-  title: string;
-  instructions: string;
-  themeStyle: 'recipe' | 'rhyme' | 'pamphlet' | 'molecular' | 'film_edit';
-  durationSec: number;
-  requiredOrders: number;
-  lives: number;
-  beltSpeed: number;
-  orders: {
-    prompt: string;
-    sequence: SortOrderItem[];
-    distractors: SortOrderItem[];
-  }[];
-}
-
-export interface BalanceMeterChallengeConfig {
-  kind: 'balance_meter';
-  title: string;
-  instructions: string;
-  themeStyle: 'puree' | 'darkroom' | 'souffle_oven' | 'bossa_breath';
-  durationSec: number;
-  zoneHeight: number;
-  zoneDriftSpeed: number;
-  turbulence: number;
-  fillRate: number;
-}
-
-export interface MemoryPatternChallengeConfig {
-  kind: 'memory_pattern';
-  title: string;
-  instructions: string;
-  themeStyle: 'theater_cues' | 'bossa_chords' | 'play_calls' | 'gala_menu';
-  padLabels: [string, string, string, string];
-  padColors: [string, string, string, string];
-  padNotes: [number, number, number, number];
-  rounds: number[];
-  playbackMs: number;
-  lives: number;
-}
+export type ReflectionTheme =
+  | 'literature'
+  | 'theater'
+  | 'music_br'
+  | 'cinema'
+  | 'gastronomy'
+  | 'photography'
+  | 'football'
+  | 'basketball';
 
 export interface QuizQuestion {
   question: string;
   options: [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
+  explanation?: string;
 }
 
 export interface QuizChallengeConfig {
   kind: 'quiz';
   title: string;
   instructions: string;
+  themeStyle?: ReflectionTheme;
   timePerQuestionSec: number;
   questions: QuizQuestion[];
   playerHp: number;
@@ -426,29 +291,98 @@ export interface RiddleItem {
   clues: [string, string, string];
   options: [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
+  explanation?: string;
 }
 
 export interface RiddleChallengeConfig {
   kind: 'riddle_word';
   title: string;
   instructions: string;
+  themeStyle?: ReflectionTheme;
   timePerRiddleSec: number;
   riddles: RiddleItem[];
   playerHp: number;
   enemyHp: number;
 }
 
+export interface OrderRound {
+  prompt: string;
+  /** 4 to 7 items in EXACT correct order (shuffled at runtime; NO dates leaked in labels!) */
+  orderedItems: string[];
+  /** Optional parallel array of reveal tags (e.g. '1921', '1925'...) revealed ONLY once an item is locked in green or round cleared! */
+  revealTags?: string[];
+  /** Optional directional hint labels when an item is misplaced, defaults to ['▲ Plus tôt', '▼ Plus tard'] */
+  hintLabels?: [string, string];
+  explanation: string;
+}
+
+export interface OrderPuzzleChallengeConfig {
+  kind: 'order_puzzle';
+  title: string;
+  instructions: string;
+  themeStyle: ReflectionTheme;
+  lives: number;
+  rounds: OrderRound[];
+}
+
+export interface PairMatchRound {
+  prompt: string;
+  /** 4 to 6 pairs to associate */
+  pairs: { left: string; right: string }[];
+  explanation: string;
+}
+
+export interface PairMatchChallengeConfig {
+  kind: 'pair_match';
+  title: string;
+  instructions: string;
+  themeStyle: ReflectionTheme;
+  lives: number;
+  rounds: PairMatchRound[];
+}
+
+export interface IntruderRound {
+  prompt: string;
+  items: [string, string, string, string];
+  intruderIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
+export interface IntruderHuntChallengeConfig {
+  kind: 'intruder_hunt';
+  title: string;
+  instructions: string;
+  themeStyle: ReflectionTheme;
+  lives: number;
+  rounds: IntruderRound[];
+}
+
+export interface CategorySortItem {
+  label: string;
+  categoryIndex: 0 | 1 | 2;
+  explanation: string;
+}
+
+export interface CategorySortChallengeConfig {
+  kind: 'category_sort';
+  title: string;
+  instructions: string;
+  themeStyle: ReflectionTheme;
+  lives: number;
+  prompt: string;
+  /** 2 or 3 crisp category bucket titles (e.g. ['Ballon d’Or', 'Jamais Ballon d’Or']) */
+  categories: [string, string] | [string, string, string];
+  /** 6 to 8 items to classify one by one (shuffled at runtime!) */
+  items: CategorySortItem[];
+}
+
 export type SingleChallengeConfig =
-  | RhythmChallengeConfig
-  | DodgeCollectChallengeConfig
-  | TimingShotChallengeConfig
-  | ViewfinderChallengeConfig
-  | ReactionDuelChallengeConfig
-  | KitchenSortChallengeConfig
-  | BalanceMeterChallengeConfig
-  | MemoryPatternChallengeConfig
   | QuizChallengeConfig
-  | RiddleChallengeConfig;
+  | RiddleChallengeConfig
+  | OrderPuzzleChallengeConfig
+  | PairMatchChallengeConfig
+  | IntruderHuntChallengeConfig
+  | CategorySortChallengeConfig;
 
 export interface BossPhaseConfig {
   phaseTitle: string;
@@ -488,7 +422,7 @@ export interface DistrictGate {
   gatekeeperNpcId: string;
 }
 
-export type NpcRole = 'main' | 'boss' | 'secondary' | 'gatekeeper' | 'cameo';
+export type NpcRole = 'main' | 'boss' | 'secondary' | 'gatekeeper' | 'cameo' | 'guest';
 
 export interface CameoLine {
   speaker: string;
@@ -508,6 +442,7 @@ export interface NpcEntity {
   dir: Direction;
   appearance: SpriteAppearance;
   portrait: PortraitSpec;
+  customPortraitUrl?: string;
   voicePitch: number;
   badgeId?: string;
   challenge?: ChallengeConfig;
@@ -525,6 +460,7 @@ export interface NpcEntity {
   partnerAppearance?: SpriteAppearance;
   partnerPortrait?: PortraitSpec;
   cameoLines?: CameoLine[];
+  fixedLines?: string[];
 }
 
 export interface MapData {
@@ -594,7 +530,6 @@ export interface GlobalSaveData {
 }
 
 export type GameScene =
-  | 'TITLE'
   | 'MODE_SELECT'
   | 'OVERWORLD'
   | 'DIALOGUE'

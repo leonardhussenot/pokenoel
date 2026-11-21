@@ -1,4 +1,5 @@
 import { Direction } from '../types';
+import { SCREEN_H, SCREEN_W } from './overworld';
 
 export type GameButton =
   | 'up'
@@ -48,6 +49,7 @@ export class InputManager {
   private canvasTap: CanvasTap | null = null;
   private canvasHeld = false;
   private canvasPointer: CanvasTap | null = null;
+  private canvasHover: CanvasTap | null = null;
   private onAnyGesture: (() => void) | null = null;
 
   attach(canvas: HTMLCanvasElement, onAnyGesture?: () => void): void {
@@ -56,11 +58,12 @@ export class InputManager {
 
     window.addEventListener('keydown', (e) => {
       this.onAnyGesture?.();
-      // Do not hijack typing inside dialog textarea
+      // Do not hijack typing or modal dialog navigation (info/settings/save)
       if (
-        document.activeElement &&
-        (document.activeElement.tagName === 'TEXTAREA' ||
-          document.activeElement.tagName === 'INPUT')
+        (document.activeElement &&
+          (document.activeElement.tagName === 'TEXTAREA' ||
+            document.activeElement.tagName === 'INPUT')) ||
+        document.querySelector('dialog[open]')
       ) {
         return;
       }
@@ -121,8 +124,8 @@ export class InputManager {
       const rect = canvas.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return null;
       return {
-        x: Math.floor(((e.clientX - rect.left) / rect.width) * canvas.width),
-        y: Math.floor(((e.clientY - rect.top) / rect.height) * canvas.height),
+        x: Math.floor(((e.clientX - rect.left) / rect.width) * SCREEN_W),
+        y: Math.floor(((e.clientY - rect.top) / rect.height) * SCREEN_H),
       };
     };
 
@@ -136,9 +139,11 @@ export class InputManager {
     });
 
     canvas.addEventListener('pointermove', (e) => {
-      if (!this.canvasHeld) return;
       const pt = mapCanvasCoords(e);
-      if (pt) this.canvasPointer = pt;
+      if (pt) {
+        this.canvasHover = pt;
+        if (this.canvasHeld) this.canvasPointer = pt;
+      }
     });
 
     const endCanvasHold = () => {
@@ -146,7 +151,10 @@ export class InputManager {
     };
     canvas.addEventListener('pointerup', endCanvasHold);
     canvas.addEventListener('pointercancel', endCanvasHold);
-    canvas.addEventListener('pointerleave', endCanvasHold);
+    canvas.addEventListener('pointerleave', () => {
+      this.canvasHeld = false;
+      this.canvasHover = null;
+    });
   }
 
   private resolveButton(e: KeyboardEvent): GameButton | null {
@@ -196,6 +204,9 @@ export class InputManager {
     for (const d of this.dirOrder) {
       if (this.pressed.has(d)) return d;
     }
+    for (const d of ['up', 'down', 'left', 'right'] as const) {
+      if (this.pressed.has(d)) return d;
+    }
     return null;
   }
 
@@ -209,6 +220,10 @@ export class InputManager {
 
   getCanvasPointer(): CanvasTap | null {
     return this.canvasPointer;
+  }
+
+  getCanvasHover(): CanvasTap | null {
+    return this.canvasHover;
   }
 
   consumeTap(): CanvasTap | null {

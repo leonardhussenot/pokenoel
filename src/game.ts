@@ -1,8 +1,10 @@
 import { soundEngine } from './audio/soundEngine';
 import { WORLDS } from './data';
-import { FAMILY_PAIRS, MODE_ORDER } from './data/familyAvatars';
+import { FAMILY_MEMBERS, FAMILY_PAIRS, MODE_ORDER } from './data/familyAvatars';
+import { randomizeGuestsInWorld } from './data/guests';
 import { InputManager } from './engine/input';
-import { OverworldEngine, SCREEN_H, SCREEN_W } from './engine/overworld';
+import { OverworldEngine, RENDER_SCALE, SCREEN_H, SCREEN_W } from './engine/overworld';
+import { preloadPortraitUrls } from './engine/pixelRenderer';
 import {
   decodeSaveCode,
   encodeSaveCode,
@@ -18,7 +20,6 @@ import {
   renderEndingCeremony,
   renderModeSelectScreen,
   renderPauseMenu,
-  renderTitleScreen,
 } from './engine/uiRenderer';
 import { ChallengeRunner } from './minigames/challengeRunner';
 import {
@@ -36,10 +37,11 @@ export class PokeNoelGame {
   private ctx: CanvasRenderingContext2D;
   private input = new InputManager();
   private save: GlobalSaveData;
-  private scene: GameScene = 'TITLE';
+  private scene: GameScene = 'MODE_SELECT';
   private timer = 0;
 
   private modeCursor = 0;
+  private lastHoverCard = -1;
   private activeModeId: ModeId = 'pm';
   private activeWorld: WorldDefinition = WORLDS.pm;
   private overworld: OverworldEngine | null = null;
@@ -53,8 +55,12 @@ export class PokeNoelGame {
 
   private lastTimestamp = 0;
   private soundBtnEl: HTMLButtonElement | null = null;
+  private shellEl: HTMLElement | null = null;
+  private currentShellTheme = '';
 
   constructor(canvas: HTMLCanvasElement) {
+    canvas.width = SCREEN_W * RENDER_SCALE;
+    canvas.height = SCREEN_H * RENDER_SCALE;
     const context = canvas.getContext('2d');
     if (!context) {
       throw new Error('Impossible d’initialiser le contexte 2D du canvas.');
@@ -64,6 +70,7 @@ export class PokeNoelGame {
 
     this.save = loadGlobalSave();
     soundEngine.setMuted(this.save.muted);
+    preloadPortraitUrls(Object.values(FAMILY_MEMBERS).map((m) => m.customPortraitUrl));
 
     this.input.attach(canvas, () => soundEngine.unlock());
     this.wireShellControls();
@@ -73,16 +80,41 @@ export class PokeNoelGame {
   private wireShellControls(): void {
     if (typeof document === 'undefined') return;
 
-    this.soundBtnEl = document.querySelector<HTMLButtonElement>('#btn-sound');
-    const padBtn = document.querySelector<HTMLButtonElement>('#btn-toggle-pad');
+    this.soundBtnEl = document.querySelector<HTMLButtonElement>('#btn-setting-sound');
+    const padBtn = document.querySelector<HTMLButtonElement>('#btn-setting-pad');
+    const settingSaveBtn = document.querySelector<HTMLButtonElement>('#btn-setting-save');
+    const infoBtn = document.querySelector<HTMLButtonElement>('#btn-info');
+    const settingsBtn = document.querySelector<HTMLButtonElement>('#btn-settings');
+    const infoDialog = document.querySelector<HTMLDialogElement>('#info-dialog');
+    const settingsDialog = document.querySelector<HTMLDialogElement>('#settings-dialog');
     const shell = document.querySelector<HTMLElement>('#gba-shell');
+    this.shellEl = shell;
+    this.syncShellTheme();
 
     const updateSoundLabel = () => {
       if (this.soundBtnEl) {
-        this.soundBtnEl.textContent = soundEngine.isMuted() ? 'Son : OFF' : 'Son : ON';
+        this.soundBtnEl.textContent = soundEngine.isMuted() ? 'Coupé (M)' : 'Activé (M)';
+      }
+    };
+    const updatePadLabel = () => {
+      if (padBtn) {
+        padBtn.textContent = shell?.classList.contains('show-pad') ? 'Affichée' : 'Masquée';
       }
     };
     updateSoundLabel();
+    updatePadLabel();
+
+    infoBtn?.addEventListener('click', () => {
+      soundEngine.unlock();
+      if (infoDialog && !infoDialog.open) infoDialog.showModal();
+    });
+
+    settingsBtn?.addEventListener('click', () => {
+      soundEngine.unlock();
+      updateSoundLabel();
+      updatePadLabel();
+      if (settingsDialog && !settingsDialog.open) settingsDialog.showModal();
+    });
 
     this.soundBtnEl?.addEventListener('click', () => {
       soundEngine.unlock();
@@ -92,6 +124,12 @@ export class PokeNoelGame {
 
     padBtn?.addEventListener('click', () => {
       shell?.classList.toggle('show-pad');
+      updatePadLabel();
+    });
+
+    settingSaveBtn?.addEventListener('click', () => {
+      settingsDialog?.close();
+      this.openSaveDialog();
     });
 
     // Save Code Modal
@@ -130,7 +168,7 @@ export class PokeNoelGame {
       soundEngine.playBadgeFanfare();
       feedback.textContent = 'Sauvegarde chargée avec succès !';
       feedback.classList.remove('error');
-      if (this.scene !== 'TITLE' && this.scene !== 'MODE_SELECT') {
+      if (this.scene !== 'MODE_SELECT') {
         this.startMode(this.activeModeId);
       }
       setTimeout(() => dialog?.close(), 650);
@@ -152,13 +190,25 @@ export class PokeNoelGame {
     }
   }
 
+  private syncShellTheme(): void {
+    const nextTheme = this.scene === 'MODE_SELECT' ? 'title' : this.activeModeId;
+    if (nextTheme === this.currentShellTheme) return;
+    this.currentShellTheme = nextTheme;
+    if (this.shellEl) {
+      this.shellEl.dataset.theme = nextTheme;
+    }
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.dataset.theme = nextTheme;
+    }
+  }
+
   private toggleMute(): void {
     const next = !soundEngine.isMuted();
     soundEngine.setMuted(next);
     this.save.muted = next;
     saveGlobalSave(this.save);
     if (this.soundBtnEl) {
-      this.soundBtnEl.textContent = next ? 'Son : OFF' : 'Son : ON';
+      this.soundBtnEl.textContent = next ? 'Coupé (M)' : 'Activé (M)';
     }
   }
 
@@ -167,10 +217,15 @@ export class PokeNoelGame {
     const tick = (now: number) => {
       const dt = Math.min(0.05, Math.max(0.001, (now - this.lastTimestamp) / 1000));
       this.lastTimestamp = now;
-      this.update(dt);
-      this.render();
-      this.input.endFrame();
-      requestAnimationFrame(tick);
+      try {
+        this.update(dt);
+        this.render();
+        this.input.endFrame();
+      } catch (err) {
+        console.error('Erreur dans la boucle de jeu Noël 2026 :', err);
+      } finally {
+        requestAnimationFrame(tick);
+      }
     };
     requestAnimationFrame(tick);
   }
@@ -182,6 +237,8 @@ export class PokeNoelGame {
   private startMode(modeId: ModeId): void {
     this.activeModeId = modeId;
     this.activeWorld = WORLDS[modeId];
+    randomizeGuestsInWorld(this.activeWorld);
+    preloadPortraitUrls(this.activeWorld.npcs.map((n) => n.customPortraitUrl));
     const modeSave = this.getActiveModeSave();
     const pair = FAMILY_PAIRS[modeId];
 
@@ -203,6 +260,7 @@ export class PokeNoelGame {
     );
 
     this.scene = 'OVERWORLD';
+    this.syncShellTheme();
     soundEngine.playBgm(this.activeWorld.bgmId);
 
     // Welcome toast on fresh start
@@ -249,6 +307,7 @@ export class PokeNoelGame {
         text: `Halte ! L’accès à « ${gate.districtLabel} » requiert ${gate.requiredBadges} badges. Il vous en manque encore ${missing} !`,
         appearance: gk?.appearance,
         portrait: gk?.portrait,
+        customPortraitUrl: gk?.customPortraitUrl,
         voicePitch: gk?.voicePitch,
       },
     ]);
@@ -279,6 +338,20 @@ export class PokeNoelGame {
       return;
     }
 
+    if (npc.role === 'guest') {
+      const lines = (npc.fixedLines ?? ['Bonjour !']).map((text) => ({
+        speaker: npc.name,
+        text,
+        appearance: npc.appearance,
+        portrait: npc.portrait,
+        customPortraitUrl: npc.customPortraitUrl,
+        voicePitch: npc.voicePitch,
+      }));
+      this.dialogue.start(lines);
+      this.scene = 'DIALOGUE';
+      return;
+    }
+
     if (npc.role === 'gatekeeper') {
       const gate = this.activeWorld.gates.find((g) => g.id === npc.gateId);
       if (gate) {
@@ -290,6 +363,7 @@ export class PokeNoelGame {
               text: `Vous avez ${modeSave.badges.length} badges ! La voie vers « ${gate.districtLabel} » est grande ouverte ! Bonne chance !`,
               appearance: npc.appearance,
               portrait: npc.portrait,
+              customPortraitUrl: npc.customPortraitUrl,
               voicePitch: npc.voicePitch,
             },
           ]);
@@ -306,10 +380,11 @@ export class PokeNoelGame {
       const hintText = this.buildDynamicHintText(npc, modeSave);
       this.dialogue.start([
         {
-          speaker: `${npc.name} (${npc.title})`,
+          speaker: npc.name,
           text: hintText,
           appearance: npc.appearance,
           portrait: npc.portrait,
+          customPortraitUrl: npc.customPortraitUrl,
           voicePitch: npc.voicePitch,
         },
       ]);
@@ -333,6 +408,7 @@ export class PokeNoelGame {
             text,
             appearance: npc.appearance,
             portrait: npc.portrait,
+            customPortraitUrl: npc.customPortraitUrl,
             voicePitch: npc.voicePitch,
           })
         );
@@ -346,6 +422,7 @@ export class PokeNoelGame {
         text,
         appearance: npc.appearance,
         portrait: npc.portrait,
+        customPortraitUrl: npc.customPortraitUrl,
         voicePitch: npc.voicePitch,
       }));
       this.dialogue.start(introMsgs, () => {
@@ -442,16 +519,23 @@ export class PokeNoelGame {
     }
 
     switch (this.scene) {
-      case 'TITLE': {
-        const tap = this.input.consumeTap();
-        if (this.input.justPressed('a') || tap) {
-          soundEngine.playConfirm();
-          this.scene = 'MODE_SELECT';
-        }
-        break;
-      }
-
       case 'MODE_SELECT': {
+        const hover = this.input.getCanvasHover();
+        if (hover) {
+          const rects = getModeCardRects();
+          const hIdx = rects.findIndex(
+            (r) => hover.x >= r.x && hover.x <= r.x + r.w && hover.y >= r.y && hover.y <= r.y + r.h
+          );
+          if (hIdx !== -1 && hIdx !== this.lastHoverCard) {
+            this.lastHoverCard = hIdx;
+            if (this.modeCursor !== hIdx) {
+              this.modeCursor = hIdx;
+              soundEngine.playSelect();
+            }
+          } else if (hIdx === -1) {
+            this.lastHoverCard = -1;
+          }
+        }
         if (this.input.justPressed('left') || this.input.justPressed('right')) {
           this.modeCursor ^= 1;
           soundEngine.playSelect();
@@ -462,11 +546,6 @@ export class PokeNoelGame {
         if (this.input.justPressed('swap')) {
           soundEngine.playSelect();
           this.openSaveDialog();
-          break;
-        }
-        if (this.input.justPressed('b')) {
-          soundEngine.playCancel();
-          this.scene = 'TITLE';
           break;
         }
         const tap = this.input.consumeTap();
@@ -636,14 +715,9 @@ export class PokeNoelGame {
             this.pauseSubView = 'map';
             break;
           case 3:
-            this.overworld?.swapLeader();
-            saveGlobalSave(this.save);
-            this.scene = 'OVERWORLD';
-            break;
-          case 4:
             this.openSaveDialog();
             break;
-          case 5:
+          case 4:
             saveGlobalSave(this.save);
             soundEngine.playBgm('title');
             this.scene = 'MODE_SELECT';
@@ -690,15 +764,15 @@ export class PokeNoelGame {
   }
 
   private render(): void {
+    this.syncShellTheme();
     const ctx = this.ctx;
+    ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
+    ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, SCREEN_W, SCREEN_H);
 
     switch (this.scene) {
-      case 'TITLE':
-        renderTitleScreen(ctx, this.timer);
-        break;
       case 'MODE_SELECT':
-        renderModeSelectScreen(ctx, this.save, this.modeCursor);
+        renderModeSelectScreen(ctx, this.save, this.modeCursor, this.timer);
         break;
       case 'OVERWORLD':
         this.overworld?.render(ctx);

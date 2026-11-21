@@ -8,13 +8,16 @@ import {
   NpcEntity,
   SignPost,
   WorldDefinition,
+  WorldTheme,
 } from '../types';
 import { InputManager } from './input';
 import { drawOverworldSprite, drawPortrait } from './pixelRenderer';
 import { drawTile, isTileWalkable, TILE_SIZE } from './tilesetRenderer';
+import { WorldAtmosphere } from './worldAtmosphere';
 
 export const SCREEN_W = 384;
 export const SCREEN_H = 240;
+export const RENDER_SCALE = 4;
 
 const DIR_DELTA: Record<Direction, { dx: number; dy: number }> = {
   down: { dx: 0, dy: 1 },
@@ -22,6 +25,102 @@ const DIR_DELTA: Record<Direction, { dx: number; dy: number }> = {
   left: { dx: -1, dy: 0 },
   right: { dx: 1, dy: 0 },
 };
+
+const THEME_ACCENT: Record<WorldTheme, string> = {
+  pm: '#e0b853',
+  df: '#2ec4de',
+  jp: '#e87654',
+  aj: '#4a9eff',
+};
+
+const THEME_HUD_STYLE: Record<
+  WorldTheme,
+  { bgTop: string; bgBottom: string; trimMid: string; pillTint: string }
+> = {
+  pm: {
+    bgTop: 'rgba(28, 15, 24, 0.94)',
+    bgBottom: 'rgba(18, 10, 17, 0.90)',
+    trimMid: '#e8c166',
+    pillTint: 'rgba(232, 193, 102, 0.20)',
+  },
+  df: {
+    bgTop: 'rgba(16, 26, 40, 0.94)',
+    bgBottom: 'rgba(11, 18, 30, 0.90)',
+    trimMid: '#f2c872',
+    pillTint: 'rgba(242, 200, 114, 0.20)',
+  },
+  jp: {
+    bgTop: 'rgba(28, 18, 17, 0.94)',
+    bgBottom: 'rgba(19, 12, 12, 0.90)',
+    trimMid: '#efb976',
+    pillTint: 'rgba(239, 185, 118, 0.20)',
+  },
+  aj: {
+    bgTop: 'rgba(14, 24, 46, 0.94)',
+    bgBottom: 'rgba(10, 17, 34, 0.90)',
+    trimMid: '#f4ce72',
+    pillTint: 'rgba(244, 206, 114, 0.20)',
+  },
+};
+
+function safeRoundRectFill(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+): void {
+  const rad = Math.min(r, w * 0.5, h * 0.5);
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, rad);
+  } else {
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.lineTo(x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.lineTo(x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.lineTo(x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    if (typeof ctx.closePath === 'function') ctx.closePath();
+  }
+  ctx.fill();
+}
+
+function safeRoundRectStroke(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+): void {
+  const rad = Math.min(r, w * 0.5, h * 0.5);
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, rad);
+  } else {
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.lineTo(x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.lineTo(x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.lineTo(x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    if (typeof ctx.closePath === 'function') ctx.closePath();
+  }
+  ctx.stroke();
+}
+
+function formatLandmarkShortLabel(name: string): string {
+  const dashIdx = name.indexOf('—');
+  const candidate = dashIdx >= 0 ? name.slice(dashIdx + 1).trim() : name.trim();
+  if (candidate.length <= 32) return candidate;
+  return `${candidate.slice(0, 31)}…`;
+}
 
 export interface OverworldCallbacks {
   onInteractNpc: (npc: NpcEntity) => void;
@@ -54,6 +153,7 @@ export class OverworldEngine {
   private animTimer = 0;
   private toastMessage = '';
   private toastTimer = 0;
+  private atmosphere = new WorldAtmosphere();
 
   constructor(
     private world: WorldDefinition,
@@ -83,6 +183,7 @@ export class OverworldEngine {
     this.moveStartY = this.leaderY;
     this.followerStartX = this.followerX;
     this.followerStartY = this.followerY;
+    this.atmosphere.resetForMap(map);
   }
 
   getCurrentMap(): MapData {
@@ -90,11 +191,11 @@ export class OverworldEngine {
   }
 
   getLeaderMember(): FamilyMember {
-    return this.pairMembers[this.save.leaderIndex];
+    return this.pairMembers[0];
   }
 
   getFollowerMember(): FamilyMember {
-    return this.pairMembers[this.save.leaderIndex === 0 ? 1 : 0];
+    return this.pairMembers[1];
   }
 
   getPosition(): { mapId: string; x: number; y: number } {
@@ -137,15 +238,10 @@ export class OverworldEngine {
     return true;
   }
 
-  swapLeader(): void {
-    this.save.leaderIndex = this.save.leaderIndex === 0 ? 1 : 0;
-    this.swapHopTimer = 0.28;
-    soundEngine.playSwap();
-    this.showToast(`${this.getLeaderMember().name} passe en tête !`, 1.6);
-  }
-
   update(dt: number, input: InputManager): void {
     this.animTimer += dt;
+    this.atmosphere.update(dt, this.getCurrentMap());
+
     if (this.bumpCooldown > 0) this.bumpCooldown -= dt;
     if (this.warpCooldown > 0) this.warpCooldown -= dt;
     if (this.fadeAlpha > 0) this.fadeAlpha = Math.max(0, this.fadeAlpha - dt * 3.8);
@@ -155,11 +251,6 @@ export class OverworldEngine {
     if (input.justPressed('menu') || input.justPressed('b')) {
       soundEngine.playConfirm();
       this.callbacks.onOpenPauseMenu();
-      return;
-    }
-
-    if (input.justPressed('swap')) {
-      this.swapLeader();
       return;
     }
 
@@ -186,11 +277,11 @@ export class OverworldEngine {
     // Movement
     const dir = input.getDirectionHeld();
     if (dir) {
-      this.tryStartMove(dir);
+      this.tryStartMove(dir, input.isDown('run'));
     }
   }
 
-  private tryStartMove(dir: Direction): void {
+  private tryStartMove(dir: Direction, running: boolean): void {
     this.leaderDir = dir;
     const map = this.getCurrentMap();
     const { dx, dy } = DIR_DELTA[dir];
@@ -211,6 +302,13 @@ export class OverworldEngine {
       }
       return;
     }
+
+    // Emit crisp footsteps dust puff at vacated tile
+    this.atmosphere.emitStepDust(
+      this.leaderX * TILE_SIZE + TILE_SIZE * 0.5,
+      this.leaderY * TILE_SIZE + TILE_SIZE - 2,
+      running
+    );
 
     this.moveStartX = this.leaderX;
     this.moveStartY = this.leaderY;
@@ -282,6 +380,7 @@ export class OverworldEngine {
     this.save.lastY = this.leaderY;
     this.warpCooldown = 0.22;
     this.fadeAlpha = 1;
+    this.atmosphere.resetForMap(targetMap);
   }
 
   private tryInteract(): void {
@@ -292,7 +391,6 @@ export class OverworldEngine {
 
     const npc = this.getNpcAt(map.id, tx, ty);
     if (npc) {
-      // Turn NPC toward player if not cameo pair
       if (npc.role !== 'cameo') {
         const opp: Record<Direction, Direction> = {
           down: 'up',
@@ -333,7 +431,7 @@ export class OverworldEngine {
 
   render(ctx: CanvasRenderingContext2D): void {
     const map = this.getCurrentMap();
-    const waterFrame = Math.floor(this.animTimer * 2.2) % 2;
+    const tileAnimFrame = Math.floor(this.animTimer * 3.4) % 4;
 
     const lerpX = this.moving
       ? this.moveStartX + (this.leaderX - this.moveStartX) * this.moveProgress
@@ -366,11 +464,15 @@ export class OverworldEngine {
       camY = Math.max(0, Math.min(mapPxH - SCREEN_H, camY));
     }
 
-    // Background fill (black in interiors, forest dark outside)
-    ctx.fillStyle = map.isInterior ? '#11131d' : '#1b3623';
+    // Background fill
+    ctx.fillStyle = map.isInterior
+      ? map.theme === 'darkroom'
+        ? '#140a0f'
+        : '#101320'
+      : '#162b1f';
     ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
-    // Draw visible tiles
+    // 1. Draw visible HD tiles
     const minTX = Math.max(0, Math.floor(camX / TILE_SIZE));
     const maxTX = Math.min(map.width - 1, Math.ceil((camX + SCREEN_W) / TILE_SIZE));
     const minTY = Math.max(0, Math.floor(camY / TILE_SIZE));
@@ -385,11 +487,14 @@ export class OverworldEngine {
             tile = 'gate_open';
           }
         }
-        drawTile(ctx, tile, map.theme, tx * TILE_SIZE - camX, ty * TILE_SIZE - camY, waterFrame);
+        drawTile(ctx, tile, map.theme, tx * TILE_SIZE - camX, ty * TILE_SIZE - camY, tileAnimFrame);
       }
     }
 
-    // Collect drawable entities for Y-sorting
+    // 2. Ground-layer atmosphere (lamp pools, water glints, cloud shadows, dust puffs, swap sparkles)
+    this.atmosphere.renderGroundEffects(ctx, map, camX, camY, this.animTimer);
+
+    // 3. Collect drawable entities for Y-sorting
     interface DrawActor {
       sortY: number;
       draw: () => void;
@@ -406,7 +511,10 @@ export class OverworldEngine {
 
     // Leader
     const leaderMember = this.getLeaderMember();
-    const hopOffset = this.swapHopTimer > 0 ? -Math.round(Math.sin((this.swapHopTimer / 0.28) * Math.PI) * 5) : 0;
+    const hopOffset =
+      this.swapHopTimer > 0
+        ? -Math.round(Math.sin((this.swapHopTimer / 0.28) * Math.PI) * 5.5)
+        : 0;
     actors.push({
       sortY: lerpY,
       draw: () => {
@@ -422,7 +530,7 @@ export class OverworldEngine {
       },
     });
 
-    // Follower (only draw if not sitting directly under leader)
+    // Follower
     const followerMember = this.getFollowerMember();
     if (fLerpX !== lerpX || fLerpY !== lerpY) {
       actors.push({
@@ -444,7 +552,7 @@ export class OverworldEngine {
     // NPCs on current map
     const npcs = this.world.npcs.filter((n) => n.mapId === map.id);
     for (const npc of npcs) {
-      const bob = Math.floor((this.animTimer * 2 + npc.x) % 2);
+      const bob = Math.sin(this.animTimer * 3.6 + npc.x * 1.3 + npc.y * 0.7) * 1.3;
       actors.push({
         sortY: npc.y,
         draw: () => {
@@ -454,48 +562,28 @@ export class OverworldEngine {
 
           if (npc.role === 'cameo' && npc.partnerAppearance) {
             drawOverworldSprite(ctx, npc.partnerAppearance, npc.dir, 0, sx + TILE_SIZE, sy);
-            // Warm heart/star cameo tag
-            this.drawTag(ctx, sx + 12, sy - 9 + bob, '♥', '#ff7096');
+            this.drawTag(ctx, sx + 12, sy - 10 + bob, '♥', '#ff7096');
           } else if (npc.role === 'main' || npc.role === 'boss') {
             const won = npc.badgeId ? this.save.badges.includes(npc.badgeId) : this.save.bossDefeated;
             this.drawTag(
               ctx,
               sx + 4,
-              sy - 10 + bob,
+              sy - 11 + bob,
               won ? '✓' : npc.role === 'boss' ? '★' : '!',
               won ? '#57d978' : npc.role === 'boss' ? '#ffd045' : '#ff5a5a'
             );
           } else if (npc.role === 'secondary') {
-            this.drawTag(ctx, sx + 4, sy - 9 + bob, '?', '#7cc4ff');
+            this.drawTag(ctx, sx + 4, sy - 10 + bob, '?', '#7cc4ff');
+          } else if (npc.role === 'guest') {
+            this.drawTag(ctx, sx + 4, sy - 10 + bob, '…', '#f4ce76');
           } else if (npc.role === 'gatekeeper') {
             const gate = this.world.gates.find((g) => g.id === npc.gateId);
             if (gate && !this.isGateUnlocked(gate)) {
-              this.drawTag(ctx, sx + 4, sy - 10 + bob, `${gate.requiredBadges}`, '#ff944d');
+              this.drawTag(ctx, sx + 4, sy - 11 + bob, `${gate.requiredBadges}`, '#ff944d');
             }
           }
         },
       });
-    }
-
-    // Building completion indicators on overworld roofs/doors
-    if (!map.isInterior) {
-      const bob = Math.floor((this.animTimer * 2) % 2);
-      for (const b of this.world.buildings) {
-        const won = b.isBoss
-          ? this.save.bossDefeated
-          : this.save.badges.includes(b.badgeId);
-        const sx = b.doorX * TILE_SIZE - camX + 4;
-        const sy = (b.doorY - 2) * TILE_SIZE - camY - 4 + bob;
-        if (sx >= -16 && sx <= SCREEN_W + 16 && sy >= -16 && sy <= SCREEN_H + 16) {
-          this.drawTag(
-            ctx,
-            sx,
-            sy,
-            won ? '✓' : b.isBoss ? '★' : '!',
-            won ? '#57d978' : b.isBoss ? '#ffd045' : '#ff5a5a'
-          );
-        }
-      }
     }
 
     actors.sort((a, b) => a.sortY - b.sortY);
@@ -503,23 +591,35 @@ export class OverworldEngine {
       actor.draw();
     }
 
-    // Compact GBA Top HUD
+    // 4. Elegant subtle landmark building nameplates & completion indicators on overworld
+    if (!map.isInterior) {
+      this.renderLandmarkNameplates(ctx, camX, camY);
+    }
+
+    // 5. Air-layer atmosphere (searchlights, autumn leaves, carnival confetti, steam, curtains, safelight)
+    this.atmosphere.renderAirEffects(ctx, map, camX, camY, this.animTimer);
+
+    // 6. Sleek Top HUD
     this.renderHud(ctx, leaderMember);
 
-    // Toast notification (e.g. leader swapped)
+    // Toast notification
     if (this.toastTimer > 0 && this.toastMessage) {
       ctx.save();
-      ctx.font = 'bold 9px sans-serif';
-      const tw = ctx.measureText(this.toastMessage).width + 18;
+      ctx.font = '600 8.2px system-ui, -apple-system, "Segoe UI", sans-serif';
+      const tw = Math.ceil(ctx.measureText(this.toastMessage).width) + 22;
       const tx = Math.floor((SCREEN_W - tw) / 2);
-      ctx.fillStyle = 'rgba(18, 22, 38, 0.9)';
-      ctx.fillRect(tx, 26, tw, 16);
-      ctx.strokeStyle = '#f4c542';
-      ctx.strokeRect(tx + 0.5, 26.5, tw - 1, 15);
-      ctx.fillStyle = '#fff5d1';
+      const toastGrad = ctx.createLinearGradient(0, 26, 0, 41);
+      toastGrad.addColorStop(0, 'rgba(22, 19, 34, 0.94)');
+      toastGrad.addColorStop(1, 'rgba(13, 12, 22, 0.92)');
+      ctx.fillStyle = toastGrad;
+      safeRoundRectFill(ctx, tx, 26, tw, 15, 7.5);
+      ctx.strokeStyle = 'rgba(244, 206, 118, 0.72)';
+      ctx.lineWidth = 0.85;
+      safeRoundRectStroke(ctx, tx + 0.4, 26.4, tw - 0.8, 14.2, 7.1);
+      ctx.fillStyle = '#fff6dc';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(this.toastMessage, SCREEN_W / 2, 34);
+      ctx.fillText(this.toastMessage, SCREEN_W / 2, 33.8);
       ctx.restore();
     }
 
@@ -530,6 +630,65 @@ export class OverworldEngine {
     }
   }
 
+  private renderLandmarkNameplates(
+    ctx: CanvasRenderingContext2D,
+    camX: number,
+    camY: number
+  ): void {
+    const bob = Math.sin(this.animTimer * 3.0) * 1.1;
+    const accent = THEME_ACCENT[this.world.modeId];
+
+    ctx.save();
+    for (const b of this.world.buildings) {
+      const won = b.isBoss
+        ? this.save.bossDefeated
+        : this.save.badges.includes(b.badgeId);
+      const centerX = b.doorX * TILE_SIZE - camX + 8;
+      const roofY = (b.doorY - (b.isBoss ? 4 : 3)) * TILE_SIZE - camY;
+
+      if (centerX < -60 || centerX > SCREEN_W + 60 || roofY < 10 || roofY > SCREEN_H + 30) {
+        continue;
+      }
+
+      const shortLabel = formatLandmarkShortLabel(b.name);
+      ctx.font = '600 6px system-ui, -apple-system, "Segoe UI", sans-serif';
+      const textW = Math.ceil(ctx.measureText(shortLabel).width);
+      const pillW = Math.min(148, textW + 22);
+      const pillH = 12;
+      const px = Math.round(centerX - pillW / 2);
+      const py = Math.round(roofY - 12 + bob * 0.5);
+
+      // Subtle translucent dark-glass nameplate
+      ctx.fillStyle = 'rgba(14, 18, 32, 0.84)';
+      safeRoundRectFill(ctx, px, py, pillW, pillH, 3.5);
+      ctx.strokeStyle = won ? '#57d978' : b.isBoss ? '#ffd045' : accent;
+      ctx.lineWidth = 0.8;
+      safeRoundRectStroke(ctx, px + 0.4, py + 0.4, pillW - 0.8, pillH - 0.8, 3.5);
+
+      // Status badge circle on left of pill with generous breathing room before label
+      const statusCol = won ? '#57d978' : b.isBoss ? '#ffd045' : '#ff5e5e';
+      const statusSym = won ? '✓' : b.isBoss ? '★' : '!';
+      ctx.fillStyle = statusCol;
+      ctx.beginPath();
+      ctx.arc(px + 7.2, py + 6, 3.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#111420';
+      ctx.font = 'bold 5.8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(statusSym, px + 7.2, py + 6.3);
+
+      // Crisp building label
+      ctx.fillStyle = won ? '#d9ffe2' : '#fff8e8';
+      ctx.font = '600 6px system-ui, -apple-system, "Segoe UI", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(shortLabel, px + 14.5, py + 6.2);
+    }
+    ctx.restore();
+  }
+
   private drawTag(
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -538,46 +697,132 @@ export class OverworldEngine {
     color: string
   ): void {
     ctx.save();
-    ctx.fillStyle = '#151824';
-    ctx.fillRect(x, y, 9, 10);
+    ctx.fillStyle = 'rgba(15, 18, 30, 0.9)';
+    safeRoundRectFill(ctx, x - 0.5, y - 0.5, 10, 11, 2.5);
     ctx.fillStyle = color;
-    ctx.fillRect(x + 1, y + 1, 7, 8);
+    safeRoundRectFill(ctx, x + 0.5, y + 0.5, 8, 9, 2);
     ctx.fillStyle = '#111420';
-    ctx.font = 'bold 7px monospace';
+    ctx.font = 'bold 6.8px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(symbol, x + 4.5, y + 5.5);
+    ctx.fillText(symbol, x + 4.5, y + 5.2);
     ctx.restore();
   }
 
   private renderHud(ctx: CanvasRenderingContext2D, leader: FamilyMember): void {
+    const hudTheme = THEME_HUD_STYLE[this.world.modeId];
+    const hudH = 21;
     ctx.save();
-    ctx.fillStyle = 'rgba(16, 20, 34, 0.86)';
-    ctx.fillRect(0, 0, SCREEN_W, 20);
-    ctx.fillStyle = '#f4c542';
-    ctx.fillRect(0, 20, SCREEN_W, 1);
 
-    // Mini portrait (16x16)
-    drawPortrait(ctx, leader.appearance, leader.portrait, 3, 2, 16, leader.customPortraitUrl);
+    // Soft floating drop shadow beneath HUD bar
+    const shadowGrad = ctx.createLinearGradient(0, hudH, 0, hudH + 4);
+    shadowGrad.addColorStop(0, 'rgba(4, 4, 10, 0.36)');
+    shadowGrad.addColorStop(1, 'rgba(4, 4, 10, 0)');
+    ctx.fillStyle = shadowGrad;
+    ctx.fillRect(0, hudH, SCREEN_W, 4);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 9px sans-serif';
+    // Warm dark-glass gradient bar harmonizing with the outer Collector-Edition frame
+    const hudGrad = ctx.createLinearGradient(0, 0, 0, hudH);
+    hudGrad.addColorStop(0, hudTheme.bgTop);
+    hudGrad.addColorStop(1, hudTheme.bgBottom);
+    ctx.fillStyle = hudGrad;
+    ctx.fillRect(0, 0, SCREEN_W, hudH);
+
+    // Subtle warm center champagne luster
+    const lusterGrad = ctx.createLinearGradient(0, 0, SCREEN_W, 0);
+    lusterGrad.addColorStop(0, 'rgba(244, 206, 118, 0)');
+    lusterGrad.addColorStop(0.5, 'rgba(244, 206, 118, 0.06)');
+    lusterGrad.addColorStop(1, 'rgba(244, 206, 118, 0)');
+    ctx.fillStyle = lusterGrad;
+    ctx.fillRect(0, 0, SCREEN_W, hudH);
+
+    // Delicate inner top sheen catching the brushed-gold screen rim
+    ctx.fillStyle = 'rgba(255, 245, 214, 0.14)';
+    ctx.fillRect(0, 0, SCREEN_W, 0.6);
+
+    // Delicate brushed-gold hairline bottom trim matching outer frame
+    const trimGrad = ctx.createLinearGradient(0, 0, SCREEN_W, 0);
+    trimGrad.addColorStop(0, 'rgba(244, 206, 118, 0.32)');
+    trimGrad.addColorStop(0.25, hudTheme.trimMid);
+    trimGrad.addColorStop(0.5, 'rgba(255, 244, 208, 0.88)');
+    trimGrad.addColorStop(0.75, hudTheme.trimMid);
+    trimGrad.addColorStop(1, 'rgba(244, 206, 118, 0.32)');
+    ctx.fillStyle = trimGrad;
+    ctx.fillRect(0, hudH - 0.9, SCREEN_W, 0.9);
+
+    // Two crisp gilded miniature portrait lockets side-by-side for the duo!
+    const [memA, memB] = this.pairMembers;
+    const frameGrad = ctx.createLinearGradient(3, 2, 3, 19);
+    frameGrad.addColorStop(0, '#fff4cf');
+    frameGrad.addColorStop(0.5, hudTheme.trimMid);
+    frameGrad.addColorStop(1, '#a97a2c');
+
+    const drawHudLocket = (lx: number, member: FamilyMember) => {
+      ctx.fillStyle = 'rgba(8, 8, 16, 0.92)';
+      safeRoundRectFill(ctx, lx, 2, 17, 17, 3);
+      drawPortrait(ctx, member.appearance, member.portrait, lx + 1, 3, 15, member.customPortraitUrl);
+      ctx.strokeStyle = frameGrad;
+      ctx.lineWidth = 0.95;
+      safeRoundRectStroke(ctx, lx + 0.4, 2.4, 16.2, 16.2, 2.6);
+    };
+    drawHudLocket(3, memA);
+    drawHudLocket(22, memB);
+
+    // Compute right-hand badge pill first so left text never collides
+    const pillY = 3.6;
+    const pillH = 13.4;
+    const pillR = pillH / 2;
+
+    const badgeStr = `★ ${this.save.badges.length}/12${this.save.bossDefeated ? ' ♛' : ''}`;
+    ctx.font = '700 8px system-ui, -apple-system, "Segoe UI", sans-serif';
+    const bw = Math.ceil(ctx.measureText(badgeStr).width) + 12;
+    const bx = SCREEN_W - 4 - bw;
+
+    // Duo names + golden diamond separator + district name (gracefully clipped if long)
+    const nameX = 43.5;
+    const maxTextRight = bx - 6;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    const districtName = this.getCurrentDistrictName();
-    ctx.fillText(`${leader.name} • ${districtName}`, 23, 10);
 
-    // Badge count pill on right
-    const badgeStr = `Badges ${this.save.badges.length}/12${this.save.bossDefeated ? ' ★' : ''}`;
-    ctx.font = 'bold 9px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#ffe27a';
-    ctx.fillText(badgeStr, SCREEN_W - 62, 10);
+    const duoLabel = `${memA.name} & ${memB.name}`;
+    ctx.font = '700 8px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.fillStyle = '#fff7e4';
+    ctx.fillText(duoLabel, nameX, 10.6);
+    const nameW = ctx.measureText(duoLabel).width;
 
-    // Menu hint
-    ctx.fillStyle = '#9db3e6';
-    ctx.font = 'bold 8px sans-serif';
-    ctx.fillText('[Échap] Menu', SCREEN_W - 6, 10);
+    const sepX = nameX + nameW + 4;
+    ctx.font = '700 5.5px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.fillStyle = 'rgba(244, 206, 118, 0.85)';
+    ctx.fillText('◆', sepX, 10.5);
+
+    const distX = sepX + 7.5;
+    const availW = Math.max(24, maxTextRight - distX);
+    ctx.font = '500 7.7px system-ui, -apple-system, "Segoe UI", sans-serif';
+    let districtName = this.getCurrentDistrictName();
+    if (ctx.measureText(districtName).width > availW) {
+      while (districtName.length > 4 && ctx.measureText(`${districtName}…`).width > availW) {
+        districtName = districtName.slice(0, -1);
+      }
+      districtName = `${districtName}…`;
+    }
+    ctx.fillStyle = '#e3d9c5';
+    ctx.fillText(districtName, distX, 10.6);
+    void leader;
+
+    // Refined gilded badge pill
+    const badgeGrad = ctx.createLinearGradient(0, pillY, 0, pillY + pillH);
+    badgeGrad.addColorStop(0, hudTheme.pillTint);
+    badgeGrad.addColorStop(1, 'rgba(176, 126, 42, 0.14)');
+    ctx.fillStyle = badgeGrad;
+    safeRoundRectFill(ctx, bx, pillY, bw, pillH, pillR);
+    ctx.strokeStyle = 'rgba(244, 206, 118, 0.66)';
+    ctx.lineWidth = 0.8;
+    safeRoundRectStroke(ctx, bx + 0.35, pillY + 0.35, bw - 0.7, pillH - 0.7, pillR);
+    ctx.font = '700 8px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff0be';
+    ctx.fillText(badgeStr, bx + bw / 2, 10.6);
+
     ctx.restore();
   }
 }

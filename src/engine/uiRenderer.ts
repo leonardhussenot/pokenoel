@@ -1,6 +1,13 @@
 import { FAMILY_PAIRS, MODE_ORDER } from '../data/familyAvatars';
 import { drawBadgeIcon, drawOverworldSprite, drawPortrait } from './pixelRenderer';
-import { drawPanelBox, drawWrappedText, MG_H, MG_W } from '../minigames/common';
+import {
+  drawPanelBox,
+  drawRoundRectPath,
+  drawStarPath,
+  drawWrappedText,
+  MG_H,
+  MG_W,
+} from '../minigames/common';
 import {
   BadgeDef,
   GlobalSaveData,
@@ -104,7 +111,7 @@ export class DialogueController {
 
     // Speaker nameplate
     ctx.fillStyle = '#28365e';
-    ctx.font = 'bold 9px sans-serif';
+    ctx.font = '700 9px system-ui, -apple-system, "Segoe UI", sans-serif';
     const nameW = Math.min(180, ctx.measureText(msg.speaker).width + 14);
     ctx.fillRect(textX, boxY - 9, nameW, 14);
     ctx.strokeStyle = '#f4c542';
@@ -116,7 +123,7 @@ export class DialogueController {
 
     // Wrapped typewriter text
     ctx.fillStyle = '#1b2033';
-    ctx.font = 'bold 9px sans-serif';
+    ctx.font = '600 9.5px system-ui, -apple-system, "Segoe UI", sans-serif';
     ctx.textBaseline = 'top';
     const shown = msg.text.slice(0, Math.floor(this.charCount));
     drawWrappedText(ctx, shown, textX, boxY + 11, textW, 13);
@@ -130,211 +137,369 @@ export class DialogueController {
   }
 }
 
-export function renderTitleScreen(ctx: CanvasRenderingContext2D, timer: number): void {
-  // Deep winter Pokémon night sky
-  const grad = ctx.createLinearGradient(0, 0, 0, MG_H);
-  grad.addColorStop(0, '#121b3d');
-  grad.addColorStop(0.65, '#1d3269');
-  grad.addColorStop(1, '#261c36');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, MG_W, MG_H);
-
-  // Twinkling stars & gentle snowfall
-  for (let i = 0; i < 36; i++) {
-    const sx = (i * 47 + Math.sin(timer + i) * 6 + MG_W) % MG_W;
-    const sy = ((i * 29 + timer * (10 + (i % 5) * 3)) % (MG_H - 36));
-    ctx.fillStyle = i % 4 === 0 ? '#ffe680' : 'rgba(255,255,255,0.75)';
-    ctx.fillRect(Math.round(sx), Math.round(sy), i % 3 === 0 ? 2 : 1, i % 3 === 0 ? 2 : 1);
-  }
-
-  // Festive silhouettes & Pokéball-ornament crest
-  const cx = MG_W / 2;
-  ctx.fillStyle = '#182447';
-  ctx.fillRect(0, 198, MG_W, 42);
-
-  // Ornamental PokéNoël Emblem
-  ctx.fillStyle = '#0d101c';
-  ctx.beginPath();
-  ctx.arc(cx, 54, 24, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#d93848';
-  ctx.beginPath();
-  ctx.arc(cx, 54, 21, Math.PI, 0);
-  ctx.fill();
-  ctx.fillStyle = '#f5f2eb';
-  ctx.beginPath();
-  ctx.arc(cx, 54, 21, 0, Math.PI);
-  ctx.fill();
-  ctx.fillStyle = '#181c2b';
-  ctx.fillRect(cx - 21, 52, 42, 4);
-  ctx.fillStyle = '#f4c542';
-  ctx.beginPath();
-  ctx.arc(cx, 54, 7, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#fff5cc';
-  ctx.beginPath();
-  ctx.arc(cx, 54, 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Cartridge Logo: PokéNoël
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = 'bold 30px sans-serif';
-  ctx.fillStyle = '#142154';
-  ctx.fillText('PokéNoël', cx + 3, 103);
-  ctx.strokeStyle = '#1e4ea8';
-  ctx.lineWidth = 4;
-  ctx.strokeText('PokéNoël', cx, 100);
-  ctx.fillStyle = '#ffd542';
-  ctx.fillText('PokéNoël', cx, 100);
-
-  // Subtitle ribbon
-  ctx.fillStyle = '#b8283c';
-  ctx.fillRect(cx - 98, 124, 196, 22);
-  ctx.strokeStyle = '#ffd542';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(cx - 98, 124, 196, 22);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText('ATTRAPEZ-LES TOUS !', cx, 135);
-
-  ctx.fillStyle = '#bfd1ff';
-  ctx.font = '9px sans-serif';
-  ctx.fillText('Édition Spéciale Famille • 4 Mondes • 52 Défis', cx, 162);
-
-  // Blinking Start prompt
-  if (Math.floor(timer * 2.2) % 2 === 0) {
-    ctx.fillStyle = '#79f59d';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillText('Appuyez sur [Espace / Entrée / A] pour jouer', cx, 194);
-  }
-
-  ctx.fillStyle = '#8b9ac9';
-  ctx.font = '8px sans-serif';
-  ctx.fillText('Flèches / ZQSD : Bouger   •   C : Échanger de meneur   •   M : Son', cx, 226);
-}
-
 export function getModeCardRects() {
   return [
-    { x: 12, y: 34, w: 174, h: 88 },
-    { x: 198, y: 34, w: 174, h: 88 },
-    { x: 12, y: 128, w: 174, h: 88 },
-    { x: 198, y: 128, w: 174, h: 88 },
+    { x: 12, y: 36, w: 174, h: 93 },
+    { x: 198, y: 36, w: 174, h: 93 },
+    { x: 12, y: 137, w: 174, h: 93 },
+    { x: 198, y: 137, w: 174, h: 93 },
   ];
+}
+
+function drawGiftBow(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+  ctx.save();
+  ctx.strokeStyle = '#ffe58f';
+  ctx.fillStyle = 'rgba(246, 206, 108, 0.28)';
+  ctx.lineWidth = 1.15;
+  // Left loop
+  ctx.beginPath();
+  ctx.ellipse(cx - 3.6, cy, 3.4, 2.0, -0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Right loop
+  ctx.beginPath();
+  ctx.ellipse(cx + 3.6, cy, 3.4, 2.0, 0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Tails
+  ctx.beginPath();
+  ctx.moveTo(cx - 1.2, cy + 1.2);
+  ctx.lineTo(cx - 3.5, cy + 4.2);
+  ctx.moveTo(cx + 1.2, cy + 1.2);
+  ctx.lineTo(cx + 3.5, cy + 4.2);
+  ctx.stroke();
+  // Center knot
+  ctx.fillStyle = '#ffe68c';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 export function renderModeSelectScreen(
   ctx: CanvasRenderingContext2D,
   save: GlobalSaveData,
-  selectedIndex: number
+  selectedIndex: number,
+  timer = 0
 ): void {
-  ctx.fillStyle = '#14192c';
+  // 1. Illustrated Winter Christmas Eve Night Sky
+  const sky = ctx.createLinearGradient(0, 0, 0, MG_H);
+  sky.addColorStop(0, '#0a1026');
+  sky.addColorStop(0.45, '#142044');
+  sky.addColorStop(0.82, '#211c3c');
+  sky.addColorStop(1, '#161b32');
+  ctx.fillStyle = sky;
   ctx.fillRect(0, 0, MG_W, MG_H);
 
-  // Header
-  ctx.fillStyle = '#0f1322';
-  ctx.fillRect(0, 0, MG_W, 28);
-  ctx.fillStyle = '#f4c542';
-  ctx.fillRect(0, 27, MG_W, 1);
+  // Subtle warm festive horizon glow
+  if (typeof ctx.createRadialGradient === 'function') {
+    const glow = ctx.createRadialGradient(MG_W / 2, MG_H * 0.52, 12, MG_W / 2, MG_H * 0.52, 210);
+    glow.addColorStop(0, 'rgba(244, 198, 108, 0.10)');
+    glow.addColorStop(0.6, 'rgba(130, 74, 142, 0.06)');
+    glow.addColorStop(1, 'rgba(10, 14, 30, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, MG_W, MG_H);
+  }
 
+  // Twinkling background winter stars
+  for (let i = 0; i < 28; i++) {
+    const sx = (i * 53 + 17) % MG_W;
+    const sy = 4 + ((i * 29) % 190);
+    const twinkle = 0.22 + 0.55 * (0.5 + 0.5 * Math.sin(timer * (1.8 + (i % 4) * 0.5) + i * 1.7));
+    ctx.fillStyle = i % 3 === 0 ? `rgba(255, 232, 160, ${twinkle.toFixed(2)})` : `rgba(218, 232, 255, ${(twinkle * 0.75).toFixed(2)})`;
+    const sz = i % 5 === 0 ? 1.5 : 1;
+    ctx.fillRect(sx, sy, sz, sz);
+  }
+
+  // Soft distant snowy pine silhouettes along the very bottom edge
+  ctx.fillStyle = '#0e152b';
+  for (let tx = -4; tx < MG_W + 12; tx += 18) {
+    const th = 10 + ((tx * 7) % 7);
+    ctx.beginPath();
+    ctx.moveTo(tx, MG_H);
+    ctx.lineTo(tx + 7, MG_H - th);
+    ctx.lineTo(tx + 14, MG_H);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Soft falling snowflakes (back layer)
+  for (let i = 0; i < 24; i++) {
+    const speed = 7 + (i % 4) * 2.5;
+    const fx = (i * 39 + Math.sin(timer * 0.9 + i * 1.3) * 9 + timer * 3.5 + MG_W) % MG_W;
+    const fy = (i * 23 + timer * speed) % MG_H;
+    const r = i % 4 === 0 ? 1.3 : 0.85;
+    ctx.fillStyle = `rgba(255, 250, 240, ${i % 3 === 0 ? 0.48 : 0.28})`;
+    ctx.beginPath();
+    ctx.arc(fx, fy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 2. Festive Header with Golden Fairy-Light Garland
+  const headerGrad = ctx.createLinearGradient(0, 0, 0, 31);
+  headerGrad.addColorStop(0, 'rgba(12, 16, 36, 0.92)');
+  headerGrad.addColorStop(1, 'rgba(18, 24, 48, 0.55)');
+  ctx.fillStyle = headerGrad;
+  ctx.fillRect(0, 0, MG_W, 31);
+
+  // Delicate swooping golden garland wire across the top
+  ctx.save();
+  ctx.strokeStyle = 'rgba(244, 206, 118, 0.42)';
+  ctx.lineWidth = 0.85;
+  ctx.beginPath();
+  ctx.moveTo(0, 3);
+  for (let x = 0; x <= MG_W; x += 64) {
+    ctx.quadraticCurveTo(x + 32, 10, x + 64, 3);
+  }
+  ctx.stroke();
+
+  // Warm twinkling fairy-light bulbs along the garland
+  const bulbColors = ['#ffe17d', '#ff7b89', '#79e8a8', '#fff2cc'];
+  for (let b = 0; b < 13; b++) {
+    const bx = 14 + b * 30;
+    const phase = (bx % 64) / 64;
+    const by = 3 + Math.sin(phase * Math.PI) * 3.8;
+    const pulse = 0.65 + 0.35 * Math.sin(timer * 3.1 + b * 1.15);
+    const col = bulbColors[b % bulbColors.length];
+    if (typeof ctx.createRadialGradient === 'function') {
+      const bglow = ctx.createRadialGradient(bx, by + 1, 0.5, bx, by + 1, 6.5);
+      bglow.addColorStop(0, `rgba(255, 232, 165, ${(0.36 * pulse).toFixed(2)})`);
+      bglow.addColorStop(1, 'rgba(255, 232, 165, 0)');
+      ctx.fillStyle = bglow;
+      ctx.beginPath();
+      ctx.arc(bx, by + 1, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = col;
+    ctx.globalAlpha = 0.72 + 0.28 * pulse;
+    ctx.beginPath();
+    ctx.arc(bx, by + 1, 1.55, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // Subtle gold bottom divider line
+  const ruleGrad = ctx.createLinearGradient(0, 0, MG_W, 0);
+  ruleGrad.addColorStop(0, 'rgba(244, 206, 118, 0.12)');
+  ruleGrad.addColorStop(0.5, 'rgba(244, 206, 118, 0.62)');
+  ruleGrad.addColorStop(1, 'rgba(244, 206, 118, 0.12)');
+  ctx.fillStyle = ruleGrad;
+  ctx.fillRect(0, 30, MG_W, 0.9);
+
+  // Header Title & Completion Pill
   const clearedCount = MODE_ORDER.filter((m) => save.modes[m].bossDefeated).length;
-  ctx.fillStyle = '#ffe27a';
-  ctx.font = 'bold 11px sans-serif';
+  ctx.fillStyle = '#fff0bc';
+  ctx.font = 'bold 10.5px system-ui, -apple-system, "Segoe UI", sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText('Choisissez votre binôme :', 12, 14);
+  ctx.fillText('Choisissez votre binôme', 14, 20.5);
 
-  ctx.textAlign = 'right';
-  ctx.font = 'bold 9px sans-serif';
-  ctx.fillStyle = clearedCount === 4 ? '#79f59d' : '#b4c2eb';
-  ctx.fillText(
-    clearedCount === 4
-      ? '★ 4/4 MONDES COMPLÉTÉS ! JOYEUX NOËL !'
-      : `Mondes terminés : ${clearedCount}/4`,
-    MG_W - 10,
-    14
-  );
+  const badgeText = clearedCount === 4 ? '★ 4/4 • JOYEUX NOËL !' : `★ ${clearedCount}/4`;
+  ctx.font = 'bold 8.2px system-ui, -apple-system, "Segoe UI", sans-serif';
+  const pillW = Math.ceil(ctx.measureText(badgeText).width) + 14;
+  const pillX = MG_W - 12 - pillW;
+  ctx.fillStyle = clearedCount === 4 ? 'rgba(46, 128, 76, 0.45)' : 'rgba(244, 206, 118, 0.14)';
+  drawRoundRectPath(ctx, pillX, 13.5, pillW, 13, 6.5);
+  ctx.fill();
+  ctx.strokeStyle = clearedCount === 4 ? '#79f59d' : 'rgba(244, 206, 118, 0.55)';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.fillStyle = clearedCount === 4 ? '#9bffb8' : '#ffe69a';
+  ctx.textAlign = 'center';
+  ctx.fillText(badgeText, pillX + pillW / 2, 20.2);
 
+  // 3. 2×2 Gift / Polaroid Collector Cards (Zero Theme Spoilers!)
   const rects = getModeCardRects();
   MODE_ORDER.forEach((modeId, idx) => {
     const pair = FAMILY_PAIRS[modeId];
     const modeSave = save.modes[modeId];
-    const r = rects[idx];
+    const base = rects[idx];
     const selected = idx === selectedIndex;
+    const liftY = selected ? -2 : 0;
+    const x = base.x;
+    const y = base.y + liftY;
+    const w = base.w;
+    const h = base.h;
 
-    drawPanelBox(
-      ctx,
-      r.x,
-      r.y,
-      r.w,
-      r.h,
-      selected ? '#273459' : '#1b2238',
-      selected ? '#f4c542' : '#414c70'
-    );
+    ctx.save();
 
-    // Pair color accent header strip
-    ctx.fillStyle = pair.primaryColor;
-    ctx.fillRect(r.x + 3, r.y + 3, r.w - 6, 16);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 9px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(
-      `${selected ? '▶ ' : ''}${pair.label}`,
-      r.x + 7,
-      r.y + 11
-    );
-
-    if (modeSave.bossDefeated) {
-      ctx.fillStyle = '#ffe27a';
-      ctx.textAlign = 'right';
-      ctx.fillText('★ ROI', r.x + r.w - 7, r.y + 11);
+    // Warm outer golden halo & drop shadow on selected card
+    if (selected) {
+      ctx.fillStyle = 'rgba(247, 214, 116, 0.15)';
+      drawRoundRectPath(ctx, x - 3, y - 3, w + 6, h + 6, 11);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(5, 8, 18, 0.55)';
+      drawRoundRectPath(ctx, x + 1, y + 4, w, h, 9);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(5, 8, 18, 0.38)';
+      drawRoundRectPath(ctx, x + 1, y + 2, w, h, 9);
+      ctx.fill();
     }
 
-    // Two mini portraits
-    const [mA, mB] = pair.members;
-    drawPortrait(ctx, mA.appearance, mA.portrait, r.x + 8, r.y + 24, 34, mA.customPortraitUrl);
-    drawPortrait(ctx, mB.appearance, mB.portrait, r.x + 44, r.y + 24, 34, mB.customPortraitUrl);
+    // Rounded satin card body
+    const cardGrad = ctx.createLinearGradient(x, y, x, y + h);
+    if (selected) {
+      cardGrad.addColorStop(0, '#2a345a');
+      cardGrad.addColorStop(1, '#1a223d');
+    } else {
+      cardGrad.addColorStop(0, '#1d2440');
+      cardGrad.addColorStop(1, '#14192e');
+    }
+    ctx.fillStyle = cardGrad;
+    drawRoundRectPath(ctx, x, y, w, h, 8.5);
+    ctx.fill();
 
-    // Theme & World Info
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = '#ffe680';
-    ctx.font = 'bold 8px sans-serif';
-    ctx.fillText(pair.worldName, r.x + 83, r.y + 24);
+    // Top gift ribbon strip clipped to card top
+    ctx.save();
+    drawRoundRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 8);
+    ctx.clip();
+    const ribGrad = ctx.createLinearGradient(x, y, x + w, y);
+    ribGrad.addColorStop(0, pair.primaryColor);
+    ribGrad.addColorStop(1, selected ? pair.primaryColor : pair.primaryColor);
+    ctx.fillStyle = ribGrad;
+    ctx.fillRect(x, y, w, 17);
+    // Subtle ribbon sheen
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.13)';
+    ctx.fillRect(x, y, w, 5);
+    // Thin gold ribbon trim
+    ctx.fillStyle = 'rgba(255, 228, 148, 0.55)';
+    ctx.fillRect(x, y + 16.2, w, 0.9);
+    ctx.restore();
 
-    ctx.fillStyle = '#cbd5f5';
-    ctx.font = '8px sans-serif';
-    drawWrappedText(ctx, pair.themeLabel, r.x + 83, r.y + 36, r.w - 89, 10);
+    // Card border
+    ctx.strokeStyle = selected ? '#f7d674' : 'rgba(130, 152, 206, 0.34)';
+    ctx.lineWidth = selected ? 1.5 : 0.9;
+    drawRoundRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 8);
+    ctx.stroke();
 
-    // Progress bar at bottom of card
-    const count = modeSave.badges.length;
-    ctx.fillStyle = '#121626';
-    ctx.fillRect(r.x + 8, r.y + 66, r.w - 16, 14);
-    ctx.fillStyle = modeSave.bossDefeated ? '#f4c542' : '#45c46b';
-    ctx.fillRect(r.x + 8, r.y + 66, Math.round(((r.w - 16) * count) / 12), 14);
+    // Pair Name on ribbon + delicate golden gift bow
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 8px sans-serif';
-    ctx.textAlign = 'center';
+    ctx.font = 'bold 9.2px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(
-      modeSave.bossDefeated ? '12/12 + BOSS VAINCU !' : `Badges : ${count}/12`,
-      r.x + r.w / 2,
-      r.y + 73
-    );
+    ctx.fillText(pair.label, x + 9, y + 8.8);
+
+    if (modeSave.bossDefeated) {
+      ctx.fillStyle = '#ffe588';
+      ctx.font = 'bold 7.8px system-ui, -apple-system, "Segoe UI", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('★ ROI', x + w - 8, y + 8.8);
+    } else {
+      drawGiftBow(ctx, x + w - 14, y + 8.5);
+    }
+
+    // Two Polaroid-framed HD Family Portraits
+    const [mA, mB] = pair.members;
+    const pSize = 46;
+    const frameW = pSize + 4;
+    const frameH = pSize + 7;
+    const pAy = y + 21.5;
+    const pAx = x + Math.floor(w / 2) - frameW - 4;
+    const pBx = x + Math.floor(w / 2) + 4;
+
+    const drawPolaroid = (
+      fx: number,
+      fy: number,
+      member: (typeof pair.members)[0],
+      tiltRad: number
+    ) => {
+      ctx.save();
+      ctx.translate(fx + frameW / 2, fy + frameH / 2);
+      ctx.rotate(selected ? tiltRad * 0.4 : tiltRad);
+      // Soft photo drop shadow
+      ctx.fillStyle = 'rgba(6, 9, 20, 0.45)';
+      drawRoundRectPath(ctx, -frameW / 2 + 1, -frameH / 2 + 1.5, frameW, frameH, 2.5);
+      ctx.fill();
+      // Warm cream polaroid paper border
+      ctx.fillStyle = selected ? '#fffaf0' : '#ebe3d3';
+      drawRoundRectPath(ctx, -frameW / 2, -frameH / 2, frameW, frameH, 2.2);
+      ctx.fill();
+      // Crisp HD portrait inside
+      drawPortrait(
+        ctx,
+        member.appearance,
+        member.portrait,
+        -pSize / 2,
+        -frameH / 2 + 2,
+        pSize,
+        member.customPortraitUrl
+      );
+      ctx.strokeStyle = selected ? 'rgba(218, 172, 74, 0.65)' : 'rgba(40, 48, 72, 0.35)';
+      ctx.lineWidth = 0.7;
+      ctx.strokeRect(-pSize / 2, -frameH / 2 + 2, pSize, pSize);
+      ctx.restore();
+    };
+
+    drawPolaroid(pAx, pAy, mA, -0.028);
+    drawPolaroid(pBx, pAy, mB, 0.028);
+
+    // Cute animated duo sprites hopping beside the polaroids on the selected card!
+    if (selected) {
+      const hopA = Math.abs(Math.sin(timer * 5.2)) * 3;
+      const hopB = Math.abs(Math.sin(timer * 5.2 + 1.2)) * 3;
+      const walkFrame = Math.floor(timer * 4.5) % 3;
+      drawOverworldSprite(
+        ctx,
+        mA.appearance,
+        'down',
+        walkFrame,
+        x + 8,
+        y + 42 - hopA,
+        mA.customSpriteSheetUrl
+      );
+      drawOverworldSprite(
+        ctx,
+        mB.appearance,
+        'down',
+        (walkFrame + 1) % 3,
+        x + w - 24,
+        y + 42 - hopB,
+        mB.customSpriteSheetUrl
+      );
+    }
+
+    // 12 Mini Golden Badge Stars + Discrete Counter at Bottom of Card
+    const count = modeSave.badges.length;
+    const starY = y + h - 8.5;
+    const starStartX = x + 15;
+    const starStep = 10.2;
+    for (let s = 0; s < 12; s++) {
+      const sx = starStartX + s * starStep;
+      const earned = s < count;
+      if (earned) {
+        const shimmer = 0.85 + 0.15 * Math.sin(timer * 4 + s * 0.7);
+        ctx.fillStyle = modeSave.bossDefeated ? '#fff099' : '#ffd54f';
+        ctx.globalAlpha = shimmer;
+        drawStarPath(ctx, sx, starY, 3.6, 1.65, 5);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = selected ? '#3b4870' : '#2a3352';
+        drawStarPath(ctx, sx, starY, 3.0, 1.35, 5);
+        ctx.fill();
+      }
+    }
+
+    ctx.fillStyle = count > 0 || selected ? '#ffe699' : '#96a5cf';
+    ctx.font = 'bold 7.6px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(modeSave.bossDefeated ? '12/12 ★' : `${count}/12`, x + w - 9, starY + 0.4);
+
+    ctx.restore();
   });
 
-  // Footer
-  ctx.fillStyle = '#9aa8d4';
-  ctx.font = '8px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(
-    '[A / Clic] Jouer   •   [Échap / B] Retour   •   [C] Importer/Exporter Code de Sauvegarde',
-    MG_W / 2,
-    229
-  );
+  // Gentle foreground snow motes
+  for (let i = 0; i < 10; i++) {
+    const fx = (i * 47 + Math.cos(timer * 0.8 + i) * 12 + timer * 5 + MG_W) % MG_W;
+    const fy = (i * 31 + timer * (13 + (i % 3) * 3)) % MG_H;
+    ctx.fillStyle = 'rgba(255, 252, 245, 0.34)';
+    ctx.beginPath();
+    ctx.arc(fx, fy, 1.1, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 export type PauseSubView = 'menu' | 'badges' | 'notebook' | 'map';
@@ -343,7 +508,6 @@ export const PAUSE_OPTIONS = [
   'Boîte à Badges',
   'Carnet de Rencontres',
   'Carte du Monde',
-  'Échanger le meneur',
   'Sauvegarde & Code',
   'Changer de binôme',
 ] as const;
@@ -471,7 +635,7 @@ export function renderPauseMenu(
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText('Carnet de Rencontres (↑/↓ pour parcourir, Échap retour)', 22, 20);
+    ctx.fillText('Carnet de Rencontres', 22, 20);
 
     const chosen = entries[subCursor % entries.length];
     const met = save.metNpcs.includes(chosen.id);
@@ -501,17 +665,23 @@ export function renderPauseMenu(
     // Right detail card
     drawPanelBox(ctx, 178, 38, 182, 178, '#1b2238', '#d6ae53');
     if (met) {
-      drawPortrait(ctx, chosen.appearance, chosen.portrait, 190, 48, 48);
+      drawPortrait(
+        ctx,
+        chosen.appearance,
+        chosen.portrait,
+        190,
+        48,
+        48,
+        chosen.customPortraitUrl
+      );
       ctx.fillStyle = '#ffe27a';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.fillText(chosen.name, 246, 50);
-      ctx.fillStyle = '#9cc0ff';
+      ctx.font = 'bold 9.5px sans-serif';
+      const nameEndY = drawWrappedText(ctx, chosen.name, 246, 56, 106, 12);
       ctx.font = '8px sans-serif';
-      drawWrappedText(ctx, chosen.title, 246, 64, 106, 10);
       ctx.fillStyle = won ? '#66f28d' : '#ff9494';
-      ctx.fillText(won ? 'Badge obtenu ✓' : 'À défier !', 246, 86);
+      ctx.fillText(won ? 'Badge obtenu ✓' : 'À défier !', 246, nameEndY + 4);
       ctx.fillStyle = '#e6ebff';
-      drawWrappedText(ctx, chosen.notebookBio ?? '', 190, 108, 158, 11);
+      drawWrappedText(ctx, chosen.notebookBio ?? '', 190, 104, 158, 11);
     } else {
       ctx.fillStyle = '#8b98c4';
       ctx.font = 'bold 9px sans-serif';

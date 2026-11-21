@@ -6,42 +6,101 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>PokéNoël : Attrapez-les tous !</title>
+    <title>Noël 2026</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='8' fill='%23131626' stroke='%23f4ce76' stroke-width='1.8'/%3E%3Cpath d='M16 4.5l2.8 8.7 8.7 2.8-8.7 2.8L16 27.5l-2.8-8.7L4.5 16l8.7-2.8z' fill='%23f4ce76'/%3E%3C/svg%3E"
+    />
   </head>
-  <body>
-    <main class="gba-shell" id="gba-shell">
+  <body data-theme="title">
+    <main class="gba-shell" id="gba-shell" data-theme="title">
+      <!-- Subtle Collector-Edition corner filigree accents -->
+      <span class="corner-ornament corner-tl" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M2 18V6.5C2 4 4 2 6.5 2H18" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" />
+          <path d="M5.5 12.5V7.5C5.5 6.4 6.4 5.5 7.5 5.5H12.5" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity="0.65" />
+          <path d="M7.5 7.5L9.2 8.2L7.5 8.9L6.8 10.6L6.1 8.9L4.4 8.2L6.1 7.5L6.8 5.8Z" fill="currentColor" opacity="0.9" />
+        </svg>
+      </span>
+      <span class="corner-ornament corner-tr" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M2 18V6.5C2 4 4 2 6.5 2H18" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" />
+          <path d="M5.5 12.5V7.5C5.5 6.4 6.4 5.5 7.5 5.5H12.5" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity="0.65" />
+          <path d="M7.5 7.5L9.2 8.2L7.5 8.9L6.8 10.6L6.1 8.9L4.4 8.2L6.1 7.5L6.8 5.8Z" fill="currentColor" opacity="0.9" />
+        </svg>
+      </span>
+      <span class="corner-ornament corner-bl" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M2 18V6.5C2 4 4 2 6.5 2H18" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" />
+          <path d="M5.5 12.5V7.5C5.5 6.4 6.4 5.5 7.5 5.5H12.5" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity="0.65" />
+          <path d="M7.5 7.5L9.2 8.2L7.5 8.9L6.8 10.6L6.1 8.9L4.4 8.2L6.1 7.5L6.8 5.8Z" fill="currentColor" opacity="0.9" />
+        </svg>
+      </span>
+      <span class="corner-ornament corner-br" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M2 18V6.5C2 4 4 2 6.5 2H18" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" />
+          <path d="M5.5 12.5V7.5C5.5 6.4 6.4 5.5 7.5 5.5H12.5" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity="0.65" />
+          <path d="M7.5 7.5L9.2 8.2L7.5 8.9L6.8 10.6L6.1 8.9L4.4 8.2L6.1 7.5L6.8 5.8Z" fill="currentColor" opacity="0.9" />
+        </svg>
+      </span>
+
       <header class="shell-topbar">
+        <span class="topbar-rule topbar-rule-left" aria-hidden="true"></span>
         <div class="brand">
-          <span class="power-led" aria-hidden="true"></span>
-          <span class="brand-title">POKÉNOËL</span>
-          <span class="brand-sub">ÉDITION FAMILLE • GBA</span>
+          <svg class="brand-star" viewBox="0 0 24 24" aria-hidden="true">
+            <defs>
+              <linearGradient id="crest-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fff8de" />
+                <stop offset="50%" stop-color="#f6d277" />
+                <stop offset="100%" stop-color="#c99338" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M12 1.2L14.25 9.75L22.8 12L14.25 14.25L12 22.8L9.75 14.25L1.2 12L9.75 9.75Z"
+              fill="url(#crest-gold)"
+            />
+            <circle cx="19.2" cy="4.8" r="1.15" fill="#fff4cf" opacity="0.85" />
+          </svg>
+          <span class="brand-title">NOËL 2026</span>
+          <svg class="brand-sparkle" viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M8 1.5L9.4 6.6L14.5 8L9.4 9.4L8 14.5L6.6 9.4L1.5 8L6.6 6.6Z"
+              fill="#f4ce76"
+            />
+          </svg>
         </div>
-        <div class="shell-actions">
-          <button type="button" class="pill-btn" id="btn-toggle-pad" title="Afficher/Masquer la manette tactile">
-            Manette
-          </button>
-          <button type="button" class="pill-btn" id="btn-sound" title="Couper/Activer le son (M)">
-            Son : ON
-          </button>
-        </div>
+        <span class="topbar-rule topbar-rule-right" aria-hidden="true"></span>
       </header>
 
       <section class="screen-bezel">
         <div class="screen-frame">
           <canvas
             id="game-canvas"
-            width="384"
-            height="240"
-            aria-label="Écran de jeu PokéNoël"
+            width="1536"
+            height="960"
+            aria-label="Écran de jeu Noël 2026"
           ></canvas>
         </div>
-        <div class="keyboard-strip" aria-label="Raccourcis clavier">
-          <span><strong>Flèches / ZQSD</strong> Bouger</span>
-          <span><strong>Espace / Entrée</strong> Valider (A)</span>
-          <span><strong>Échap / X</strong> Retour / Menu (B)</span>
-          <span><strong>Maj</strong> Courir</span>
-          <span><strong>C / Tab</strong> Échanger meneur</span>
-          <span><strong>M</strong> Son</span>
+        <div class="bezel-corner-bar">
+          <button
+            type="button"
+            class="corner-icon-btn"
+            id="btn-info"
+            title="Informations & commandes"
+            aria-label="Informations et commandes"
+          >
+            i
+          </button>
+          <button
+            type="button"
+            class="corner-icon-btn"
+            id="btn-settings"
+            title="Réglages"
+            aria-label="Réglages"
+          >
+            ⚙
+          </button>
         </div>
       </section>
 
@@ -55,7 +114,6 @@
         </div>
 
         <div class="center-cluster">
-          <button type="button" class="meta-btn" data-btn="swap">ÉCHANGE</button>
           <button type="button" class="meta-btn" data-btn="menu">MENU</button>
           <button type="button" class="meta-btn" data-btn="run">COURIR</button>
         </div>
@@ -67,7 +125,54 @@
       </section>
     </main>
 
-    <!-- Modal d'import/export de code de sauvegarde (accessible via bouton dans le jeu) -->
+    <!-- Modal Informations & Commandes -->
+    <dialog id="info-dialog" class="save-dialog">
+      <form method="dialog" class="save-dialog-box">
+        <h2>Comment jouer</h2>
+        <p class="save-desc">
+          Explorez la ville avec votre binôme, discutez avec les habitants pour obtenir des indices et entrez dans les bâtiments pour relever des quiz et des jeux de réflexion afin de remporter les 12 badges avant d’affronter le Boss Final !
+        </p>
+        <ul class="info-list">
+          <li><strong>Flèches / ZQSD</strong> : Se déplacer et naviguer</li>
+          <li><strong>Espace / Entrée / Clic</strong> : Parler, entrer, valider (A)</li>
+          <li><strong>Échap / X</strong> : Retour ou Menu du voyage (B)</li>
+          <li><strong>Maj</strong> : Courir plus vite</li>
+          <li><strong>M</strong> : Couper ou activer la musique et les sons</li>
+        </ul>
+        <p class="save-desc">
+          Astuce : sur mobile ou à la souris, vous pouvez aussi cliquer/toucher directement l’écran dans les menus et les défis, ou activer la manette tactile dans <strong>⚙ Réglages</strong>.
+        </p>
+        <div class="save-dialog-buttons">
+          <button type="submit" class="primary">Compris !</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Modal Réglages -->
+    <dialog id="settings-dialog" class="save-dialog">
+      <form method="dialog" class="save-dialog-box">
+        <h2>Réglages</h2>
+        <div class="settings-list">
+          <div class="setting-row">
+            <span>Musique &amp; effets sonores</span>
+            <button type="button" id="btn-setting-sound" class="setting-toggle">Son : ON</button>
+          </div>
+          <div class="setting-row">
+            <span>Manette tactile à l’écran</span>
+            <button type="button" id="btn-setting-pad" class="setting-toggle">Masquée</button>
+          </div>
+          <div class="setting-row">
+            <span>Transférer sa progression</span>
+            <button type="button" id="btn-setting-save" class="setting-toggle">Sauvegarde &amp; Code</button>
+          </div>
+        </div>
+        <div class="save-dialog-buttons">
+          <button type="submit" class="primary">Fermer</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Modal d'import/export de code de sauvegarde (accessible via réglages ou menu) -->
     <dialog id="save-code-dialog" class="save-dialog">
       <form method="dialog" class="save-dialog-box">
         <h2>Sauvegarde &amp; Code</h2>
