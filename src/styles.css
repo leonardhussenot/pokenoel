@@ -991,7 +991,7 @@ body[data-theme='aj'] {
       max(6px, env(safe-area-inset-bottom))
       max(8px, env(safe-area-inset-left));
     display: grid;
-    grid-template-columns: minmax(114px, 1fr) auto minmax(114px, 1fr);
+    grid-template-columns: minmax(118px, 1fr) auto minmax(118px, 1fr);
     grid-template-rows: auto 1fr auto;
     align-items: center;
     justify-items: center;
@@ -1014,13 +1014,14 @@ body[data-theme='aj'] {
   .screen-frame {
     grid-column: 2;
     grid-row: 1 / -1;
-    height: min(
-      calc(100dvh - max(12px, env(safe-area-inset-top) + env(safe-area-inset-bottom))),
-      calc((100vw - 252px - env(safe-area-inset-left) - env(safe-area-inset-right)) * 240 / 384)
+    --frame-h: min(
+      calc(100dvh - 14px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)),
+      calc((100vw - 268px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) * 240 / 384)
     );
-    width: auto;
-    aspect-ratio: 384 / 240;
-    max-width: 100%;
+    height: var(--frame-h);
+    width: calc(var(--frame-h) * 384 / 240);
+    min-width: 240px;
+    min-height: 150px;
     border-radius: 9px;
   }
 
