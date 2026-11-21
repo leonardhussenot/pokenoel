@@ -454,15 +454,10 @@ export class PokeNoelGame {
     }
 
     const targetNpc = this.activeWorld.npcs.find((n) => n.id === targetBuilding.characterId);
-    const dx = targetBuilding.doorX - npc.x;
-    const dy = targetBuilding.doorY - npc.y;
-    const horiz = dx < -4 ? 'à l’ouest' : dx > 4 ? 'à l’est' : 'tout près';
-    const vert = dy < -2 ? 'au nord' : dy > 2 ? 'au sud' : '';
-    const dirPhrase = vert && horiz !== 'tout près' ? `${vert} et ${horiz}` : vert || horiz;
 
     const intro =
       npc.hintLines?.[0] ?? 'Mon petit doigt me dit qu’un défi passionnant vous attend chez';
-    return `${intro} ${targetNpc?.name ?? 'un grand maître'} ! Rendez-vous dans « ${targetBuilding.name} », ${dirPhrase} !`;
+    return `${intro} ${targetNpc?.name ?? 'un grand maître'} ! Rendez-vous dans « ${targetBuilding.name} », pas loin d’ici !`;
   }
 
   private launchChallenge(npc: NpcEntity): void {
