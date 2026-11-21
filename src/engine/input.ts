@@ -91,7 +91,15 @@ export class InputManager {
       this.canvasHeld = false;
     });
 
-    // Touch / Mouse buttons in the GBA shell
+    // Touch / Mouse buttons in the GBA shell (prevent iOS text-selection & callout on hold)
+    const touchControls = document.getElementById('touch-controls');
+    if (touchControls) {
+      touchControls.addEventListener('contextmenu', (e) => e.preventDefault());
+      touchControls.addEventListener('selectstart', (e) => e.preventDefault());
+    }
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener('selectstart', (e) => e.preventDefault());
+
     const buttons = document.querySelectorAll<HTMLElement>('[data-btn]');
     buttons.forEach((el) => {
       const btnName = el.dataset.btn as GameButton | undefined;
@@ -112,6 +120,11 @@ export class InputManager {
         el.classList.remove('active');
         this.releaseButton(btnName);
       };
+
+      // Block iOS Safari long-press text selection & magnifying glass
+      el.addEventListener('touchstart', (ev) => ev.preventDefault(), { passive: false });
+      el.addEventListener('contextmenu', (ev) => ev.preventDefault());
+      el.addEventListener('selectstart', (ev) => ev.preventDefault());
 
       el.addEventListener('pointerdown', start);
       el.addEventListener('pointerup', end);

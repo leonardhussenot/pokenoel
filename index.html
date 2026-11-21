@@ -114,8 +114,8 @@
         </div>
 
         <div class="center-cluster">
-          <button type="button" class="meta-btn" data-btn="menu">MENU</button>
-          <button type="button" class="meta-btn" data-btn="run">COURIR</button>
+          <button type="button" class="meta-btn meta-btn-menu" data-btn="menu">MENU</button>
+          <button type="button" class="meta-btn meta-btn-run" data-btn="run">COURIR</button>
         </div>
 
         <div class="ab-cluster">
@@ -124,6 +124,26 @@
         </div>
       </section>
     </main>
+
+    <!-- Invitation à tourner le téléphone à l'horizontale (mobile portrait) -->
+    <div class="rotate-overlay" id="rotate-overlay" aria-live="polite">
+      <div class="rotate-card">
+        <div class="rotate-brand">✦ NOËL 2026 ✦</div>
+        <div class="rotate-phone-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect x="19" y="10" width="26" height="44" rx="5" stroke="currentColor" stroke-width="2.2" />
+            <line x1="28" y1="15" x2="36" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity="0.7" />
+            <circle cx="32" cy="48" r="1.8" fill="currentColor" opacity="0.75" />
+            <path d="M51 22C54.5 26 56 30.5 55.5 36" stroke="#f4ce76" stroke-width="2" stroke-linecap="round" />
+            <path d="M51.5 34.5L55.7 36.8L57.5 32.3" stroke="#f4ce76" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <h2 class="rotate-title">Tournez votre téléphone</h2>
+        <p class="rotate-desc">
+          Passez en mode <strong>paysage (horizontal)</strong> pour profiter du jeu en grand écran avec les commandes sur les côtés.
+        </p>
+      </div>
+    </div>
 
     <!-- Modal Informations & Commandes -->
     <dialog id="info-dialog" class="save-dialog">
