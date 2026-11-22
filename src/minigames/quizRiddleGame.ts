@@ -2,6 +2,7 @@ import { soundEngine } from '../audio/soundEngine';
 import { InputManager } from '../engine/input';
 import { drawPortrait } from '../engine/pixelRenderer';
 import {
+  ChallengeMistake,
   FamilyMember,
   NpcEntity,
   QuizChallengeConfig,
@@ -74,6 +75,11 @@ export class QuizRiddleGame implements MiniGameInstance {
   private hitStreak = 0;
   private result: 'playing' | 'won' | 'lost' = 'playing';
   private theme: ReflectionTheme;
+  private mistakes: ChallengeMistake[] = [];
+
+  getMistakes(): ChallengeMistake[] {
+    return [...this.mistakes];
+  }
 
   constructor(
     private cfg: QuizChallengeConfig | RiddleChallengeConfig,
@@ -250,7 +256,7 @@ export class QuizRiddleGame implements MiniGameInstance {
 
     this.lastChoiceIdx = choiceIdx;
     this.lastCorrectIdx = correctIdx;
-    this.feedbackExplanation = explanation;
+    this.feedbackExplanation = choiceIdx === correctIdx ? explanation : '';
 
     if (choiceIdx === correctIdx) {
       this.enemyHp = Math.max(0, this.enemyHp - 1);
@@ -278,6 +284,37 @@ export class QuizRiddleGame implements MiniGameInstance {
           : `${this.challenger.name} perd 1 PV !`;
       this.feedbackColor = '#66f28d';
     } else {
+      const wrongAnswer = item.options[choiceIdx] ?? '';
+      const correctAnswer = item.options[correctIdx] ?? '';
+      if (wrongAnswer && correctAnswer) {
+        if (this.cfg.kind === 'quiz') {
+          const question = this.cfg.questions[this.index].question;
+          const already = this.mistakes.some(
+            (m) => m.kind === 'quiz' && m.question === question && m.wrongAnswer === wrongAnswer
+          );
+          if (!already) {
+            this.mistakes.unshift({
+              kind: 'quiz',
+              question,
+              wrongAnswer,
+              correctAnswer,
+            });
+          }
+        } else {
+          const clue = this.cfg.riddles[this.index].clues[0] ?? '';
+          const already = this.mistakes.some(
+            (m) => m.kind === 'riddle_word' && m.clue === clue && m.wrongAnswer === wrongAnswer
+          );
+          if (!already) {
+            this.mistakes.unshift({
+              kind: 'riddle_word',
+              clue,
+              wrongAnswer,
+              correctAnswer,
+            });
+          }
+        }
+      }
       this.playerHp = Math.max(0, this.playerHp - 1);
       this.hitStreak = 0;
       this.playerShake = 0.42;
@@ -294,12 +331,12 @@ export class QuizRiddleGame implements MiniGameInstance {
         targetSide: 'player',
       };
       this.feedback = 'PAS TOUT À FAIT !';
-      this.feedbackSub = `Bonne réponse : ${item.options[correctIdx]}`;
+      this.feedbackSub = 'Mauvaise réponse — vous perdez 1 PV !';
       this.feedbackColor = '#ff7b89';
     }
 
     this.pauseElapsed = 0;
-    this.pauseTimer = explanation ? 2.5 : 1.7;
+    this.pauseTimer = this.feedbackExplanation ? 2.5 : 1.5;
   }
 
   private getOptionRects() {
@@ -485,7 +522,8 @@ export class QuizRiddleGame implements MiniGameInstance {
       const rx = r.x + shakeX;
       const selected = i === this.cursor;
       const inReveal = this.pauseTimer > 0 && this.lastChoiceIdx !== null;
-      const isCorrectReveal = inReveal && i === this.lastCorrectIdx;
+      const isCorrectReveal =
+        inReveal && this.lastChoiceIdx === this.lastCorrectIdx && i === this.lastCorrectIdx;
       const isWrongReveal = inReveal && i === this.lastChoiceIdx && i !== this.lastCorrectIdx;
 
       const cardBg = isCorrectReveal

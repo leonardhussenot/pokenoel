@@ -1,5 +1,5 @@
 import { InputManager } from '../engine/input';
-import { ReflectionTheme } from '../types';
+import { ChallengeMistake, ReflectionTheme } from '../types';
 
 export const MG_W = 384;
 export const MG_H = 240;
@@ -8,6 +8,7 @@ export interface MiniGameInstance {
   update(dt: number, input: InputManager): void;
   render(ctx: CanvasRenderingContext2D): void;
   getResult(): 'playing' | 'won' | 'lost';
+  getMistakes?(): ChallengeMistake[];
 }
 
 export interface MgParticle {
@@ -567,6 +568,28 @@ export function getReflectionThemePalette(theme: ReflectionTheme): ReflectionThe
         promptInk: '#261812',
         beam: 'rgba(255, 204, 132, 0.18)',
       };
+    case 'manga':
+      return {
+        accent: '#32d6e8',
+        accentSoft: 'rgba(50, 214, 232, 0.22)',
+        cardBg: 'rgba(14, 28, 46, 0.93)',
+        cardSelectedBg: 'rgba(24, 58, 86, 0.96)',
+        cardBorder: '#3c7a96',
+        promptBg: '#f2fafc',
+        promptInk: '#102230',
+        beam: 'rgba(92, 232, 248, 0.18)',
+      };
+    case 'polar':
+      return {
+        accent: '#e8b25a',
+        accentSoft: 'rgba(232, 178, 90, 0.22)',
+        cardBg: 'rgba(28, 24, 26, 0.93)',
+        cardSelectedBg: 'rgba(64, 48, 36, 0.96)',
+        cardBorder: '#826444',
+        promptBg: '#faf5ea',
+        promptInk: '#211914',
+        beam: 'rgba(245, 212, 146, 0.18)',
+      };
   }
 }
 
@@ -594,11 +617,14 @@ export function inferReflectionTheme(
   if (mapId.includes('darkroom')) return 'photography';
   if (mapId.includes('stadium')) return 'football';
   if (mapId.includes('court')) return 'basketball';
+  if (mapId.includes('manga')) return 'manga';
+  if (mapId.includes('noir')) return 'polar';
 
   if (npc.id.startsWith('pm_')) return 'literature';
   if (npc.id.startsWith('df_')) return 'music_br';
   if (npc.id.startsWith('jp_')) return 'gastronomy';
   if (npc.id.startsWith('aj_')) return 'football';
+  if (npc.id.startsWith('sd_')) return 'manga';
   return 'literature';
 }
 
@@ -1054,6 +1080,112 @@ export function drawReflectionStageBackdrop(
     ctx.beginPath();
     ctx.arc(MG_W / 2, MG_H + 8, 44, Math.PI, 0);
     ctx.stroke();
+  } else if (theme === 'manga') {
+    // Cyberpunk Neo-Tokyo & Manga Studio backdrop
+    const sky = ctx.createLinearGradient(0, 26, 0, MG_H);
+    sky.addColorStop(0, '#091426');
+    sky.addColorStop(0.55, '#11263d');
+    sky.addColorStop(1, '#08121f');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, MG_W, MG_H);
+
+    // Subtle neon cyan & magenta horizon glows
+    const cyanGlow = ctx.createRadialGradient(84, 152, 10, 84, 152, 130);
+    cyanGlow.addColorStop(0, 'rgba(46, 196, 214, 0.24)');
+    cyanGlow.addColorStop(1, 'rgba(17, 38, 61, 0)');
+    ctx.fillStyle = cyanGlow;
+    ctx.fillRect(0, 26, MG_W, MG_H - 26);
+
+    const pinkGlow = ctx.createRadialGradient(MG_W - 76, 146, 10, MG_W - 76, 146, 120);
+    pinkGlow.addColorStop(0, 'rgba(235, 92, 158, 0.16)');
+    pinkGlow.addColorStop(1, 'rgba(17, 38, 61, 0)');
+    ctx.fillStyle = pinkGlow;
+    ctx.fillRect(0, 26, MG_W, MG_H - 26);
+
+    // Subtle Neo-Tokyo skyline silhouette with lit windows
+    const towers = [
+      { x: 6, w: 30, h: 64 },
+      { x: 42, w: 22, h: 86 },
+      { x: 70, w: 36, h: 54 },
+      { x: 278, w: 34, h: 60 },
+      { x: 318, w: 24, h: 88 },
+      { x: 348, w: 30, h: 66 },
+    ];
+    for (const t of towers) {
+      ctx.fillStyle = 'rgba(8, 15, 28, 0.72)';
+      ctx.fillRect(t.x, MG_H - t.h, t.w, t.h);
+      ctx.fillStyle = 'rgba(76, 228, 245, 0.26)';
+      for (let wy = MG_H - t.h + 6; wy < MG_H - 8; wy += 9) {
+        for (let wx = t.x + 4; wx < t.x + t.w - 5; wx += 7) {
+          ctx.fillRect(wx, wy, 3, 4);
+        }
+      }
+    }
+
+    // Crisp manga speed-line accent rays in upper corners
+    ctx.strokeStyle = 'rgba(92, 232, 248, 0.12)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, 32 + i * 14);
+      ctx.lineTo(44 - i * 4, 48 + i * 11);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(MG_W, 32 + i * 14);
+      ctx.lineTo(MG_W - 44 + i * 4, 48 + i * 11);
+      ctx.stroke();
+    }
+
+    // Rising cyber sparks
+    for (let i = 0; i < 12; i++) {
+      const sx = (i * 33 + 17 + Math.sin(elapsed * 1.1 + i) * 10) % MG_W;
+      const sy = MG_H - (((elapsed * (16 + (i % 4) * 4) + i * 27) % (MG_H - 34)) + 4);
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(92, 232, 248, 0.45)' : 'rgba(255, 212, 120, 0.38)';
+      ctx.fillRect(sx, sy, 1.8, 1.8);
+    }
+  } else if (theme === 'polar') {
+    // Rainy French Film Noir & Polar Detective backdrop
+    const bg = ctx.createLinearGradient(0, 26, 0, MG_H);
+    bg.addColorStop(0, '#171416');
+    bg.addColorStop(0.55, '#211c1b');
+    bg.addColorStop(1, '#100e10');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, MG_W, MG_H);
+
+    // Venetian-blind diagonal sepia light shafts
+    const sway = Math.sin(elapsed * 0.55) * 10;
+    for (let i = 0; i < 4; i++) {
+      drawSpotlightBeam(
+        ctx,
+        36 + i * 82,
+        26,
+        96 + i * 82 + sway,
+        MG_H,
+        14,
+        26,
+        'rgba(245, 206, 138, 0.08)'
+      );
+    }
+
+    // Warm Parisian streetlamp mist glow on the right
+    const lamp = ctx.createRadialGradient(MG_W - 44, 62, 6, MG_W - 44, 62, 128);
+    lamp.addColorStop(0, 'rgba(245, 198, 112, 0.22)');
+    lamp.addColorStop(0.6, 'rgba(186, 124, 62, 0.07)');
+    lamp.addColorStop(1, 'rgba(20, 16, 16, 0)');
+    ctx.fillStyle = lamp;
+    ctx.fillRect(0, 26, MG_W, MG_H - 26);
+
+    // Subtle film-noir diagonal rain streaks
+    ctx.strokeStyle = 'rgba(232, 214, 184, 0.14)';
+    ctx.lineWidth = 0.85;
+    for (let i = 0; i < 16; i++) {
+      const rx = (i * 27 + 12 - ((elapsed * 24) % MG_W) + MG_W) % MG_W;
+      const ry = 28 + ((i * 31 + elapsed * 58) % (MG_H - 32));
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx - 3, ry + 8);
+      ctx.stroke();
+    }
   } else {
     // 'basketball' — Polished NBA hardwood court under arena lights
     const ceiling = ctx.createLinearGradient(0, 26, 0, 174);

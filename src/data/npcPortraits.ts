@@ -118,6 +118,35 @@ import ajSec10Url from '../assets/portraits/npcs/aj_sec_10.jpg';
 import ajSec11Url from '../assets/portraits/npcs/aj_sec_11.jpg';
 import ajSec12Url from '../assets/portraits/npcs/aj_sec_12.jpg';
 
+// Main, boss, gatekeeper & secondary NPCs — sdWorld
+import sdArakiUrl from '../assets/portraits/npcs/sd_araki.jpg';
+import sdImaishiUrl from '../assets/portraits/npcs/sd_imaishi.jpg';
+import sdSimenonUrl from '../assets/portraits/npcs/sd_simenon.jpg';
+import sdLeblancUrl from '../assets/portraits/npcs/sd_leblanc.jpg';
+import sdOshiiUrl from '../assets/portraits/npcs/sd_oshii.jpg';
+import sdPurnellUrl from '../assets/portraits/npcs/sd_purnell.jpg';
+import sdChristieUrl from '../assets/portraits/npcs/sd_christie.jpg';
+import sdClouzotUrl from '../assets/portraits/npcs/sd_clouzot.jpg';
+import sdOtomoUrl from '../assets/portraits/npcs/sd_otomo.jpg';
+import sdUrasawaUrl from '../assets/portraits/npcs/sd_urasawa.jpg';
+import sdTruffautUrl from '../assets/portraits/npcs/sd_truffaut.jpg';
+import sdMelvilleUrl from '../assets/portraits/npcs/sd_melville.jpg';
+import sdMiyazakiUrl from '../assets/portraits/npcs/sd_miyazaki.jpg';
+import sdGk1Url from '../assets/portraits/npcs/sd_gk_1.jpg';
+import sdGk2Url from '../assets/portraits/npcs/sd_gk_2.jpg';
+import sdSec1Url from '../assets/portraits/npcs/sd_sec_1.jpg';
+import sdSec2Url from '../assets/portraits/npcs/sd_sec_2.jpg';
+import sdSec3Url from '../assets/portraits/npcs/sd_sec_3.jpg';
+import sdSec4Url from '../assets/portraits/npcs/sd_sec_4.jpg';
+import sdSec5Url from '../assets/portraits/npcs/sd_sec_5.jpg';
+import sdSec6Url from '../assets/portraits/npcs/sd_sec_6.jpg';
+import sdSec7Url from '../assets/portraits/npcs/sd_sec_7.jpg';
+import sdSec8Url from '../assets/portraits/npcs/sd_sec_8.jpg';
+import sdSec9Url from '../assets/portraits/npcs/sd_sec_9.jpg';
+import sdSec10Url from '../assets/portraits/npcs/sd_sec_10.jpg';
+import sdSec11Url from '../assets/portraits/npcs/sd_sec_11.jpg';
+import sdSec12Url from '../assets/portraits/npcs/sd_sec_12.jpg';
+
 export const NPC_PORTRAIT_URLS: Record<string, string> = {
   // pmWorld — La Cité des Lettres
   pm_baudelaire: pmBaudelaireUrl,
@@ -245,6 +274,35 @@ export const NPC_PORTRAIT_URLS: Record<string, string> = {
   aj_sec_10: ajSec10Url,
   aj_sec_11: ajSec11Url,
   aj_sec_12: ajSec12Url,
+
+  // sdWorld — Néo-Noir & Manga (12 main + 1 boss + 2 famous gatekeepers + 12 secondary = 27)
+  sd_araki: sdArakiUrl,
+  sd_imaishi: sdImaishiUrl,
+  sd_simenon: sdSimenonUrl,
+  sd_leblanc: sdLeblancUrl,
+  sd_oshii: sdOshiiUrl,
+  sd_purnell: sdPurnellUrl,
+  sd_christie: sdChristieUrl,
+  sd_clouzot: sdClouzotUrl,
+  sd_otomo: sdOtomoUrl,
+  sd_urasawa: sdUrasawaUrl,
+  sd_truffaut: sdTruffautUrl,
+  sd_melville: sdMelvilleUrl,
+  sd_miyazaki: sdMiyazakiUrl,
+  sd_gk_1: sdGk1Url,
+  sd_gk_2: sdGk2Url,
+  sd_sec_1: sdSec1Url,
+  sd_sec_2: sdSec2Url,
+  sd_sec_3: sdSec3Url,
+  sd_sec_4: sdSec4Url,
+  sd_sec_5: sdSec5Url,
+  sd_sec_6: sdSec6Url,
+  sd_sec_7: sdSec7Url,
+  sd_sec_8: sdSec8Url,
+  sd_sec_9: sdSec9Url,
+  sd_sec_10: sdSec10Url,
+  sd_sec_11: sdSec11Url,
+  sd_sec_12: sdSec12Url,
 };
 
 export function getNpcPortraitUrl(npcId: string): string | undefined {

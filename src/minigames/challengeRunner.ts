@@ -4,6 +4,7 @@ import { drawBadgeIcon, drawPortrait } from '../engine/pixelRenderer';
 import {
   BadgeDef,
   ChallengeConfig,
+  ChallengeMistake,
   FamilyMember,
   NpcEntity,
   SingleChallengeConfig,
@@ -91,7 +92,9 @@ export class ChallengeRunner {
     private pair: [FamilyMember, FamilyMember],
     private leaderIndex: 0 | 1,
     private config: ChallengeConfig,
-    private onAttemptIncrement: () => void
+    private onAttemptIncrement: () => void,
+    private onChallengeLost?: (mistakes: ChallengeMistake[]) => void,
+    private loseHelperTip?: { helperName: string; speechLine: string }
   ) {
     this.isBoss = config.kind === 'boss_gauntlet';
     soundEngine.playBgm(this.isBoss ? 'boss' : 'battle');
@@ -185,6 +188,8 @@ export class ChallengeRunner {
         }
       } else if (res === 'lost') {
         soundEngine.playDefeat();
+        const recordedMistakes = this.currentMini.getMistakes?.() ?? [];
+        this.onChallengeLost?.(recordedMistakes);
         this.phase = 'lost';
         this.loseCursor = 0;
         this.timer = 0;
@@ -807,15 +812,36 @@ export class ChallengeRunner {
       ctx.stroke();
 
       ctx.fillStyle = '#f5effa';
-      ctx.font = '9px sans-serif';
       const taunt =
         this.challenger.loseLines?.[0] ??
         'Presque ! Prenez une grande respiration et retentez votre chance.';
-      drawWrappedText(ctx, `« ${taunt} »`, 106, 68, MG_W - 150, 12.5);
+      const fullLoseSpeech = this.loseHelperTip
+        ? `« ${taunt} ${this.loseHelperTip.speechLine} »`
+        : `« ${taunt} »`;
+      drawFittedWrappedText(ctx, fullLoseSpeech, 106, 62, MG_W - 150, 62, {
+        preferredSize: 8.4,
+        minSize: 6.4,
+        weight: '500',
+        lineHeightRatio: 1.24,
+      });
 
       ctx.fillStyle = '#b4a8cc';
       ctx.font = 'bold 8px sans-serif';
-      ctx.fillText(`— ${this.challenger.name}`, 106, 128);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`— ${this.challenger.name}`, 106, 130);
+
+      if (!this.isBoss && this.loseHelperTip) {
+        ctx.fillStyle = '#ffd978';
+        ctx.font = 'bold 7.4px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          `Astuce : quittez pour aller demander un indice à ${this.loseHelperTip.helperName} !`,
+          MG_W / 2,
+          156
+        );
+      }
 
       // Two crisp tactile buttons: Réessayer / Quitter (keep y=166 so tap y > 165 matches!)
       const btnY = 166;

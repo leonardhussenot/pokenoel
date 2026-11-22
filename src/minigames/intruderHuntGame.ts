@@ -1,6 +1,6 @@
 import { soundEngine } from '../audio/soundEngine';
 import { InputManager } from '../engine/input';
-import { IntruderHuntChallengeConfig, IntruderRound } from '../types';
+import { ChallengeMistake, IntruderHuntChallengeConfig, IntruderRound } from '../types';
 import {
   drawFittedWrappedText,
   drawHearts,
@@ -34,6 +34,11 @@ export class IntruderHuntGame implements MiniGameInstance {
   private revealElapsed = 0;
   private shakeTimer = 0;
   private particles: MgParticle[] = [];
+  private mistakes: ChallengeMistake[] = [];
+
+  getMistakes(): ChallengeMistake[] {
+    return [...this.mistakes];
+  }
 
   constructor(private cfg: IntruderHuntChallengeConfig) {
     this.rounds = cfg.rounds;
@@ -86,14 +91,31 @@ export class IntruderHuntGame implements MiniGameInstance {
     this.revealTimer = 2.6;
     this.revealElapsed = 0;
 
-    const targetRect = this.getCardRects()[round.intruderIndex];
-    const cx = targetRect.x + targetRect.w / 2;
-    const cy = targetRect.y + targetRect.h / 2;
+    const burstRect = this.getCardRects()[this.wasCorrect ? round.intruderIndex : idx];
+    const cx = burstRect.x + burstRect.w / 2;
+    const cy = burstRect.y + burstRect.h / 2;
 
     if (this.wasCorrect) {
       soundEngine.playHitPerfect();
       this.spawnRevealBurst(cx, cy, '#66f28d');
     } else {
+      const pickedItem = round.items[idx] ?? '';
+      const intruderItem = round.items[round.intruderIndex] ?? '';
+      if (pickedItem && intruderItem) {
+        const already = this.mistakes.some(
+          (m) =>
+            m.kind === 'intruder_hunt' &&
+            m.pickedItem === pickedItem &&
+            m.intruderItem === intruderItem
+        );
+        if (!already) {
+          this.mistakes.unshift({
+            kind: 'intruder_hunt',
+            pickedItem,
+            intruderItem,
+          });
+        }
+      }
       this.lives = Math.max(0, this.lives - 1);
       this.shakeTimer = 0.36;
       soundEngine.playHitMiss();
@@ -176,8 +198,8 @@ export class IntruderHuntGame implements MiniGameInstance {
     // Rich themed stage backdrop
     drawReflectionStageBackdrop(ctx, this.cfg.themeStyle, this.elapsed);
 
-    // Dramatic spotlight on the true intruder during reveal!
-    if (inReveal) {
+    // Dramatic spotlight on the true intruder ONLY when the player found it!
+    if (inReveal && this.wasCorrect) {
       const intrRect = rects[round.intruderIndex];
       drawSpotlightBeam(
         ctx,
@@ -187,7 +209,7 @@ export class IntruderHuntGame implements MiniGameInstance {
         intrRect.y + intrRect.h + 12,
         14,
         92,
-        this.wasCorrect ? 'rgba(102, 242, 141, 0.28)' : 'rgba(255, 130, 142, 0.28)'
+        'rgba(102, 242, 141, 0.28)'
       );
     }
 
@@ -215,7 +237,7 @@ export class IntruderHuntGame implements MiniGameInstance {
       const r = rects[i];
       const rx = r.x + shakeX;
       const isCursor = !inReveal && this.cursor === i;
-      const isIntruder = inReveal && i === round.intruderIndex;
+      const isIntruder = inReveal && this.wasCorrect && i === round.intruderIndex;
       const isWrongPick = inReveal && i === this.selectedIdx && !this.wasCorrect;
       const dimmed = inReveal && !isIntruder && !isWrongPick;
 
@@ -321,11 +343,12 @@ export class IntruderHuntGame implements MiniGameInstance {
     // Particles
     drawMgParticles(ctx, this.particles);
 
-    // Crisp Explanation Toast positioned on the opposite row so the intruder stays 100% visible!
+    // Crisp feedback toast: show full explanation ONLY on correct pick; never spoil the intruder on wrong pick!
     if (inReveal) {
-      const intruderInTopRow = round.intruderIndex < 2;
-      const boxY = intruderInTopRow ? 146 : 70;
-      const boxH = 78;
+      const focusIdx = this.wasCorrect ? round.intruderIndex : (this.selectedIdx ?? 0);
+      const focusInTopRow = focusIdx < 2;
+      const boxY = focusInTopRow ? 146 : 70;
+      const boxH = this.wasCorrect ? 78 : 56;
       const accentColor = this.wasCorrect ? '#66f28d' : '#ff8a96';
 
       ctx.fillStyle = 'rgba(10, 14, 28, 0.96)';
@@ -340,7 +363,7 @@ export class IntruderHuntGame implements MiniGameInstance {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText(
-        formatFrenchText(this.wasCorrect ? '★ INTRUS DÉMASQUÉ ! ★' : 'C’ÉTAIT L’INTRUS !'),
+        formatFrenchText(this.wasCorrect ? '★ INTRUS DÉMASQUÉ ! ★' : '✗ CE N’EST PAS L’INTRUS !'),
         MG_W / 2,
         boxY + 6
       );
@@ -349,12 +372,24 @@ export class IntruderHuntGame implements MiniGameInstance {
       ctx.fillRect(28, boxY + 21, MG_W - 56, 1);
 
       ctx.fillStyle = '#f4f7ff';
-      drawFittedWrappedText(ctx, round.explanation, 24, boxY + 25, MG_W - 48, boxH - 38, {
-        preferredSize: 8.1,
-        minSize: 6.2,
-        weight: '600',
-        lineHeightRatio: 1.28,
-      });
+      const bodyText = this.wasCorrect
+        ? round.explanation
+        : 'Vous perdez 1 cœur ! Cet élément appartient bien au groupe.';
+      drawFittedWrappedText(
+        ctx,
+        bodyText,
+        this.wasCorrect ? 24 : MG_W / 2,
+        boxY + 25,
+        MG_W - 48,
+        boxH - 38,
+        {
+          preferredSize: 8.1,
+          minSize: 6.2,
+          weight: '600',
+          lineHeightRatio: 1.28,
+          align: this.wasCorrect ? 'left' : 'center',
+        }
+      );
 
       if (this.revealElapsed >= 0.45) {
         const pAlpha = 0.6 + 0.4 * Math.sin(this.elapsed * 7);

@@ -1,4 +1,4 @@
-import { GlobalSaveData, ModeId, ModeSaveData } from '../types';
+import { ChallengeMistake, GlobalSaveData, ModeId, ModeSaveData } from '../types';
 
 export const SAVE_STORAGE_KEY = 'pokenoel_save_v1';
 
@@ -7,6 +7,7 @@ const DEFAULT_SPAWNS: Record<ModeId, { mapId: string; x: number; y: number }> = 
   df: { mapId: 'df_overworld', x: 30, y: 39 },
   jp: { mapId: 'jp_overworld', x: 30, y: 39 },
   aj: { mapId: 'aj_overworld', x: 30, y: 39 },
+  sd: { mapId: 'sd_overworld', x: 30, y: 39 },
 };
 
 export function createDefaultModeSave(modeId: ModeId): ModeSaveData {
@@ -33,16 +34,80 @@ export function createDefaultGlobalSave(): GlobalSaveData {
       df: createDefaultModeSave('df'),
       jp: createDefaultModeSave('jp'),
       aj: createDefaultModeSave('aj'),
+      sd: createDefaultModeSave('sd'),
     },
   };
+}
+
+function isValidMistake(m: unknown): m is ChallengeMistake {
+  if (!m || typeof m !== 'object') return false;
+  const o = m as Record<string, unknown>;
+  switch (o.kind) {
+    case 'order_puzzle':
+      return (
+        typeof o.earlierItem === 'string' &&
+        typeof o.laterItem === 'string' &&
+        typeof o.chronological === 'boolean'
+      );
+    case 'pair_match':
+      return (
+        typeof o.leftText === 'string' &&
+        typeof o.wrongRightText === 'string' &&
+        typeof o.correctRightText === 'string'
+      );
+    case 'intruder_hunt':
+      return typeof o.pickedItem === 'string' && typeof o.intruderItem === 'string';
+    case 'category_sort':
+      return (
+        typeof o.itemLabel === 'string' &&
+        typeof o.wrongCategory === 'string' &&
+        typeof o.correctCategory === 'string'
+      );
+    case 'quiz':
+      return (
+        typeof o.question === 'string' &&
+        typeof o.wrongAnswer === 'string' &&
+        typeof o.correctAnswer === 'string'
+      );
+    case 'riddle_word':
+      return (
+        typeof o.clue === 'string' &&
+        typeof o.wrongAnswer === 'string' &&
+        typeof o.correctAnswer === 'string'
+      );
+    default:
+      return false;
+  }
+}
+
+function sanitizeFailedMistakes(
+  raw: unknown,
+  badges: string[]
+): Record<string, ChallengeMistake[]> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const out: Record<string, ChallengeMistake[]> = {};
+  let hasAny = false;
+  for (const [badgeId, list] of Object.entries(raw as Record<string, unknown>)) {
+    if (badges.includes(badgeId) || !Array.isArray(list)) continue;
+    const cleaned = list.filter(isValidMistake).slice(0, 5);
+    if (cleaned.length > 0) {
+      out[badgeId] = cleaned;
+      hasAny = true;
+    }
+  }
+  return hasAny ? out : undefined;
 }
 
 function sanitizeModeSave(modeId: ModeId, raw: unknown): ModeSaveData {
   const def = createDefaultModeSave(modeId);
   if (!raw || typeof raw !== 'object') return def;
   const obj = raw as Partial<ModeSaveData>;
+  const badges = Array.isArray(obj.badges)
+    ? [...new Set(obj.badges.filter((x) => typeof x === 'string'))]
+    : [];
+  const failedMistakes = sanitizeFailedMistakes(obj.failedMistakes, badges);
   return {
-    badges: Array.isArray(obj.badges) ? [...new Set(obj.badges.filter((x) => typeof x === 'string'))] : [],
+    badges,
     bossDefeated: Boolean(obj.bossDefeated),
     metNpcs: Array.isArray(obj.metNpcs) ? [...new Set(obj.metNpcs.filter((x) => typeof x === 'string'))] : [],
     playTimeSeconds: typeof obj.playTimeSeconds === 'number' && Number.isFinite(obj.playTimeSeconds) ? Math.max(0, Math.floor(obj.playTimeSeconds)) : 0,
@@ -51,6 +116,7 @@ function sanitizeModeSave(modeId: ModeId, raw: unknown): ModeSaveData {
     lastMapId: typeof obj.lastMapId === 'string' && obj.lastMapId.length > 0 ? obj.lastMapId : def.lastMapId,
     lastX: typeof obj.lastX === 'number' && Number.isFinite(obj.lastX) ? obj.lastX : def.lastX,
     lastY: typeof obj.lastY === 'number' && Number.isFinite(obj.lastY) ? obj.lastY : def.lastY,
+    ...(failedMistakes ? { failedMistakes } : {}),
   };
 }
 
@@ -67,6 +133,7 @@ export function sanitizeGlobalSave(raw: unknown): GlobalSaveData {
       df: sanitizeModeSave('df', modes.df),
       jp: sanitizeModeSave('jp', modes.jp),
       aj: sanitizeModeSave('aj', modes.aj),
+      sd: sanitizeModeSave('sd', modes.sd),
     },
   };
 }

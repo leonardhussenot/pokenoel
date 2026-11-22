@@ -104,11 +104,37 @@ const CAMEO_SCRIPTS: Record<ModeId, Record<1 | 2 | 3, CameoScript>> = {
       ],
     },
     3: {
+      pair: 'sd',
+      lines: [
+        'On se croirait dans un grand shōnen sportif sur cette avenue… les dunks de LeBron et les appuis de Messi, quel spectacle !',
+        'Gardez votre sang-froid de détective face à Zizou là-haut : un vrai suspense digne d’un polar français !',
+        'Allez chercher la coupe finale, Alexis & Joseph ! On vous encourage depuis Néo-Noir & Manga !',
+      ],
+    },
+  },
+  sd: {
+    1: {
+      pair: 'pm',
+      lines: [
+        'Coucou Sam & Denis ! Entre les bulles de manga et les enquêtes de Maigret, ce quartier a un charme fou !',
+        'Méfiez-vous des tours de passe-passe d’Arsène Lupin : il est encore plus rusé que les valets de Molière !',
+        'Bonne chasse aux quatre premiers badges, les enquêteurs du soir !',
+      ],
+    },
+    2: {
+      pair: 'df',
+      lines: [
+        'Quelles lumières néon et sépia sur ces avenues ! Entre Arcane, Ghost in the Shell et le suspense de Clouzot, on adore !',
+        'Et Agatha Christie verrouille ses intrigues encore plus serré qu’un thriller d’Hitchcock !',
+        'Cap sur les 8 badges, Sam & Denis : l’enquête avance à grands pas !',
+      ],
+    },
+    3: {
       pair: 'jp',
       lines: [
-        'On est venus shooter les dunks et les lucarnes de l’Avenue des Ballons d’Or… quel festival !',
-        'Gardez le sang-froid sur les contres de LeBron et les appuis de Messi, comme devant un soufflé prêt à sortir !',
-        'Plus qu’un petit effort… Zizou vous attend déjà sur le point de penalty !',
+        'La photographie noir et blanc de Melville et la Nouvelle Vague de Truffaut… j’ai envie de tout cadrer au 35 mm !',
+        'Et après les nuits cyberpunk d’Akira et de Monster, je vous prépare un bon ramen fumant pour fêter ça !',
+        'Plus qu’un dernier effort avant d’aller défier Hayao Miyazaki au sommet !',
       ],
     },
   },

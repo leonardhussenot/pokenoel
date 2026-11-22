@@ -12,6 +12,7 @@ import {
 } from '../types';
 import { InputManager } from './input';
 import { drawOverworldSprite, drawPortrait } from './pixelRenderer';
+import { secondaryHasPendingHint } from './secondaryHints';
 import { drawTile, isTileWalkable, TILE_SIZE } from './tilesetRenderer';
 import { WorldAtmosphere } from './worldAtmosphere';
 
@@ -31,6 +32,7 @@ const THEME_ACCENT: Record<WorldTheme, string> = {
   df: '#2ec4de',
   jp: '#e87654',
   aj: '#4a9eff',
+  sd: '#2ec4d6',
 };
 
 const THEME_HUD_STYLE: Record<
@@ -60,6 +62,12 @@ const THEME_HUD_STYLE: Record<
     bgBottom: 'rgba(10, 17, 34, 0.90)',
     trimMid: '#f4ce72',
     pillTint: 'rgba(244, 206, 114, 0.20)',
+  },
+  sd: {
+    bgTop: 'rgba(14, 27, 40, 0.94)',
+    bgBottom: 'rgba(9, 18, 28, 0.90)',
+    trimMid: '#58d8e6',
+    pillTint: 'rgba(46, 196, 214, 0.22)',
   },
 };
 
@@ -573,7 +581,8 @@ export class OverworldEngine {
               won ? '#57d978' : npc.role === 'boss' ? '#ffd045' : '#ff5a5a'
             );
           } else if (npc.role === 'secondary') {
-            this.drawTag(ctx, sx + 4, sy - 10 + bob, '?', '#7cc4ff');
+            const hasHint = secondaryHasPendingHint(npc, this.world, this.save);
+            this.drawTag(ctx, sx + 4, sy - 10 + bob, '?', hasHint ? '#ffd045' : '#7cc4ff');
           } else if (npc.role === 'guest') {
             this.drawTag(ctx, sx + 4, sy - 10 + bob, '…', '#f4ce76');
           } else if (npc.role === 'gatekeeper') {

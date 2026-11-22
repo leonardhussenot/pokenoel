@@ -1,4 +1,5 @@
 import alexisPortraitUrl from '../assets/portraits/alexis.jpg';
+import denisPortraitUrl from '../assets/portraits/denis.jpg';
 import dominiquePortraitUrl from '../assets/portraits/dominique.jpg';
 import francisPortraitUrl from '../assets/portraits/francis.jpg';
 import josephPortraitUrl from '../assets/portraits/joseph.jpg';
@@ -6,6 +7,7 @@ import juliettePortraitUrl from '../assets/portraits/juliette.jpg';
 import margueritePortraitUrl from '../assets/portraits/marguerite.jpg';
 import pierrePortraitUrl from '../assets/portraits/pierre.jpg';
 import polaPortraitUrl from '../assets/portraits/pola.jpg';
+import samPortraitUrl from '../assets/portraits/sam.jpg';
 import { FamilyMember, FamilyMemberId, FamilyPair, ModeId } from '../types';
 
 /**
@@ -242,6 +244,60 @@ export const FAMILY_MEMBERS: Record<FamilyMemberId, FamilyMember> = {
     },
     customPortraitUrl: josephPortraitUrl,
   },
+  sam: {
+    id: 'sam',
+    name: 'Sam',
+    voicePitch: 420,
+    appearance: {
+      skin: '#f0c4a2',
+      hairColor: '#36261d',
+      hairStyle: 'tousled_curls',
+      headwear: 'none',
+      glasses: 'none',
+      facialHair: 'stubble',
+      facialHairColor: '#36261d',
+      topColor: '#2a2e36',
+      bottomColor: '#1b1f29',
+      accentColor: '#2ec4d6',
+      outfitStyle: 'coat',
+    },
+    portrait: {
+      bgTop: '#163d4f',
+      bgBottom: '#0f1c2e',
+      eyeColor: '#5c6e4e',
+      collar: 'hoodie',
+      prop: 'none',
+      smile: 'normal',
+    },
+    customPortraitUrl: samPortraitUrl,
+  },
+  denis: {
+    id: 'denis',
+    name: 'Denis',
+    voicePitch: 300,
+    appearance: {
+      skin: '#d99c72',
+      hairColor: '#8f7b60',
+      hairStyle: 'wavy',
+      headwear: 'none',
+      glasses: 'none',
+      facialHair: 'stubble',
+      facialHairColor: '#9a948c',
+      topColor: '#7e8690',
+      bottomColor: '#283042',
+      accentColor: '#c98a4b',
+      outfitStyle: 'casual',
+    },
+    portrait: {
+      bgTop: '#1d3247',
+      bgBottom: '#111b2b',
+      eyeColor: '#4c6652',
+      collar: 'normal',
+      prop: 'film',
+      smile: 'wide',
+    },
+    customPortraitUrl: denisPortraitUrl,
+  },
 };
 
 export const FAMILY_PAIRS: Record<ModeId, FamilyPair> = {
@@ -285,6 +341,16 @@ export const FAMILY_PAIRS: Record<ModeId, FamilyPair> = {
     secondaryColor: '#d44234',
     members: [FAMILY_MEMBERS.alexis, FAMILY_MEMBERS.joseph],
   },
+  sd: {
+    modeId: 'sd',
+    shortCode: 'SD',
+    label: 'Sam & Denis',
+    themeLabel: 'Manga, Animation & Polar Français',
+    worldName: 'Néo-Noir & Manga',
+    primaryColor: '#2ec4d6',
+    secondaryColor: '#c98a4b',
+    members: [FAMILY_MEMBERS.sam, FAMILY_MEMBERS.denis],
+  },
 };
 
-export const MODE_ORDER: ModeId[] = ['pm', 'df', 'jp', 'aj'];
+export const MODE_ORDER: ModeId[] = ['pm', 'df', 'jp', 'aj', 'sd'];

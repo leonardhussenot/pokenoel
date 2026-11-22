@@ -1,6 +1,6 @@
 import { soundEngine } from '../audio/soundEngine';
 import { InputManager } from '../engine/input';
-import { PairMatchChallengeConfig, PairMatchRound } from '../types';
+import { ChallengeMistake, PairMatchChallengeConfig, PairMatchRound } from '../types';
 import {
   drawFittedSingleLine,
   drawFittedWrappedText,
@@ -65,6 +65,11 @@ export class PairMatchGame implements MiniGameInstance {
   private statusHint = '';
   private statusHintTimer = 0;
   private particles: MgParticle[] = [];
+  private mistakes: ChallengeMistake[] = [];
+
+  getMistakes(): ChallengeMistake[] {
+    return [...this.mistakes];
+  }
 
   constructor(private cfg: PairMatchChallengeConfig) {
     this.rounds = cfg.rounds;
@@ -266,6 +271,25 @@ export class PairMatchGame implements MiniGameInstance {
       this.leftCursor = this.firstUnmatched(this.leftItems);
       this.rightCursor = this.firstUnmatched(this.rightItems);
     } else {
+      const round = this.rounds[this.roundIndex];
+      const correctRightText = round.pairs[left.pairId]?.right ?? '';
+      if (correctRightText) {
+        const already = this.mistakes.some(
+          (m) =>
+            m.kind === 'pair_match' &&
+            m.leftText === left.text &&
+            m.wrongRightText === right.text
+        );
+        if (!already) {
+          this.mistakes.unshift({
+            kind: 'pair_match',
+            leftText: left.text,
+            wrongRightText: right.text,
+            correctRightText,
+          });
+        }
+      }
+
       this.lives = Math.max(0, this.lives - 1);
       this.shakeTimer = 0.36;
       this.wrongFlash = { leftIdx, rightIdx, timer: 0.7 };

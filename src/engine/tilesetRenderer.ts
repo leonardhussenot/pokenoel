@@ -210,6 +210,41 @@ const WORLD_PALETTES: Record<WorldTheme, ThemePalette> = {
     carpetMain: '#1f56b8',
     carpetDark: '#12367a',
   },
+  // Néo-Tokyo Noir — Cyberpunk manga neon-cyan & French polar sepia-amber cinema
+  sd: {
+    grass1: '#35786c',
+    grass2: '#2b635a',
+    grass3: '#479486',
+    grassBlade: '#6cc4b4',
+    path1: '#c5ccd9',
+    path2: '#adb6c7',
+    pathGrout: '#768299',
+    plaza1: '#233247',
+    plaza2: '#1a2536',
+    plazaAccent: '#2ec4d6',
+    water1: '#155c78',
+    water2: '#268ca8',
+    waterDeep: '#0d3d52',
+    waterFoam: '#9ef2ff',
+    treeDark: '#1c4240',
+    treeMid: '#2e6662',
+    treeLight: '#589c94',
+    treeAccent: '#f28cb1', // subtle sakura-neon blossom accent
+    trunk: '#594236',
+    trunkDark: '#382820',
+    wallA: '#e8e2d5',
+    wallAShade: '#c9c0ae',
+    wallB: '#26334a',
+    wallBShade: '#192233',
+    roofA: '#1d7e91',
+    roofALight: '#39b8cc',
+    roofB: '#8a5229',
+    roofBLight: '#c98647',
+    trim: '#f0c456',
+    trimDark: '#9e7422',
+    carpetMain: '#1c6d82',
+    carpetDark: '#104454',
+  },
 };
 
 const tileCache = new Map<string, HTMLCanvasElement>();
@@ -238,6 +273,9 @@ function getThemePalette(theme: WorldTheme | InteriorTheme): ThemePalette {
     case 'stadium':
     case 'court':
       return WORLD_PALETTES.aj;
+    case 'manga_studio':
+    case 'noir_cinema':
+      return WORLD_PALETTES.sd;
     case 'boss_hall':
     default:
       return WORLD_PALETTES.pm;
@@ -1261,6 +1299,21 @@ function renderTileToCanvas(
         px(0, 12, HD, 4, theme === 'stadium' ? '#1c54b8' : '#cc352d');
         px(0, 16, HD, 2, '#ffd242');
         px(0, 24, HD, 8, '#152036');
+      } else if (theme === 'manga_studio') {
+        // Sleek Neo-Tokyo manga & animation studio wall with glowing cyan neon rail
+        px(0, 0, HD, HD, '#1f2e42');
+        px(4, 3, 24, 15, '#293d57');
+        px(6, 5, 9, 11, '#d9eef7');
+        px(17, 5, 9, 11, '#f2e8d5');
+        px(0, 21, HD, 2, '#2ec4d6');
+        px(0, 23, HD, 9, '#131d2b');
+      } else if (theme === 'noir_cinema') {
+        // Classic French polar & art-house cinema charcoal-sepia paneling with brass strip
+        px(0, 0, HD, HD, '#2b2421');
+        px(3, 3, 26, 17, '#3d332e');
+        px(5, 5, 22, 13, '#2b2421');
+        px(0, 22, HD, 2, '#d9a452');
+        px(0, 24, HD, 8, '#1a1513');
       } else {
         // boss_hall: Palatial gilded crimson-purple marble wall
         px(0, 0, HD, HD, '#54233b');

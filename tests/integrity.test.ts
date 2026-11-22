@@ -39,6 +39,8 @@ const VALID_REFLECTION_THEMES = new Set<ReflectionTheme>([
   'photography',
   'football',
   'basketball',
+  'manga',
+  'polar',
 ]);
 
 function isReflectionChallenge(c: ChallengeConfig): c is Extract<SingleChallengeConfig, { kind: ReflectionKind }> {
@@ -107,10 +109,10 @@ function hasAdjacentInSet(set: Set<string>, x: number, y: number): boolean {
   );
 }
 
-describe('Noël 2026 : Intégrité globale des 4 mondes', () => {
-  it('contient exactement les 4 binômes et les 8 membres de la famille', () => {
-    expect(MODE_ORDER).toEqual(['pm', 'df', 'jp', 'aj']);
-    expect(Object.keys(FAMILY_MEMBERS)).toHaveLength(8);
+describe('Noël 2026 : Intégrité globale des 5 mondes', () => {
+  it('contient exactement les 5 binômes et les 10 membres de la famille', () => {
+    expect(MODE_ORDER).toEqual(['pm', 'df', 'jp', 'aj', 'sd']);
+    expect(Object.keys(FAMILY_MEMBERS)).toHaveLength(10);
     for (const mode of MODE_ORDER) {
       expect(FAMILY_PAIRS[mode]).toBeDefined();
       expect(FAMILY_PAIRS[mode].members).toHaveLength(2);
@@ -118,7 +120,7 @@ describe('Noël 2026 : Intégrité globale des 4 mondes', () => {
     }
   });
 
-  it('possède 52 badges uniques à travers les 4 mondes', () => {
+  it('possède 65 badges uniques à travers les 5 mondes', () => {
     const ids = new Set<string>();
     for (const mode of MODE_ORDER) {
       const w = WORLDS[mode];
@@ -129,7 +131,7 @@ describe('Noël 2026 : Intégrité globale des 4 mondes', () => {
       expect(ids.has(w.bossBadge.id)).toBe(false);
       ids.add(w.bossBadge.id);
     }
-    expect(ids.size).toBe(52);
+    expect(ids.size).toBe(65);
   });
 
   it('supprime intégralement les 8 anciens fichiers de mini-jeux dynamiques', () => {
@@ -496,7 +498,7 @@ describe('Noël 2026 : Intégrité globale des 4 mondes', () => {
   }
 
   it('encode et décode fidèlement les codes de sauvegarde et rejette les codes corrompus', () => {
-    const sampleMode = (id: 'pm' | 'df' | 'jp' | 'aj'): ModeSaveData => ({
+    const sampleMode = (id: 'pm' | 'df' | 'jp' | 'aj' | 'sd'): ModeSaveData => ({
       badges: [`${id}_badge_1`, `${id}_badge_2`],
       bossDefeated: id === 'pm',
       metNpcs: [`${id}_sec_1`],
@@ -516,6 +518,7 @@ describe('Noël 2026 : Intégrité globale des 4 mondes', () => {
         df: sampleMode('df'),
         jp: sampleMode('jp'),
         aj: sampleMode('aj'),
+        sd: sampleMode('sd'),
       },
     };
 

@@ -5,6 +5,7 @@ import { createAjWorld } from './worlds/ajWorld';
 import { createDfWorld } from './worlds/dfWorld';
 import { createJpWorld } from './worlds/jpWorld';
 import { createPmWorld } from './worlds/pmWorld';
+import { createSdWorld } from './worlds/sdWorld';
 
 function attachNpcPortraits(world: WorldDefinition): WorldDefinition {
   for (const npc of world.npcs) {
@@ -24,6 +25,7 @@ export function buildAllWorlds(): Record<ModeId, WorldDefinition> {
     df: attachNpcPortraits(attachGuestsToWorld(createDfWorld())),
     jp: attachNpcPortraits(attachGuestsToWorld(createJpWorld())),
     aj: attachNpcPortraits(attachGuestsToWorld(createAjWorld())),
+    sd: attachNpcPortraits(attachGuestsToWorld(createSdWorld())),
   };
 }
 

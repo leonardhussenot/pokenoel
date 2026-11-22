@@ -12,6 +12,11 @@ import {
   saveGlobalSave,
 } from './engine/saveSystem';
 import {
+  buildSecondaryDialogue,
+  formatLoseHelperLine,
+  resolveClosestSecondaryForChallenger,
+} from './engine/secondaryHints';
+import {
   DialogueController,
   DialogueMessage,
   getModeCardRects,
@@ -23,6 +28,7 @@ import {
 } from './engine/uiRenderer';
 import { ChallengeRunner } from './minigames/challengeRunner';
 import {
+  ChallengeMistake,
   DistrictGate,
   GameScene,
   GlobalSaveData,
@@ -52,6 +58,7 @@ export class PokeNoelGame {
   private pauseSubView: PauseSubView = 'menu';
   private pauseSubCursor = 0;
   private endingTimer = 0;
+  private hintCycleByBadge = new Map<string, number>();
 
   private lastTimestamp = 0;
   private soundBtnEl: HTMLButtonElement | null = null;
@@ -377,17 +384,23 @@ export class PokeNoelGame {
     }
 
     if (npc.role === 'secondary') {
-      const hintText = this.buildDynamicHintText(npc, modeSave);
-      this.dialogue.start([
-        {
+      const probe = buildSecondaryDialogue(npc, this.activeWorld, modeSave, 0);
+      const cycleKey = probe.targetBadgeId ? `${this.activeModeId}:${probe.targetBadgeId}` : '';
+      const cycleIdx = cycleKey ? (this.hintCycleByBadge.get(cycleKey) ?? 0) : 0;
+      const result = buildSecondaryDialogue(npc, this.activeWorld, modeSave, cycleIdx);
+      if (result.isMistakeHint && cycleKey) {
+        this.hintCycleByBadge.set(cycleKey, cycleIdx + 1);
+      }
+      this.dialogue.start(
+        result.messages.map((text) => ({
           speaker: npc.name,
-          text: hintText,
+          text,
           appearance: npc.appearance,
           portrait: npc.portrait,
           customPortraitUrl: npc.customPortraitUrl,
           voicePitch: npc.voicePitch,
-        },
-      ]);
+        }))
+      );
       this.scene = 'DIALOGUE';
       return;
     }
@@ -432,34 +445,6 @@ export class PokeNoelGame {
     }
   }
 
-  private buildDynamicHintText(npc: NpcEntity, save: ModeSaveData): string {
-    const districtBuildings = this.activeWorld.buildings.filter(
-      (b) => b.district === npc.district && !save.badges.includes(b.badgeId)
-    );
-
-    if (districtBuildings.length === 0) {
-      return `Vous avez déjà réuni tous les badges de ce quartier ! Montez vers la porte au nord pour poursuivre votre aventure !`;
-    }
-
-    // Prefer npc.hintTargetBadgeIds if still uncollected, otherwise first uncollected in district
-    let targetBuilding = districtBuildings[0];
-    if (npc.hintTargetBadgeIds) {
-      for (const id of npc.hintTargetBadgeIds) {
-        const match = districtBuildings.find((b) => b.badgeId === id);
-        if (match) {
-          targetBuilding = match;
-          break;
-        }
-      }
-    }
-
-    const targetNpc = this.activeWorld.npcs.find((n) => n.id === targetBuilding.characterId);
-
-    const intro =
-      npc.hintLines?.[0] ?? 'Mon petit doigt me dit qu’un défi passionnant vous attend chez';
-    return `${intro} ${targetNpc?.name ?? 'un grand maître'} ! Rendez-vous dans « ${targetBuilding.name} », pas loin d’ici !`;
-  }
-
   private launchChallenge(npc: NpcEntity): void {
     if (!npc.challenge) return;
     const modeSave = this.getActiveModeSave();
@@ -470,6 +455,11 @@ export class PokeNoelGame {
         : this.activeWorld.badges.find((b) => b.id === npc.badgeId) ??
           this.activeWorld.bossBadge;
 
+    const helperSec = resolveClosestSecondaryForChallenger(npc, this.activeWorld);
+    const loseHelperTip = helperSec
+      ? { helperName: helperSec.name, speechLine: formatLoseHelperLine(helperSec) }
+      : undefined;
+
     this.challengeRunner = new ChallengeRunner(
       npc,
       badge,
@@ -479,7 +469,18 @@ export class PokeNoelGame {
       () => {
         modeSave.attempts++;
         saveGlobalSave(this.save);
-      }
+      },
+      (mistakes: ChallengeMistake[]) => {
+        if (npc.role === 'main' && npc.badgeId && mistakes.length > 0) {
+          if (!modeSave.failedMistakes) {
+            modeSave.failedMistakes = {};
+          }
+          modeSave.failedMistakes[npc.badgeId] = mistakes.slice(0, 5);
+          this.hintCycleByBadge.delete(`${this.activeModeId}:${npc.badgeId}`);
+          saveGlobalSave(this.save);
+        }
+      },
+      loseHelperTip
     );
     this.scene = 'CHALLENGE';
 
@@ -531,11 +532,17 @@ export class PokeNoelGame {
             this.lastHoverCard = -1;
           }
         }
-        if (this.input.justPressed('left') || this.input.justPressed('right')) {
-          this.modeCursor ^= 1;
+        if (this.input.justPressed('left')) {
+          const leftMap = [2, 0, 1, 4, 3];
+          this.modeCursor = leftMap[this.modeCursor] ?? 0;
+          soundEngine.playSelect();
+        } else if (this.input.justPressed('right')) {
+          const rightMap = [1, 2, 0, 4, 3];
+          this.modeCursor = rightMap[this.modeCursor] ?? 0;
           soundEngine.playSelect();
         } else if (this.input.justPressed('up') || this.input.justPressed('down')) {
-          this.modeCursor ^= 2;
+          const vertMap = [3, 3, 4, 0, 2];
+          this.modeCursor = vertMap[this.modeCursor] ?? 0;
           soundEngine.playSelect();
         }
         if (this.input.justPressed('swap')) {
@@ -640,6 +647,13 @@ export class PokeNoelGame {
 
     if (npc.badgeId && !modeSave.badges.includes(npc.badgeId)) {
       modeSave.badges.push(npc.badgeId);
+    }
+    if (npc.badgeId && modeSave.failedMistakes?.[npc.badgeId]) {
+      delete modeSave.failedMistakes[npc.badgeId];
+      if (Object.keys(modeSave.failedMistakes).length === 0) {
+        delete modeSave.failedMistakes;
+      }
+      this.hintCycleByBadge.delete(`${this.activeModeId}:${npc.badgeId}`);
     }
     saveGlobalSave(this.save);
     soundEngine.playBgm(this.activeWorld.bgmId);

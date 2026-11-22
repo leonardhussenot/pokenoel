@@ -15,7 +15,8 @@ type AmbientKind =
   | 'spark'
   | 'dust'
   | 'ember'
-  | 'bird';
+  | 'bird'
+  | 'rain';
 
 interface AmbientParticle {
   x: number;
@@ -344,6 +345,67 @@ export class WorldAtmosphere {
           kind: 'spark',
         });
       }
+    } else if (theme === 'sd') {
+      // Subtle neon-cyan & warm sepia rain streaks + floating cyber/cinema sparks
+      const rainCols = ['#5ee6f5', '#f2be72', '#8cebf7', '#e6a65c'];
+      for (let i = 0; i < 22; i++) {
+        push({
+          x: this.rand() * SCREEN_W,
+          y: this.rand() * SCREEN_H,
+          vx: -14 - this.rand() * 8,
+          vy: 42 + this.rand() * 28,
+          size: 4 + this.rand() * 3.5,
+          phase: this.rand() * Math.PI * 2,
+          spin: 2.5,
+          color: rainCols[i % rainCols.length],
+          alpha: 0.34,
+          kind: 'rain',
+        });
+      }
+      for (let i = 0; i < 14; i++) {
+        push({
+          x: this.rand() * SCREEN_W,
+          y: this.rand() * SCREEN_H,
+          vx: -3 + this.rand() * 7,
+          vy: -(10 + this.rand() * 12),
+          size: 1.7 + this.rand() * 0.9,
+          phase: this.rand() * Math.PI * 2,
+          spin: 4.2,
+          color: i % 2 === 0 ? '#4ce4f5' : '#f5c06b',
+          alpha: 0.72,
+          kind: 'spark',
+        });
+      }
+    } else if (theme === 'manga_studio') {
+      for (let i = 0; i < 16; i++) {
+        push({
+          x: 50 + this.rand() * (SCREEN_W - 100),
+          y: 32 + this.rand() * (SCREEN_H - 60),
+          vx: -3 + this.rand() * 6,
+          vy: -(8 + this.rand() * 10),
+          size: 1.6 + this.rand() * 0.8,
+          phase: this.rand() * Math.PI * 2,
+          spin: 3.8,
+          color: i % 2 === 0 ? '#4ce4f5' : '#ffd875',
+          alpha: 0.62,
+          kind: 'spark',
+        });
+      }
+    } else if (theme === 'noir_cinema') {
+      for (let i = 0; i < 18; i++) {
+        push({
+          x: 45 + this.rand() * (SCREEN_W - 90),
+          y: 28 + this.rand() * (SCREEN_H - 50),
+          vx: -2 + this.rand() * 5,
+          vy: -3 + this.rand() * 6,
+          size: 1.2 + this.rand() * 1.2,
+          phase: this.rand() * Math.PI * 2,
+          spin: 1.8,
+          color: '#f2d399',
+          alpha: 0.44,
+          kind: 'dust',
+        });
+      }
     } else if (theme === 'boss_hall') {
       for (let i = 0; i < 24; i++) {
         push({
@@ -641,6 +703,23 @@ export class WorldAtmosphere {
       this.drawLightCone(ctx, SCREEN_W - 74, 20, 1.89, 210, 42, 'rgba(220, 240, 255, 0.15)');
     } else if (map.theme === 'court') {
       safeRadialGlow(ctx, SCREEN_W * 0.5, 110, 125, 'rgba(255, 246, 214, 0.14)', 'rgba(255, 246, 214, 0)');
+    } else if (map.theme === 'sd') {
+      // Subtle neon-cyan & warm sepia nocturnal skyline wash + light beams
+      this.drawLightCone(ctx, 44, SCREEN_H + 8, -0.52 + Math.sin(time * 0.65) * 0.25, 250, 32, 'rgba(46, 196, 214, 0.12)');
+      this.drawLightCone(ctx, SCREEN_W - 44, SCREEN_H + 8, -2.62 + Math.cos(time * 0.58) * 0.25, 250, 32, 'rgba(232, 168, 86, 0.11)');
+      const wash = ctx.createLinearGradient(0, 20, SCREEN_W, SCREEN_H);
+      wash.addColorStop(0, 'rgba(46, 196, 214, 0.08)');
+      wash.addColorStop(0.55, 'rgba(20, 32, 48, 0)');
+      wash.addColorStop(1, 'rgba(212, 148, 82, 0.08)');
+      ctx.fillStyle = wash;
+      ctx.fillRect(0, 20, SCREEN_W, SCREEN_H - 20);
+    } else if (map.theme === 'manga_studio') {
+      // Crisp cyan-teal studio desk light glow
+      safeRadialGlow(ctx, SCREEN_W * 0.5, 96, 115, 'rgba(76, 228, 245, 0.14)', 'rgba(16, 28, 44, 0)');
+    } else if (map.theme === 'noir_cinema') {
+      // Dramatic warm sepia diagonal noir light shafts
+      this.drawLightCone(ctx, 68, 20, 1.15, 210, 30, 'rgba(245, 206, 138, 0.14)');
+      this.drawLightCone(ctx, 210, 20, 1.15, 210, 30, 'rgba(245, 206, 138, 0.10)');
     } else if (map.theme === 'boss_hall') {
       // Majestic golden sanctuary light shafts descending on the Boss
       this.drawLightCone(ctx, SCREEN_W * 0.5 - 32, 20, 1.48, 210, 32, 'rgba(255, 226, 122, 0.18)');
@@ -697,6 +776,13 @@ export class WorldAtmosphere {
         ctx.moveTo(p.x - 3.5, p.y + flap);
         ctx.lineTo(p.x, p.y);
         ctx.lineTo(p.x + 3.5, p.y + flap);
+        ctx.stroke();
+      } else if (p.kind === 'rain') {
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.size * 0.32, p.y + p.size);
         ctx.stroke();
       }
     }

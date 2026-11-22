@@ -1,6 +1,7 @@
 import { FAMILY_PAIRS, MODE_ORDER } from '../data/familyAvatars';
 import { drawBadgeIcon, drawOverworldSprite, drawPortrait } from './pixelRenderer';
 import {
+  drawFittedSingleLine,
   drawPanelBox,
   drawRoundRectPath,
   drawStarPath,
@@ -138,11 +139,13 @@ export class DialogueController {
 }
 
 export function getModeCardRects() {
+  // Balanced festive 5-card layout inside 384x240: 3 cards on top row + 2 centered on bottom row
   return [
-    { x: 12, y: 36, w: 174, h: 93 },
-    { x: 198, y: 36, w: 174, h: 93 },
-    { x: 12, y: 137, w: 174, h: 93 },
-    { x: 198, y: 137, w: 174, h: 93 },
+    { x: 10, y: 36, w: 116, h: 93 },
+    { x: 134, y: 36, w: 116, h: 93 },
+    { x: 258, y: 36, w: 116, h: 93 },
+    { x: 70, y: 137, w: 116, h: 93 },
+    { x: 198, y: 137, w: 116, h: 93 },
   ];
 }
 
@@ -288,28 +291,32 @@ export function renderModeSelectScreen(
   ctx.fillRect(0, 30, MG_W, 0.9);
 
   // Header Title & Completion Pill
+  const totalModes = MODE_ORDER.length;
   const clearedCount = MODE_ORDER.filter((m) => save.modes[m].bossDefeated).length;
+  const allCleared = clearedCount === totalModes;
   ctx.fillStyle = '#fff0bc';
   ctx.font = 'bold 10.5px system-ui, -apple-system, "Segoe UI", sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText('Choisissez votre binôme', 14, 20.5);
 
-  const badgeText = clearedCount === 4 ? '★ 4/4 • JOYEUX NOËL !' : `★ ${clearedCount}/4`;
+  const badgeText = allCleared
+    ? `★ ${totalModes}/${totalModes} • JOYEUX NOËL !`
+    : `★ ${clearedCount}/${totalModes}`;
   ctx.font = 'bold 8.2px system-ui, -apple-system, "Segoe UI", sans-serif';
   const pillW = Math.ceil(ctx.measureText(badgeText).width) + 14;
   const pillX = MG_W - 12 - pillW;
-  ctx.fillStyle = clearedCount === 4 ? 'rgba(46, 128, 76, 0.45)' : 'rgba(244, 206, 118, 0.14)';
+  ctx.fillStyle = allCleared ? 'rgba(46, 128, 76, 0.45)' : 'rgba(244, 206, 118, 0.14)';
   drawRoundRectPath(ctx, pillX, 13.5, pillW, 13, 6.5);
   ctx.fill();
-  ctx.strokeStyle = clearedCount === 4 ? '#79f59d' : 'rgba(244, 206, 118, 0.55)';
+  ctx.strokeStyle = allCleared ? '#79f59d' : 'rgba(244, 206, 118, 0.55)';
   ctx.lineWidth = 0.8;
   ctx.stroke();
-  ctx.fillStyle = clearedCount === 4 ? '#9bffb8' : '#ffe69a';
+  ctx.fillStyle = allCleared ? '#9bffb8' : '#ffe69a';
   ctx.textAlign = 'center';
   ctx.fillText(badgeText, pillX + pillW / 2, 20.2);
 
-  // 3. 2×2 Gift / Polaroid Collector Cards (Zero Theme Spoilers!)
+  // 3. 3+2 Gift / Polaroid Collector Cards (Zero Theme Spoilers!)
   const rects = getModeCardRects();
   MODE_ORDER.forEach((modeId, idx) => {
     const pair = FAMILY_PAIRS[modeId];
@@ -357,15 +364,15 @@ export function renderModeSelectScreen(
     ctx.clip();
     const ribGrad = ctx.createLinearGradient(x, y, x + w, y);
     ribGrad.addColorStop(0, pair.primaryColor);
-    ribGrad.addColorStop(1, selected ? pair.primaryColor : pair.primaryColor);
+    ribGrad.addColorStop(1, pair.primaryColor);
     ctx.fillStyle = ribGrad;
-    ctx.fillRect(x, y, w, 17);
+    ctx.fillRect(x, y, w, 16);
     // Subtle ribbon sheen
     ctx.fillStyle = 'rgba(255, 255, 255, 0.13)';
     ctx.fillRect(x, y, w, 5);
     // Thin gold ribbon trim
     ctx.fillStyle = 'rgba(255, 228, 148, 0.55)';
-    ctx.fillRect(x, y + 16.2, w, 0.9);
+    ctx.fillRect(x, y + 15.2, w, 0.9);
     ctx.restore();
 
     // Card border
@@ -374,30 +381,34 @@ export function renderModeSelectScreen(
     drawRoundRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 8);
     ctx.stroke();
 
-    // Pair Name on ribbon + delicate golden gift bow
+    // Pair Name on ribbon + delicate golden gift bow (fitted cleanly inside 116px card)
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 9.2px system-ui, -apple-system, "Segoe UI", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(pair.label, x + 9, y + 8.8);
+    drawFittedSingleLine(ctx, pair.label, x + 6, y + 8.3, w - (modeSave.bossDefeated ? 26 : 22), {
+      preferredSize: 8.2,
+      minSize: 6.2,
+      weight: 'bold',
+      align: 'left',
+      baseline: 'middle',
+    });
 
     if (modeSave.bossDefeated) {
       ctx.fillStyle = '#ffe588';
-      ctx.font = 'bold 7.8px system-ui, -apple-system, "Segoe UI", sans-serif';
+      ctx.font = 'bold 7.4px system-ui, -apple-system, "Segoe UI", sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText('★ ROI', x + w - 8, y + 8.8);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★ ROI', x + w - 5, y + 8.3);
     } else {
-      drawGiftBow(ctx, x + w - 14, y + 8.5);
+      drawGiftBow(ctx, x + w - 11, y + 8.2);
     }
 
     // Two Polaroid-framed HD Family Portraits
     const [mA, mB] = pair.members;
-    const pSize = 46;
+    const pSize = 42;
     const frameW = pSize + 4;
     const frameH = pSize + 7;
-    const pAy = y + 21.5;
-    const pAx = x + Math.floor(w / 2) - frameW - 4;
-    const pBx = x + Math.floor(w / 2) + 4;
+    const pAy = y + 20.5;
+    const pAx = x + Math.floor(w / 2) - frameW - 3;
+    const pBx = x + Math.floor(w / 2) + 3;
 
     const drawPolaroid = (
       fx: number,
@@ -432,39 +443,15 @@ export function renderModeSelectScreen(
       ctx.restore();
     };
 
-    drawPolaroid(pAx, pAy, mA, -0.028);
-    drawPolaroid(pBx, pAy, mB, 0.028);
-
-    // Cute animated duo sprites hopping beside the polaroids on the selected card!
-    if (selected) {
-      const hopA = Math.abs(Math.sin(timer * 5.2)) * 3;
-      const hopB = Math.abs(Math.sin(timer * 5.2 + 1.2)) * 3;
-      const walkFrame = Math.floor(timer * 4.5) % 3;
-      drawOverworldSprite(
-        ctx,
-        mA.appearance,
-        'down',
-        walkFrame,
-        x + 8,
-        y + 42 - hopA,
-        mA.customSpriteSheetUrl
-      );
-      drawOverworldSprite(
-        ctx,
-        mB.appearance,
-        'down',
-        (walkFrame + 1) % 3,
-        x + w - 24,
-        y + 42 - hopB,
-        mB.customSpriteSheetUrl
-      );
-    }
+    drawPolaroid(pAx, pAy, mA, -0.025);
+    drawPolaroid(pBx, pAy, mB, 0.025);
 
     // 12 Mini Golden Badge Stars + Discrete Counter at Bottom of Card
     const count = modeSave.badges.length;
-    const starY = y + h - 8.5;
-    const starStartX = x + 15;
-    const starStep = 10.2;
+    const starY = y + h - 15.5;
+    const starStep = 7.6;
+    const starSpan = 11 * starStep;
+    const starStartX = x + (w - starSpan) / 2;
     for (let s = 0; s < 12; s++) {
       const sx = starStartX + s * starStep;
       const earned = s < count;
@@ -472,21 +459,21 @@ export function renderModeSelectScreen(
         const shimmer = 0.85 + 0.15 * Math.sin(timer * 4 + s * 0.7);
         ctx.fillStyle = modeSave.bossDefeated ? '#fff099' : '#ffd54f';
         ctx.globalAlpha = shimmer;
-        drawStarPath(ctx, sx, starY, 3.6, 1.65, 5);
+        drawStarPath(ctx, sx, starY, 3.0, 1.38, 5);
         ctx.fill();
         ctx.globalAlpha = 1;
       } else {
         ctx.fillStyle = selected ? '#3b4870' : '#2a3352';
-        drawStarPath(ctx, sx, starY, 3.0, 1.35, 5);
+        drawStarPath(ctx, sx, starY, 2.55, 1.15, 5);
         ctx.fill();
       }
     }
 
     ctx.fillStyle = count > 0 || selected ? '#ffe699' : '#96a5cf';
-    ctx.font = 'bold 7.6px system-ui, -apple-system, "Segoe UI", sans-serif';
-    ctx.textAlign = 'right';
+    ctx.font = 'bold 6.9px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(modeSave.bossDefeated ? '12/12 ★' : `${count}/12`, x + w - 9, starY + 0.4);
+    ctx.fillText(modeSave.bossDefeated ? '12/12 ★' : `${count}/12`, x + w / 2, y + h - 6.2);
 
     ctx.restore();
   });

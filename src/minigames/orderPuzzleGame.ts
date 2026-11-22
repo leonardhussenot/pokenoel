@@ -1,6 +1,6 @@
 import { soundEngine } from '../audio/soundEngine';
 import { InputManager } from '../engine/input';
-import { OrderPuzzleChallengeConfig, OrderRound } from '../types';
+import { ChallengeMistake, OrderPuzzleChallengeConfig, OrderRound } from '../types';
 import {
   drawFittedSingleLine,
   drawFittedWrappedText,
@@ -55,6 +55,11 @@ export class OrderPuzzleGame implements MiniGameInstance {
   private wrongHintText = '';
   private wrongHintTimer = 0;
   private particles: MgParticle[] = [];
+  private mistakes: ChallengeMistake[] = [];
+
+  getMistakes(): ChallengeMistake[] {
+    return [...this.mistakes];
+  }
 
   constructor(private cfg: OrderPuzzleChallengeConfig) {
     this.rounds = cfg.rounds;
@@ -285,6 +290,47 @@ export class OrderPuzzleGame implements MiniGameInstance {
     this.lives = Math.max(0, this.lives - 1);
     this.shakeTimer = 0.36;
     soundEngine.playHitMiss();
+
+    // Capture exact inverted pairs from the player's submitted order (adjacent inversions first)
+    const round = this.rounds[this.roundIndex];
+    const chronoSignal = `${round.hintLabels?.join(' ') ?? ''} ${round.prompt}`.toLowerCase();
+    const chronological = /tôt|tard|ancien|récent|chronolog|sortie|date|année|siècle|carrière|film/.test(
+      chronoSignal
+    );
+    const latestMistakes: ChallengeMistake[] = [];
+    const seenPairs = new Set<string>();
+    const addInversion = (earlier: string, later: string) => {
+      const key = `${earlier}|||${later}`;
+      if (seenPairs.has(key) || latestMistakes.length >= 4) return;
+      seenPairs.add(key);
+      latestMistakes.push({
+        kind: 'order_puzzle',
+        earlierItem: earlier,
+        laterItem: later,
+        chronological,
+      });
+    };
+    // Pass 1: adjacent inversions (most directly confusing pairs!)
+    for (let i = 0; i < this.slots.length - 1; i++) {
+      const a = this.slots[i];
+      const b = this.slots[i + 1];
+      if (a.correctPos > b.correctPos) {
+        addInversion(b.text, a.text);
+      }
+    }
+    // Pass 2: non-adjacent inversions if fewer than 3 found
+    for (let i = 0; i < this.slots.length && latestMistakes.length < 3; i++) {
+      for (let j = i + 2; j < this.slots.length && latestMistakes.length < 3; j++) {
+        const a = this.slots[i];
+        const b = this.slots[j];
+        if (a.correctPos > b.correctPos) {
+          addInversion(b.text, a.text);
+        }
+      }
+    }
+    if (latestMistakes.length > 0) {
+      this.mistakes = latestMistakes;
+    }
 
     if (this.lives <= 0) {
       this.result = 'lost';

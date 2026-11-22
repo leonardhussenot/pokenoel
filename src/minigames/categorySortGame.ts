@@ -1,6 +1,6 @@
 import { soundEngine } from '../audio/soundEngine';
 import { InputManager } from '../engine/input';
-import { CategorySortChallengeConfig, CategorySortItem } from '../types';
+import { CategorySortChallengeConfig, CategorySortItem, ChallengeMistake } from '../types';
 import {
   drawFittedSingleLine,
   drawFittedWrappedText,
@@ -73,6 +73,11 @@ export class CategorySortGame implements MiniGameInstance {
   bucketCounts: number[];
   revealTimer = 0;
   lastCorrect = false;
+  private mistakes: ChallengeMistake[] = [];
+
+  getMistakes(): ChallengeMistake[] {
+    return [...this.mistakes];
+  }
   lastPickedBucket: number | null = null;
   result: 'playing' | 'won' | 'lost' = 'playing';
 
@@ -201,10 +206,29 @@ export class CategorySortGame implements MiniGameInstance {
       this.spawnBucketBurst(targetR.x + targetR.w / 2, targetR.y + targetR.h / 2, '#66f28d', 15);
       soundEngine.playHitPerfect();
     } else {
+      const wrongCategory = this.cfg.categories[bucketIdx] ?? '';
+      const correctCategory = this.cfg.categories[correctBucket] ?? '';
+      if (item.label && wrongCategory && correctCategory) {
+        const already = this.mistakes.some(
+          (m) =>
+            m.kind === 'category_sort' &&
+            m.itemLabel === item.label &&
+            m.wrongCategory === wrongCategory
+        );
+        if (!already) {
+          this.mistakes.unshift({
+            kind: 'category_sort',
+            itemLabel: item.label,
+            wrongCategory,
+            correctCategory,
+          });
+        }
+      }
+      const pickedR = bucketRects[bucketIdx] ?? targetR;
       this.lives = Math.max(0, this.lives - 1);
       this.itemOutcomes[this.itemIndex] = 'wrong';
       this.shakeTimer = 0.36;
-      this.spawnBucketBurst(targetR.x + targetR.w / 2, targetR.y + targetR.h / 2, '#ff8a96', 12);
+      this.spawnBucketBurst(pickedR.x + pickedR.w / 2, pickedR.y + pickedR.h / 2, '#ff8a96', 12);
       soundEngine.playHitMiss();
     }
   }
@@ -420,7 +444,7 @@ export class CategorySortGame implements MiniGameInstance {
       const r = bucketRects[i];
       const rx = r.x + shakeX;
       const isCursor = !inReveal && this.cursor === i;
-      const isTrueBucket = inReveal && i === correctBucket;
+      const isTrueBucket = inReveal && this.lastCorrect && i === correctBucket;
       const isWrongPick = inReveal && i === this.lastPickedBucket && !this.lastCorrect;
       const dimmed = inReveal && !isTrueBucket && !isWrongPick;
       const pop = this.bucketPopTimers[i] > 0 ? Math.round(Math.sin((this.bucketPopTimers[i] / 0.35) * Math.PI) * 3) : 0;
@@ -575,10 +599,10 @@ export class CategorySortGame implements MiniGameInstance {
     // Particles
     drawMgParticles(ctx, this.particles);
 
-    // Reveal Explanation Toast (y = 56..138, leaves all buckets 100% visible below!)
+    // Reveal Toast (show right category & explanation ONLY on correct pick; never spoil on wrong pick!)
     if (inReveal && item) {
       const boxY = 56;
-      const boxH = 82;
+      const boxH = this.lastCorrect ? 82 : 60;
       const accentColor = this.lastCorrect ? '#66f28d' : '#ff8a96';
       const rightCatName = this.cfg.categories[correctBucket];
 
@@ -592,9 +616,7 @@ export class CategorySortGame implements MiniGameInstance {
       ctx.fillStyle = accentColor;
       drawFittedSingleLine(
         ctx,
-        this.lastCorrect
-          ? `★ BIEN CLASSÉ : ${rightCatName} ★`
-          : `✗ C’ÉTAIT : ${rightCatName}`,
+        this.lastCorrect ? `★ BIEN CLASSÉ : ${rightCatName} ★` : '✗ MAUVAISE CATÉGORIE !',
         MG_W / 2,
         boxY + 11,
         MG_W - 44,
@@ -611,24 +633,43 @@ export class CategorySortGame implements MiniGameInstance {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
       ctx.fillRect(26, boxY + 21, MG_W - 52, 1);
 
-      // Subtle card label reminder + explanation
-      ctx.fillStyle = '#ffe58f';
-      drawFittedSingleLine(ctx, `« ${item.label} »`, 24, boxY + 28, MG_W - 48, {
-        preferredSize: 7.4,
-        minSize: 6.2,
-        weight: 'bold',
-        family: 'sans-serif',
-        align: 'left',
-        baseline: 'middle',
-      });
+      if (this.lastCorrect) {
+        // Subtle card label reminder + explanation
+        ctx.fillStyle = '#ffe58f';
+        drawFittedSingleLine(ctx, `« ${item.label} »`, 24, boxY + 28, MG_W - 48, {
+          preferredSize: 7.4,
+          minSize: 6.2,
+          weight: 'bold',
+          family: 'sans-serif',
+          align: 'left',
+          baseline: 'middle',
+        });
 
-      ctx.fillStyle = '#f4f7ff';
-      drawFittedWrappedText(ctx, item.explanation, 24, boxY + 35, MG_W - 48, boxH - 48, {
-        preferredSize: 7.9,
-        minSize: 6.2,
-        weight: '600',
-        lineHeightRatio: 1.28,
-      });
+        ctx.fillStyle = '#f4f7ff';
+        drawFittedWrappedText(ctx, item.explanation, 24, boxY + 35, MG_W - 48, boxH - 48, {
+          preferredSize: 7.9,
+          minSize: 6.2,
+          weight: '600',
+          lineHeightRatio: 1.28,
+        });
+      } else {
+        ctx.fillStyle = '#f4f7ff';
+        drawFittedWrappedText(
+          ctx,
+          'Vous perdez 1 cœur ! Cet élément ne va pas dans cette catégorie.',
+          MG_W / 2,
+          boxY + 25,
+          MG_W - 48,
+          boxH - 36,
+          {
+            preferredSize: 8.1,
+            minSize: 6.4,
+            weight: '600',
+            lineHeightRatio: 1.26,
+            align: 'center',
+          }
+        );
+      }
 
       if (this.revealElapsed >= 0.4) {
         const pAlpha = 0.6 + 0.4 * Math.sin(this.elapsed * 7);

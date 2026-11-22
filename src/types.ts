@@ -1,4 +1,4 @@
-export type ModeId = 'pm' | 'df' | 'jp' | 'aj';
+export type ModeId = 'pm' | 'df' | 'jp' | 'aj' | 'sd';
 
 export type Direction = 'down' | 'up' | 'left' | 'right';
 
@@ -13,6 +13,8 @@ export type InteriorTheme =
   | 'darkroom'
   | 'stadium'
   | 'court'
+  | 'manga_studio'
+  | 'noir_cinema'
   | 'boss_hall';
 
 export type TileType =
@@ -168,7 +170,9 @@ export type FamilyMemberId =
   | 'juliette'
   | 'pierre'
   | 'alexis'
-  | 'joseph';
+  | 'joseph'
+  | 'sam'
+  | 'denis';
 
 export interface FamilyMember {
   id: FamilyMemberId;
@@ -267,7 +271,9 @@ export type ReflectionTheme =
   | 'gastronomy'
   | 'photography'
   | 'football'
-  | 'basketball';
+  | 'basketball'
+  | 'manga'
+  | 'polar';
 
 export interface QuizQuestion {
   question: string;
@@ -498,7 +504,7 @@ export interface WorldDefinition {
   modeId: ModeId;
   worldName: string;
   subtitle: string;
-  bgmId: 'world_pm' | 'world_df' | 'world_jp' | 'world_aj';
+  bgmId: 'world_pm' | 'world_df' | 'world_jp' | 'world_aj' | 'world_sd';
   overworldId: string;
   spawnX: number;
   spawnY: number;
@@ -511,6 +517,43 @@ export interface WorldDefinition {
   bossBadge: BadgeDef;
 }
 
+export type ChallengeMistake =
+  | {
+      kind: 'order_puzzle';
+      earlierItem: string;
+      laterItem: string;
+      chronological: boolean;
+    }
+  | {
+      kind: 'pair_match';
+      leftText: string;
+      wrongRightText: string;
+      correctRightText: string;
+    }
+  | {
+      kind: 'intruder_hunt';
+      pickedItem: string;
+      intruderItem: string;
+    }
+  | {
+      kind: 'category_sort';
+      itemLabel: string;
+      wrongCategory: string;
+      correctCategory: string;
+    }
+  | {
+      kind: 'quiz';
+      question: string;
+      wrongAnswer: string;
+      correctAnswer: string;
+    }
+  | {
+      kind: 'riddle_word';
+      clue: string;
+      wrongAnswer: string;
+      correctAnswer: string;
+    };
+
 export interface ModeSaveData {
   badges: string[];
   bossDefeated: boolean;
@@ -521,6 +564,7 @@ export interface ModeSaveData {
   lastMapId: string;
   lastX: number;
   lastY: number;
+  failedMistakes?: Record<string, ChallengeMistake[]>;
 }
 
 export interface GlobalSaveData {

@@ -976,7 +976,7 @@ describe('PokéNoël : Tests unitaires des 6 moteurs de réflexion & quiz', () =
   });
 });
 
-describe('PokéNoël : Simulation bout-en-bout (Victoire + Défaite + Rendu) des 60 phases & 4 Boss', () => {
+describe('PokéNoël : Simulation bout-en-bout (Victoire + Défaite + Rendu) des 75 phases & 5 Boss', () => {
   const ctx = createMockCtx();
   const seenThemeStyles = new Set<string>();
   const seenKinds = new Set<SingleChallengeConfig['kind']>();
@@ -1171,8 +1171,8 @@ describe('PokéNoël : Simulation bout-en-bout (Victoire + Défaite + Rendu) des
     });
   }
 
-  it('vérifie que les 60 phases utilisent uniquement les 6 genres réflexion/quiz et couvrent les 8 scènes thématiques', () => {
-    expect(totalSimulatedPhases).toBe(60);
+  it('vérifie que les 75 phases utilisent uniquement les 6 genres réflexion/quiz et couvrent les 10 scènes thématiques', () => {
+    expect(totalSimulatedPhases).toBe(75);
     const expectedKinds: SingleChallengeConfig['kind'][] = [
       'quiz',
       'riddle_word',
@@ -1195,13 +1195,15 @@ describe('PokéNoël : Simulation bout-en-bout (Victoire + Défaite + Rendu) des
       'photography',
       'football',
       'basketball',
+      'manga',
+      'polar',
     ];
     for (const theme of expectedThemes) {
       expect(seenThemeStyles.has(theme), `Le décor thématique ${theme} doit être utilisé`).toBe(true);
     }
   });
 
-  it('rend sans erreur toutes les tuiles des 4 mondes & intérieurs, les 8 avatars famille, les PNJ et les 52 badges', () => {
+  it('rend sans erreur toutes les tuiles des 5 mondes & intérieurs, les 10 avatars famille, les PNJ et les 65 badges', () => {
     for (const member of Object.values(FAMILY_MEMBERS)) {
       drawPortrait(ctx, member.appearance, member.portrait, 0, 0, 48, member.customPortraitUrl);
       for (const dir of ['down', 'up', 'left', 'right'] as const) {

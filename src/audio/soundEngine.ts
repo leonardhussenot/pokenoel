@@ -4,6 +4,7 @@ export type BgmTrackId =
   | 'world_df'
   | 'world_jp'
   | 'world_aj'
+  | 'world_sd'
   | 'battle'
   | 'boss'
   | 'victory';
@@ -190,6 +191,38 @@ const TRACKS: Record<BgmTrackId, TrackDef> = {
       3, 1, 2, 1, 3, 1, 2, 1,
       3, 1, 2, 1, 3, 1, 2, 2,
       3, 1, 2, 1, 3, 3, 2, 1,
+    ],
+  },
+
+  // Mode SD: Stylish Synth-Noir & Cyberpunk Manga Detective groove (A minor / C major)
+  world_sd: {
+    stepMs: 128,
+    leadWave: 'triangle',
+    bassWave: 'sawtooth',
+    arpWave: 'square',
+    lead: [
+      E5, R, Eb5, E5, G5, R, E5, R,
+      D5, R, C5, B4, A4, R, E5, R,
+      F5, R, E5, D5, C5, R, B4, C5,
+      E5, R, D5, B4, A4, R, R, R,
+    ],
+    bass: [
+      A3, R, A3, R, G3, R, E3, R,
+      F3, R, F3, R, E3, R, E3, R,
+      D3, R, D3, R, C3, R, B3, R,
+      E3, R, E3, G3, A3, R, E3, R,
+    ],
+    arp: [
+      C4, E4, A4, E4, B3, E4, G4, E4,
+      A3, C4, F4, C4, B3, E4, G4, E4,
+      A3, D4, F4, D4, G3, C4, E4, C4,
+      B3, E4, Ab5, E4, C4, E4, A4, R,
+    ],
+    perc: [
+      3, 1, 0, 1, 2, 1, 1, 0,
+      3, 1, 0, 1, 2, 0, 1, 1,
+      3, 1, 0, 1, 2, 1, 1, 0,
+      3, 1, 2, 1, 3, 0, 2, 1,
     ],
   },
 
