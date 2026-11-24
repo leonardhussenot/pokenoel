@@ -600,15 +600,15 @@ export class PokeNoelGame {
           }
         }
         if (this.input.justPressed('left')) {
-          const leftMap = [2, 0, 1, 4, 3];
+          const leftMap = [1, 0, 4, 2, 3];
           this.modeCursor = leftMap[this.modeCursor] ?? 0;
           soundEngine.playSelect();
         } else if (this.input.justPressed('right')) {
-          const rightMap = [1, 2, 0, 4, 3];
+          const rightMap = [1, 0, 3, 4, 2];
           this.modeCursor = rightMap[this.modeCursor] ?? 0;
           soundEngine.playSelect();
         } else if (this.input.justPressed('up') || this.input.justPressed('down')) {
-          const vertMap = [3, 3, 4, 0, 2];
+          const vertMap = [2, 4, 0, 0, 1];
           this.modeCursor = vertMap[this.modeCursor] ?? 0;
           soundEngine.playSelect();
         }

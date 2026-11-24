@@ -178,44 +178,16 @@ export class DialogueController {
 }
 
 export function getModeCardRects() {
-  // Balanced festive 5-card layout inside 384x240: 3 cards on top row + 2 centered on bottom row
+  // Balanced festive 5-card layout inside 384x240:
+  // Top row: 2 centered cards — wider trio card (168px) + duo card (116px) so every portrait & name has the exact same size
+  // Bottom row: 3 duo cards (116px each)
   return [
-    { x: 10, y: 36, w: 116, h: 93 },
-    { x: 134, y: 36, w: 116, h: 93 },
-    { x: 258, y: 36, w: 116, h: 93 },
-    { x: 70, y: 137, w: 116, h: 93 },
-    { x: 198, y: 137, w: 116, h: 93 },
+    { x: 44, y: 36, w: 168, h: 93 },
+    { x: 224, y: 36, w: 116, h: 93 },
+    { x: 10, y: 137, w: 116, h: 93 },
+    { x: 134, y: 137, w: 116, h: 93 },
+    { x: 258, y: 137, w: 116, h: 93 },
   ];
-}
-
-function drawGiftBow(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
-  ctx.save();
-  ctx.strokeStyle = '#ffe58f';
-  ctx.fillStyle = 'rgba(246, 206, 108, 0.28)';
-  ctx.lineWidth = 1.15;
-  // Left loop
-  ctx.beginPath();
-  ctx.ellipse(cx - 3.6, cy, 3.4, 2.0, -0.25, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  // Right loop
-  ctx.beginPath();
-  ctx.ellipse(cx + 3.6, cy, 3.4, 2.0, 0.25, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  // Tails
-  ctx.beginPath();
-  ctx.moveTo(cx - 1.2, cy + 1.2);
-  ctx.lineTo(cx - 3.5, cy + 4.2);
-  ctx.moveTo(cx + 1.2, cy + 1.2);
-  ctx.lineTo(cx + 3.5, cy + 4.2);
-  ctx.stroke();
-  // Center knot
-  ctx.fillStyle = '#ffe68c';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 1.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
 }
 
 export function getWelcomeContinueButtonRect() {
@@ -590,8 +562,8 @@ export function renderModeSelectScreen(
     drawRoundRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 8);
     ctx.stroke();
 
-    // Pair Name on ribbon + delicate golden gift bow (fitted cleanly inside 116px card without overlap)
-    let labelMaxW = w - 26;
+    // Team name on ribbon (same font size across all 5 cards, including the wider trio card)
+    let labelMaxW = w - 12;
     if (modeSave.bossDefeated) {
       ctx.font = 'bold 7.4px system-ui, -apple-system, "Segoe UI", sans-serif';
       const roiW = Math.ceil(ctx.measureText('★ ROI').width);
@@ -599,7 +571,7 @@ export function renderModeSelectScreen(
     }
     ctx.fillStyle = '#ffffff';
     drawFittedSingleLine(ctx, pair.label, x + 6, y + 8.3, labelMaxW, {
-      preferredSize: pair.members.length > 2 ? 7.4 : 8.2,
+      preferredSize: 8.2,
       minSize: 5.4,
       weight: 'bold',
       align: 'left',
@@ -612,20 +584,18 @@ export function renderModeSelectScreen(
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       ctx.fillText('★ ROI', x + w - 5, y + 8.3);
-    } else {
-      drawGiftBow(ctx, x + w - 11, y + 8.2);
     }
 
-    // Two or three Polaroid-framed HD Family Portraits
+    // Two or three Polaroid-framed HD Family Portraits (identical size for duos and trio!)
     const members = pair.members;
     const isTrio = members.length >= 3;
-    const pSize = isTrio ? 31 : 42;
-    const frameW = pSize + (isTrio ? 3.5 : 4);
-    const frameH = pSize + (isTrio ? 6 : 7);
-    const gap = isTrio ? 2 : 6;
+    const pSize = 42;
+    const frameW = pSize + 4;
+    const frameH = pSize + 7;
+    const gap = 6;
     const totalW = members.length * frameW + (members.length - 1) * gap;
     const startPx = x + (w - totalW) / 2;
-    const pAy = isTrio ? y + 25 : y + 20.5;
+    const pAy = y + 20.5;
 
     const drawPolaroid = (
       fx: number,

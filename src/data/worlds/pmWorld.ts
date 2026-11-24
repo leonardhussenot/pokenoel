@@ -162,7 +162,7 @@ const BOSS_BADGE: BadgeDef = {
   icon: 'crown',
   color: '#c92a42',
   rimColor: '#ffd94d',
-  description: 'Trophée suprême décerné par Molière à Pola & Marguerite !',
+  description: 'Trophée suprême décerné par Molière à Pola, Marguerite & Pierre !',
 };
 
 export function createPmWorld(): WorldDefinition {
@@ -214,14 +214,14 @@ export function createPmWorld(): WorldDefinition {
         prop: 'quill',
       },
       introLines: [
-        'Bienvenue dans mon clair-obscur, Pola et Marguerite ! Mon chat noir sommeille sur mes feuillets, et toute la poésie du XIXe siècle s’est mêlée sur mon bureau.',
+        'Bienvenue dans mon clair-obscur, Pola, Marguerite et Pierre ! Mon chat noir sommeille sur mes feuillets, et toute la poésie du XIXe siècle s’est mêlée sur mon bureau.',
         'Classez d’abord six grands recueils de poésie française par année de parution, puis reconstituez l’architecture secrète des six sections des Fleurs du Mal !',
       ],
       alreadyWonLines: [
         'Même mon albatros applaudit des deux ailes ! Votre sens de l’ordre poétique a chassé mon spleen jusqu’à mardi prochain.',
       ],
       winLines: [
-        '« Là, tout n’est qu’ordre et beauté, luxe, calme et volupté ! » Recevez ce Badge Fleurs du Mal, dignes héritières du vers.',
+        '« Là, tout n’est qu’ordre et beauté, luxe, calme et volupté ! » Recevez ce Badge Fleurs du Mal, dignes héritiers du vers.',
       ],
       loseLines: [
         'Aïe ! Les recueils et les sections se sont brouillés sous la pluie du spleen… Reprenez vos repères littéraires et remettez de l’ordre dans mes manuscrits !',
@@ -305,7 +305,7 @@ export function createPmWorld(): WorldDefinition {
         prop: 'quill',
       },
       introLines: [
-        'Entrez donc à Nohant, chères amies ! En pantalon, cigare éteint et plume affûtée, je défie les conventions depuis 1831 !',
+        'Entrez donc à Nohant, chers amis ! En pantalon, cigare éteint et plume affûtée, je défie les conventions depuis 1831 !',
         'Frédéric Chopin accorde le piano à côté : répondez à mon entretien littéraire pour décrocher le Badge Nohant !',
       ],
       alreadyWonLines: [
@@ -426,7 +426,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Vos correspondances se sont embrouillées dans le brouillard de Charleville ! Relisez mes vers et associez-les avec clairvoyance.',
       ],
-      duoWinReaction: 'Pola : « A noir, E blanc, I rouge, U vert, O bleu — et de Nerval à Mallarmé, sans faute ! »',
+      duoWinReaction: 'Pierre : « A noir, E blanc, I rouge, U vert, O bleu — et de Nerval à Mallarmé, sans faute ! »',
       notebookBio: 'Poète fulgurant des Voyelles, des Illuminations et d’Une saison en enfer dès ses 17 ans.',
       challenge: {
         kind: 'pair_match',
@@ -504,7 +504,7 @@ export function createPmWorld(): WorldDefinition {
         'Quatre pièges très subtils du théâtre du Grand Siècle se sont glissés dans nos registres : saurez-vous tous les démasquer ?',
       ],
       alreadyWonLines: [
-        'Quel œil de directrice de troupe ! Aucun intrus ne vous échappe sur nos planches !',
+        'Quel œil affûté ! Aucun intrus ne vous échappe sur nos planches !',
       ],
       winLines: [
         'Tonnerre d’applaudissements ! Voici le Badge Illustre-Théâtre, place aux grandes scènes !',
@@ -512,7 +512,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Ho là, un intrus s’est faufilé derrière le rideau ! Observez bien nos coulisses du Grand Siècle et recommencez.',
       ],
-      duoWinReaction: 'Marguerite : « De Montfleury au Menteur de Corneille, aucun intrus du Grand Siècle ne nous échappe ! »',
+      duoWinReaction: 'Pola : « De Montfleury au Menteur de Corneille, aucun intrus du Grand Siècle ne nous échappe ! »',
       notebookBio: 'Actrice, directrice et cofondatrice de l’Illustre-Théâtre avec Molière en 1643.',
       challenge: {
         kind: 'intruder_hunt',
@@ -607,8 +607,8 @@ export function createPmWorld(): WorldDefinition {
         prop: 'script',
       },
       introLines: [
-        '« La liberté commence où l’ignorance finit ! » Bonjour Pola et Marguerite — oubliez les questions faciles d’école, ici on entre au Panthéon des grands textes !',
-        'Saurez-vous identifier mes manifestes, drames, pamphlets d’exil et fresques épiques derrière ces énigmes d’expertes ?',
+        '« La liberté commence où l’ignorance finit ! » Bonjour Pola, Marguerite et Pierre — oubliez les questions faciles d’école, ici on entre au Panthéon des grands textes !',
+        'Saurez-vous identifier mes manifestes, drames, pamphlets d’exil et fresques épiques derrière ces énigmes d’experts ?',
       ],
       alreadyWonLines: [
         'Vous avez déchiffré mes fresques avec la fougue d’Hernani ! Mon buste au Panthéon vous salue bien bas.',
@@ -619,7 +619,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Même Gilliatt a dû affronter l’océan avant le triomphe ! Reprenez votre souffle et essayez encore.',
       ],
-      duoWinReaction: 'Pola : « De la Préface de Cromwell à la pieuvre de Gilliatt, Victor Hugo n’a plus de secret ! »',
+      duoWinReaction: 'Marguerite : « De la Préface de Cromwell à la pieuvre de Gilliatt, Victor Hugo n’a plus de secret ! »',
       notebookBio: 'Poète, dramaturge et romancier monumental (Notre-Dame de Paris, Les Misérables, Les Contemplations).',
       challenge: {
         kind: 'riddle_word',
@@ -754,7 +754,7 @@ export function createPmWorld(): WorldDefinition {
       },
       introLines: [
         '« C’est une vérité universellement reconnue… » qu’un salon du Hampshire manque cruellement d’esprit si l’on ne connaît pas ses classiques !',
-        'Installez-vous près de la théière, Pola et Marguerite : répondez à mon quiz littéraire avec finesse pour mériter le Badge Orgueil & Bal !',
+        'Installez-vous près de la théière, Pola, Marguerite et Pierre : répondez à mon quiz littéraire avec finesse pour mériter le Badge Orgueil & Bal !',
       ],
       alreadyWonLines: [
         'Même M. Darcy a esquissé un demi-sourire (ce qui chez lui équivaut à une déclaration enflammée) ! Votre culture a conquis tout Pemberley.',
@@ -765,7 +765,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Oh là là, quel scandale dans le Hertfordshire ! Reprenez une tasse de thé, relisez mes romans et revenez croiser l’ironie.',
       ],
-      duoWinReaction: 'Marguerite : « M. Darcy lui-même n’en revient pas de notre sans-faute à Pemberley ! »',
+      duoWinReaction: 'Pierre : « M. Darcy lui-même n’en revient pas de notre sans-faute à Pemberley ! »',
       notebookBio: 'Romancière anglaise immortelle d’Orgueil et Préjugés, Raison et Sentiments et Emma.',
       challenge: {
         kind: 'quiz',
@@ -873,7 +873,7 @@ export function createPmWorld(): WorldDefinition {
         blush: true,
       },
       introLines: [
-        'Entrez donc sous les arcades du Palais-Royal ! Mes chats occupent tous les fauteuils, mais il reste une place pour deux lectrices curieuses.',
+        'Entrez donc sous les arcades du Palais-Royal ! Mes chats occupent tous les fauteuils, mais il reste de la place pour trois esprits curieux.',
         'Saurez-vous démasquer mes romans, mes souvenirs et mes lieux chéris à travers ces énigmes littéraires ?',
       ],
       alreadyWonLines: [
@@ -1011,7 +1011,7 @@ export function createPmWorld(): WorldDefinition {
         prop: 'script',
       },
       introLines: [
-        'Bienvenue dans mon théâtre, Pola et Marguerite ! Entre mon illustre rival Pierre Corneille et moi-même, le Grand Siècle se partage entre devoir héroïque et passions fatales.',
+        'Bienvenue dans mon théâtre, Pola, Marguerite et Pierre ! Entre mon illustre rival Pierre Corneille et moi-même, le Grand Siècle se partage entre devoir héroïque et passions fatales.',
         'Voici huit grandes tragédies du XVIIe siècle : rendez chacune à son véritable auteur sans commettre d’erreur pour mériter le Badge Alexandrin !',
       ],
       alreadyWonLines: [
@@ -1129,7 +1129,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Oh, tragédie ! Les affiches de ma loge se sont toutes mélangées ! Reprenez votre souffle et reliez-les sans faute.',
       ],
-      duoWinReaction: 'Pola : « De La Tosca à Lorenzaccio et de Mucha à Belle-Île, aucun rôle de la Divine ne nous a échappé ! »',
+      duoWinReaction: 'Pierre : « De La Tosca à Lorenzaccio et de Mucha à Belle-Île, aucun rôle de la Divine ne nous a échappé ! »',
       notebookBio: 'Légende absolue du théâtre français et mondial (1844–1923), célébrée par Victor Hugo et Edmond Rostand.',
       challenge: {
         kind: 'pair_match',
@@ -1207,7 +1207,7 @@ export function createPmWorld(): WorldDefinition {
         'Déchiffrez mes énigmes citoyennes pour prouver votre esprit libre et recevoir le Badge Lumière Citoyenne !',
       ],
       alreadyWonLines: [
-        'Bravo, citoyennes ! Vous connaissez mes combats, mes écrits et mes pièces mieux que toute l’Assemblée !',
+        'Bravo, citoyennes et citoyen ! Vous connaissez mes combats, mes écrits et mes pièces mieux que toute l’Assemblée !',
       ],
       winLines: [
         'Victoire pour la raison et la liberté ! Voici le Badge Lumière Citoyenne.',
@@ -1215,7 +1215,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Point de découragement : la liberté demande de la persévérance ! Reprenez mes écrits et tentez de nouveau.',
       ],
-      duoWinReaction: 'Marguerite : « De Chérubin aux Trois Urnes, Olympe de Gouges avait une audace littéraire et politique vertigineuse ! »',
+      duoWinReaction: 'Pola : « De Chérubin aux Trois Urnes, Olympe de Gouges avait une audace littéraire et politique vertigineuse ! »',
       notebookBio: 'Dramaturge engagée et pionnière des droits humains et des femmes (1748–1793).',
       challenge: {
         kind: 'riddle_word',
@@ -1369,9 +1369,9 @@ export function createPmWorld(): WorldDefinition {
         'À la fin de l’envoi… bravo ! Le Badge Panache brille comme un plumet blanc.',
       ],
       loseLines: [
-        'C’est un peu court, jeune dame ! Relisez vos classiques et revenez remettre ces chefs-d’œuvre en ordre avec panache.',
+        'C’est un peu court, chers amis ! Relisez vos classiques et revenez remettre ces chefs-d’œuvre en ordre avec panache.',
       ],
-      duoWinReaction: 'Pola : « Du Cid de 1637 aux cinq actes de Cyrano — quel panache ! »',
+      duoWinReaction: 'Marguerite : « Du Cid de 1637 aux cinq actes de Cyrano — quel panache ! »',
       notebookBio: 'Auteur triomphal de Cyrano de Bergerac (1897) et L’Aiglon.',
       challenge: {
         kind: 'order_puzzle',
@@ -1460,7 +1460,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Être ou ne pas être prêt… telle est la question ! Revenez vite tenter votre revanche.',
       ],
-      duoWinReaction: 'Marguerite : « Le Barde d’Avon conquis ! Le Badge Globe d’Or brille dans notre carnet ! »',
+      duoWinReaction: 'Pierre : « Le Barde d’Avon conquis ! Le Badge Globe d’Or brille dans notre carnet ! »',
       notebookBio: 'Le plus célèbre dramaturge de langue anglaise : Hamlet, Macbeth, Roméo et Juliette.',
       challenge: {
         kind: 'quiz',
@@ -1575,7 +1575,7 @@ export function createPmWorld(): WorldDefinition {
         'Pour décrocher le Badge Comédie-Royale, il vous faudra triompher de mes TROIS ACTES DE GRAND MAÎTRE : quiz du répertoire royal, énigmes de mes personnages et chronologie de mes chefs-d’œuvre ! Frappez les trois coups !',
       ],
       alreadyWonLines: [
-        'Mes plus grands compliments, Pola et Marguerite ! Même le Malade imaginaire en a retrouvé la santé !',
+        'Mes plus grands compliments, Pola, Marguerite et Pierre ! Même le Malade imaginaire en a retrouvé la santé !',
       ],
       winLines: [
         'Triomphe absolu ! Vous faites de la prose, des vers et du génie sans même y penser ! La Cité des Lettres est à vous !',
@@ -1583,7 +1583,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         '« Que diable allait-il faire dans cette galère ? » Reprenez souffle, révisez mes classiques et rejouez les trois actes !',
       ],
-      duoWinReaction: 'Pola & Marguerite : « Rideau final ! De Vaux-le-Vicomte à 1673, même Molière s’incline ! »',
+      duoWinReaction: 'Pola, Marguerite & Pierre : « Rideau final ! De Vaux-le-Vicomte à 1673, même Molière s’incline ! »',
       notebookBio: 'Jean-Baptiste Poquelin, dit Molière (1622–1673), génie immortel de la comédie française.',
       challenge: {
         kind: 'boss_gauntlet',

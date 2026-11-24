@@ -12,7 +12,7 @@ const CAMEO_SCRIPTS: Record<ModeId, Record<1 | 2 | 3, CameoScript>> = {
     1: {
       pair: 'sd',
       lines: [
-        'Coucou Pola & Marguerite ! Entre les vers de Baudelaire et le Bateau ivre de Rimbaud, on dirait les planches les plus poétiques d’un grand manga !',
+        'Coucou Pola, Marguerite & Pierre ! Entre les vers de Baudelaire et le Bateau ivre de Rimbaud, on dirait les planches les plus poétiques d’un grand manga !',
         'Et ces quais parisiens au crépuscule ont tout d’un décor de roman policier : on s’attend presque à croiser le commissaire Maigret !',
         'Bonne chasse aux quatre premiers badges… et gardez le cap sur la gloire littéraire !',
       ],
@@ -22,7 +22,7 @@ const CAMEO_SCRIPTS: Record<ModeId, Record<1 | 2 | 3, CameoScript>> = {
       lines: [
         'Colette m’a tellement parlé de pêches et de chocolat chaud sur le Quartier des Romanciers que j’en ai déjà l’eau à la bouche !',
         'Et moi, avec cette lumière dorée sur les façades, j’ai failli sortir mon Leica pour cadrer Victor Hugo !',
-        'Cap sur les 8 badges les filles, vous écrivez déjà votre propre chef-d’œuvre !',
+        'Cap sur les 8 badges le trio, vous écrivez déjà votre propre chef-d’œuvre !',
       ],
     },
     3: {
