@@ -10,52 +10,52 @@ interface CameoScript {
 const CAMEO_SCRIPTS: Record<ModeId, Record<1 | 2 | 3, CameoScript>> = {
   pm: {
     1: {
-      pair: 'df',
+      pair: 'sd',
       lines: [
-        'Coucou Pola & Marguerite ! On s’offre un café littéraire sur les quais avant d’aller swinguer sur du choro !',
-        'Méfiez-vous du Bateau ivre de Rimbaud : ça tangue plus fort qu’un gag muet de Buster Keaton !',
-        'Bonne chasse aux quatre premiers badges… et ne laissez pas Baudelaire vous refiler son spleen !',
+        'Coucou Pola & Marguerite ! Entre les vers de Baudelaire et le Bateau ivre de Rimbaud, on dirait les planches les plus poétiques d’un grand manga !',
+        'Et ces quais parisiens au crépuscule ont tout d’un décor de roman policier : on s’attend presque à croiser le commissaire Maigret !',
+        'Bonne chasse aux quatre premiers badges… et gardez le cap sur la gloire littéraire !',
       ],
     },
     2: {
       pair: 'jp',
       lines: [
-        'Regardez cette lumière dorée sur le Quartier des Romanciers… j’ai failli sortir mon Leica pour cadrer Victor Hugo !',
-        'Et Colette m’a tellement parlé de pêches et de chocolat chaud que j’en ai oublié notre régime !',
+        'Colette m’a tellement parlé de pêches et de chocolat chaud sur le Quartier des Romanciers que j’en ai déjà l’eau à la bouche !',
+        'Et moi, avec cette lumière dorée sur les façades, j’ai failli sortir mon Leica pour cadrer Victor Hugo !',
         'Cap sur les 8 badges les filles, vous écrivez déjà votre propre chef-d’œuvre !',
       ],
     },
     3: {
       pair: 'aj',
       lines: [
-        'Franchement, l’escrime de Cyrano sur le Boulevard des Théâtres, ça claque presque autant qu’un contre de Wembanyama !',
-        'Gare aux feintes de Sarah Bernhardt… elle dégaine une réplique plus vite qu’un crochet de Mbappé !',
+        'Franchement, l’escrime de Cyrano sur le Boulevard des Théâtres, ça fuse aussi vite qu’un crochet de Mbappé !',
+        'Gare aux répliques de Sarah Bernhardt… elle vous cloue sur place aussi net qu’un contre de Wembanyama !',
         'Plus que quelques badges avant d’aller affronter Molière sur son trône !',
       ],
     },
   },
   df: {
     1: {
-      pair: 'pm',
+      pair: 'sd',
       lines: [
-        'Soleil sur Copacabana ! Le piano de Chiquinha Gonzaga résonne jusqu’aux quais de la Seine !',
-        'Dominique & Francis, attention chez Chaplin et Keaton : ça file tellement vite qu’on dirait une scène de Feydeau !',
+        'Soleil sur Copacabana, Dominique & Francis ! L’énergie de Chaplin et Keaton a le même rythme fou qu’un grand anime de Studio Trigger !',
+        'Et entre les accords de Chiquinha Gonzaga et les ombres du cinéma muet, on retrouve toute la magie des grands classiques du 7e art !',
         'Ramenez-nous les quatre premiers badges en dansant la samba !',
       ],
     },
     2: {
       pair: 'jp',
       lines: [
-        'Quelle lumière sur Studio Boulevard ! J’ai déjà mitraillé toutes les étoiles du trottoir au 50 mm !',
-        'Et moi je rêve d’une vraie feijoada mijotée après les répliques cultes d’Humphrey Bogart !',
+        'Moi je rêve déjà d’une vraie feijoada mijotée après les répliques cultes d’Humphrey Bogart sur Studio Boulevard !',
+        'Et quelle lumière ici : j’ai déjà mitraillé toutes les étoiles du trottoir au 50 mm !',
         'En route vers les 8 badges ! Silence, moteur… et surtout, action !',
       ],
     },
     3: {
       pair: 'aj',
       lines: [
-        'La Bossa Nova de Tom Jobim est tellement fluide qu’on dirait un tir à 3 points de Curry en pleine lucarne !',
-        'Mais méfiez-vous d’Hitchcock là-haut : son suspense est plus tendu qu’une séance de tirs au but à la 120e !',
+        'Méfiez-vous d’Hitchcock là-haut : son suspense est plus tendu qu’une séance de tirs au but à la 120e !',
+        'Et la Bossa Nova de Tom Jobim est tellement fluide qu’on dirait un tir à 3 points de Curry en plein filet !',
         'Force à vous deux pour la dernière ligne droite, les stars de Rio-Hollywood !',
       ],
     },
@@ -80,8 +80,8 @@ const CAMEO_SCRIPTS: Record<ModeId, Record<1 | 2 | 3, CameoScript>> = {
     3: {
       pair: 'aj',
       lines: [
-        'L’Instant Décisif de Cartier-Bresson, c’est exactement comme déclencher un buzzer beater au dixième de seconde !',
-        'Et sur le passe d’Alain Ducasse, ça court aussi vite qu’une contre-attaque en finale !',
+        'Sur le passe d’Alain Ducasse, ça court aussi vite qu’une contre-attaque en finale de Coupe du monde !',
+        'Et l’Instant Décisif de Cartier-Bresson, c’est exactement comme déclencher un buzzer beater au dixième de seconde !',
         'Allez chercher vos derniers badges… Monsieur Paul Bocuse fait déjà chauffer les fourneaux !',
       ],
     },
@@ -132,8 +132,8 @@ const CAMEO_SCRIPTS: Record<ModeId, Record<1 | 2 | 3, CameoScript>> = {
     3: {
       pair: 'jp',
       lines: [
-        'La photographie noir et blanc de Melville et la Nouvelle Vague de Truffaut… j’ai envie de tout cadrer au 35 mm !',
-        'Et après les nuits cyberpunk d’Akira et de Monster, je vous prépare un bon ramen fumant pour fêter ça !',
+        'Après les nuits cyberpunk d’Akira et de Monster, je vous prépare un bon ramen fumant pour fêter ça !',
+        'Et moi, la photographie noir et blanc de Melville et la Nouvelle Vague de Truffaut… j’ai envie de tout cadrer au 35 mm !',
         'Plus qu’un dernier effort avant d’aller défier Hayao Miyazaki au sommet !',
       ],
     },
@@ -160,6 +160,7 @@ export function buildCameosForWorld(modeId: ModeId): NpcEntity[] {
       dir: 'down',
       appearance: memA.appearance,
       portrait: memA.portrait,
+      customPortraitUrl: memA.customPortraitUrl,
       voicePitch: memA.voicePitch,
       partnerName: memB.name,
       partnerAppearance: memB.appearance,

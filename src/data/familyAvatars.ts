@@ -4,19 +4,21 @@ import dominiquePortraitUrl from '../assets/portraits/dominique.jpg';
 import francisPortraitUrl from '../assets/portraits/francis.jpg';
 import josephPortraitUrl from '../assets/portraits/joseph.jpg';
 import juliettePortraitUrl from '../assets/portraits/juliette.jpg';
+import leoPortraitUrl from '../assets/portraits/leo.jpg';
 import margueritePortraitUrl from '../assets/portraits/marguerite.jpg';
 import pierrePortraitUrl from '../assets/portraits/pierre.jpg';
+import pierre2PortraitUrl from '../assets/portraits/pierre2.jpg';
 import polaPortraitUrl from '../assets/portraits/pola.jpg';
 import samPortraitUrl from '../assets/portraits/sam.jpg';
 import { FamilyMember, FamilyMemberId, FamilyPair, ModeId } from '../types';
 
 /**
- * Avatars de la famille (8 membres).
+ * Avatars de la famille (11 membres).
  *
  * COMMENT PERSONNALISER À PARTIR DE PHOTOS :
  * 1) Ajustez directement `appearance` (couleurs, coiffure, lunettes, barbe, chapeau, tenue)
  *    et `portrait` ci-dessous, OU
- * 2) Renseignez `customPortraitUrl` (image PNG/DataURL 48x48 pixelisée) et/ou
+ * 2) Renseignez `customPortraitUrl` (image JPG/PNG ou Data URL) et/ou
  *    `customSpriteSheetUrl` (planche 4x3 de vignettes 16x24) sur n'importe quel membre :
  *    le moteur de rendu utilisera automatiquement vos visuels sans modifier la logique du jeu !
  */
@@ -76,6 +78,33 @@ export const FAMILY_MEMBERS: Record<FamilyMemberId, FamilyMember> = {
       smile: 'wide',
     },
     customPortraitUrl: margueritePortraitUrl,
+  },
+  pierre_pm: {
+    id: 'pierre_pm',
+    name: 'Pierre',
+    voicePitch: 295,
+    appearance: {
+      skin: '#efc4a4',
+      hairColor: '#c9c1b2',
+      hairStyle: 'tousled_curls',
+      headwear: 'none',
+      glasses: 'none',
+      facialHair: 'stubble',
+      facialHairColor: '#bfb8ab',
+      topColor: '#dba53a',
+      bottomColor: '#2d3340',
+      accentColor: '#4e5c3e',
+      outfitStyle: 'casual',
+    },
+    portrait: {
+      bgTop: '#4e2445',
+      bgBottom: '#1a383a',
+      eyeColor: '#566b73',
+      collar: 'normal',
+      prop: 'quill',
+      smile: 'normal',
+    },
+    customPortraitUrl: pierre2PortraitUrl,
   },
   dominique: {
     id: 'dominique',
@@ -304,12 +333,12 @@ export const FAMILY_PAIRS: Record<ModeId, FamilyPair> = {
   pm: {
     modeId: 'pm',
     shortCode: 'PM',
-    label: 'Pola & Marguerite',
+    label: 'Pola, Marguerite & Pierre',
     themeLabel: 'Littérature classique & Théâtre',
     worldName: 'La Cité des Lettres',
     primaryColor: '#8d3056',
     secondaryColor: '#3b8273',
-    members: [FAMILY_MEMBERS.pola, FAMILY_MEMBERS.marguerite],
+    members: [FAMILY_MEMBERS.pola, FAMILY_MEMBERS.marguerite, FAMILY_MEMBERS.pierre_pm],
   },
   df: {
     modeId: 'df',
@@ -354,3 +383,69 @@ export const FAMILY_PAIRS: Record<ModeId, FamilyPair> = {
 };
 
 export const MODE_ORDER: ModeId[] = ['pm', 'df', 'jp', 'aj', 'sd'];
+
+/** Avatar de Léo, le Maître du Jeu (écran d'accueil & menu pause). */
+export const GAME_MASTER_LEO = {
+  name: 'Léo',
+  roleLabel: 'Maître du Jeu',
+  appearance: {
+    skin: '#f0c4a2',
+    hairColor: '#3a2b22',
+    hairStyle: 'short' as const,
+    headwear: 'cap' as const,
+    headwearColor: '#c92a38',
+    glasses: 'sunglasses' as const,
+    glassesColor: '#3d281c',
+    facialHair: 'stubble' as const,
+    facialHairColor: '#6b4c38',
+    topColor: '#234a3c',
+    bottomColor: '#1b2436',
+    accentColor: '#f4ce76',
+    outfitStyle: 'casual' as const,
+  },
+  portrait: {
+    bgTop: '#2a1632',
+    bgBottom: '#101a30',
+    eyeColor: '#3b2418',
+    collar: 'normal' as const,
+    prop: 'none' as const,
+    smile: 'normal' as const,
+  },
+  customPortraitUrl: leoPortraitUrl,
+};
+
+export const LEO_WELCOME_MESSAGES: readonly string[] = [
+  'Bienvenue dans le grand jeu de Noël ! Ne vous aventurez pas ici tout seul, vous aurez besoin de vos équipiers pour vous en sortir… !',
+  'Bienvenue au grand jeu de Noël 2026 ! Seul, certains défis risquent de vous résister : rassemblez vite votre équipe avant d’entrer !',
+  'Ho ho ho ! Bienvenue dans le grand jeu de Noël ! Chaque monde a été préparé sur mesure pour votre équipe — vous aurez besoin de tous vos cerveaux !',
+  'Bienvenue dans le grand jeu de Noël ! Un conseil du Maître du Jeu : ne partez pas en solo, et si un défi vous piège, les habitants dehors gardent toujours un indice !',
+  'Joyeux Noël et bienvenue ! Douze badges, un Boss Final et zéro chrono : prenez votre temps, discutez en équipe et montrez ce que vous savez faire !',
+  'Bienvenue dans l’aventure de Noël 2026 ! Ne vous aventurez pas ici tout seul : vos équipiers sont votre meilleure arme pour décrocher les 12 badges !',
+];
+
+const LAST_WELCOME_KEY = 'noel2026_last_welcome_idx';
+
+export function pickWelcomeMessage(): string {
+  const count = LEO_WELCOME_MESSAGES.length;
+  let lastIdx = -1;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(LAST_WELCOME_KEY);
+      if (raw !== null) lastIdx = Number.parseInt(raw, 10);
+    }
+  } catch {
+    // Ignore private-mode storage errors
+  }
+  let idx = Math.floor(Math.random() * count);
+  if (count > 1 && idx === lastIdx) {
+    idx = (idx + 1 + Math.floor(Math.random() * (count - 1))) % count;
+  }
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(LAST_WELCOME_KEY, String(idx));
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return LEO_WELCOME_MESSAGES[idx];
+}

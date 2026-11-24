@@ -341,13 +341,13 @@ export function createPmWorld(): WorldDefinition {
             explanation: 'Paru en mai 1832, Indiana fit sensation par sa critique lucide de la condition juridique des femmes mariées.',
           },
           {
-            question: 'Quelle grande cantatrice et compositrice inspira l’héroïne de son roman musical « Consuelo » (1842–1843) ?',
+            question: 'Quelle grande cantatrice et compositrice, amie intime de George Sand à Nohant, inspira l’héroïne de « Consuelo » (1842–1843) ?',
             options: ['Maria Malibran', 'Clara Schumann', 'Pauline Viardot', 'Jenny Lind'],
             correctIndex: 2,
             explanation: 'Amie intime de Sand, la mezzo-soprano Pauline Viardot prêta sa voix et son génie à l’héroïne Consuelo.',
           },
           {
-            question: 'Quel roman autobiographique de 1859 transpire sa liaison orageuse à Venise avec Alfred de Musset ?',
+            question: 'Quel roman d’inspiration autobiographique de 1859 transpose sa liaison orageuse à Venise avec Alfred de Musset ?',
             options: ['Lélia', 'Elle et Lui', 'Histoire de ma vie', 'François le Champi'],
             correctIndex: 1,
             explanation: 'Elle et Lui (1859) provoqua la riposte immédiate de Paul de Musset, qui publia Lui et Elle la même année.',
@@ -447,7 +447,7 @@ export function createPmWorld(): WorldDefinition {
             explanation: '« A noir, E blanc, I rouge, U vert, O bleu : voyelles » — composé vers 1871 et publié en 1883 dans Lutèce.',
           },
           {
-            prompt: 'Reliez chaque poète visionnaire du XIXe siècle à son recueil phare :',
+            prompt: 'Reliez chaque poète visionnaire du XIXe siècle à son œuvre phare :',
             pairs: [
               { left: 'Arthur Rimbaud', right: 'Les Illuminations' },
               { left: 'Paul Verlaine', right: 'Romances sans paroles' },
@@ -530,10 +530,10 @@ export function createPmWorld(): WorldDefinition {
               'Amphitryon',
             ],
             intruderIndex: 1,
-            explanation: 'Créée en 1644, la comédie Le Menteur est de Pierre Corneille — et fut même jouée par la troupe de Molière !',
+            explanation: 'Créée en 1643 et publiée en 1644, la comédie Le Menteur est de Pierre Corneille — et fut même jouée par la troupe de Molière !',
           },
           {
-            prompt: 'Quel comédien célèbre du XVIIe siècle n’a PAS joué dans la troupe de Molière ?',
+            prompt: 'Quelle figure de la scène du XVIIe siècle n’a PAS joué dans la troupe de Molière ?',
             items: [
               'Armande Béjart',
               'Charles Varlet (La Grange)',
@@ -824,7 +824,7 @@ export function createPmWorld(): WorldDefinition {
             question: 'Dans « Emma » (1815), lors de quelle excursion champêtre l’héroïne blesse-t-elle cruellement la bavarde Miss Bates ?',
             options: ['À Box Hill', 'À Lyme Regis', 'À Rosings Park', 'À Bath'],
             correctIndex: 0,
-            explanation: 'Le pique-nique à Box Hill déclenche le sévère reproche de Mr Knightley, tournant moral de tout le roman.',
+            explanation: 'Le pique-nique à Box Hill déclenche le sévère reproche de M. Knightley, tournant moral de tout le roman.',
           },
           {
             question: 'Quel roman inachevé Jane Austen écrivait-elle encore en 1817, ironisant sur une station balnéaire en plein essor ?',
@@ -1118,7 +1118,7 @@ export function createPmWorld(): WorldDefinition {
       },
       introLines: [
         'On m’appelle « La Divine » — de la Comédie-Française aux tournées mondiales, j’ai créé les plus grands rôles de la Belle Époque !',
-        'Prouvez que vous connaissez mon répertoire sur le bout des doigts : reliez cinq de mes créations mythiques à leurs dramaturges, puis cinq jalons de ma légende !',
+        'Prouvez que vous connaissez mon répertoire sur le bout des doigts : reliez cinq de mes rôles mythiques à leurs dramaturges, puis cinq jalons de ma légende !',
       ],
       alreadyWonLines: [
         'Standing ovation au Châtelet ! Même Victor Hugo applaudit debout au premier balcon !',
@@ -1323,7 +1323,7 @@ export function createPmWorld(): WorldDefinition {
 
   b.placeLandmark({
     id: 'theatre_rostand',
-    name: 'Porte Saint-Martin — Rostand',
+    name: 'Porte-Saint-Martin — Rostand',
     district: 3,
     slotIndex: 2,
     interiorTheme: 'theater',
@@ -1449,10 +1449,10 @@ export function createPmWorld(): WorldDefinition {
       },
       introLines: [
         '« Le monde entier est un théâtre ! » Et mon cher ami Molière prétend avoir le meilleur public — quelle audace française !',
-        'Triomphez de mon grand quiz du Globe (garanti sans fantôme danois) pour gagner votre douzième sésame !',
+        'Triomphez de mon grand quiz du Globe (garanti sans fantôme danois) pour décrocher mon prestigieux sésame !',
       ],
       alreadyWonLines: [
-        'Tout est bien qui finit bien ! Le sanctuaire de Molière vous attend au sommet — saluez le vieux rival de ma part !',
+        'Tout est bien qui finit bien ! Dès que vous aurez réuni les douze badges, le sanctuaire de Molière vous attendra au sommet — saluez le vieux rival de ma part !',
       ],
       winLines: [
         'Bravo ! Beaucoup de bruit… pour un vrai triomphe ! Voici le Badge Globe d’Or.',
@@ -1460,7 +1460,7 @@ export function createPmWorld(): WorldDefinition {
       loseLines: [
         'Être ou ne pas être prêt… telle est la question ! Revenez vite tenter votre revanche.',
       ],
-      duoWinReaction: 'Marguerite : « Douze géants des lettres et du théâtre conquis ! Molière, nous voilà ! »',
+      duoWinReaction: 'Marguerite : « Le Barde d’Avon conquis ! Le Badge Globe d’Or brille dans notre carnet ! »',
       notebookBio: 'Le plus célèbre dramaturge de langue anglaise : Hamlet, Macbeth, Roméo et Juliette.',
       challenge: {
         kind: 'quiz',
@@ -1632,7 +1632,7 @@ export function createPmWorld(): WorldDefinition {
                     'Panulphe (ou L’Imposteur)',
                   ],
                   correctIndex: 3,
-                  explanation: 'Déguisé en homme du monde nommé Panulphe, la pièce fut pourtant aussitôt réinterdite jusqu’en février 1669.',
+                  explanation: 'Bien que le personnage fût déguisé en homme du monde nommé Panulphe, la pièce fut aussitôt réinterdite jusqu’en février 1669.',
                 },
                 {
                   question: 'Après sa brouille avec Lully en 1672, à quel compositeur Molière confia-t-il la musique du « Malade imaginaire » ?',
@@ -1971,7 +1971,7 @@ export function createPmWorld(): WorldDefinition {
     {
       id: 'pm_sec_5',
       name: 'Honoré de Balzac',
-      title: 'L’Architecte de La Comédie Humaine',
+      title: 'L’Architecte de La Comédie humaine',
       role: 'secondary',
       district: 2,
       mapId: b.overworldId,
@@ -1994,7 +1994,7 @@ export function createPmWorld(): WorldDefinition {
     {
       id: 'pm_sec_6',
       name: 'Emily Brontë',
-      title: 'Poétesse des Hurle-Vents',
+      title: 'Poétesse de Hurlevent',
       role: 'secondary',
       district: 2,
       mapId: b.overworldId,
@@ -2011,7 +2011,7 @@ export function createPmWorld(): WorldDefinition {
       },
       portrait: { bgTop: '#2c3d54', bgBottom: '#141c29', eyeColor: '#384e5c', collar: 'normal', blush: true },
       hintTargetBadgeIds: ['pm_austen', 'pm_colette'],
-      hintLines: ['Le vent furieux des landes du Yorkshire m’a soufflé d’aller saluer'],
+      hintLines: ['Le vent furieux des landes du Yorkshire m’a soufflé de vous envoyer saluer'],
     },
     {
       id: 'pm_sec_7',
@@ -2034,7 +2034,7 @@ export function createPmWorld(): WorldDefinition {
       },
       portrait: { bgTop: '#2c3345', bgBottom: '#151822', eyeColor: '#3b4a59', collar: 'bowtie' },
       hintTargetBadgeIds: ['pm_colette', 'pm_hugo'],
-      hintLines: ['J’ai mis six heures à polir cette phrase pour vous trouver le mot juste : visitez'],
+      hintLines: ['J’ai mis six heures à polir cette phrase pour vous trouver le mot juste : rendez visite à'],
     },
     {
       id: 'pm_sec_8',

@@ -181,7 +181,10 @@ export function randomizeGuestsInWorld(world: WorldDefinition): void {
     const spaced = candidates.filter((c) =>
       chosen.every((prev) => Math.abs(c.x - prev.x) + Math.abs(c.y - prev.y) >= 6)
     );
-    const pool = spaced.length > 0 ? spaced : candidates;
+    const nonOverlap = candidates.filter((c) =>
+      chosen.every((prev) => c.x !== prev.x || c.y !== prev.y)
+    );
+    const pool = spaced.length > 0 ? spaced : nonOverlap.length > 0 ? nonOverlap : candidates;
     const pick = pool[Math.floor(Math.random() * pool.length)];
     guest.x = pick.x;
     guest.y = pick.y;

@@ -1,6 +1,12 @@
 import { soundEngine } from './audio/soundEngine';
 import { WORLDS } from './data';
-import { FAMILY_MEMBERS, FAMILY_PAIRS, MODE_ORDER } from './data/familyAvatars';
+import {
+  FAMILY_MEMBERS,
+  FAMILY_PAIRS,
+  GAME_MASTER_LEO,
+  MODE_ORDER,
+  pickWelcomeMessage,
+} from './data/familyAvatars';
 import { randomizeGuestsInWorld } from './data/guests';
 import { InputManager } from './engine/input';
 import { OverworldEngine, RENDER_SCALE, SCREEN_H, SCREEN_W } from './engine/overworld';
@@ -19,12 +25,18 @@ import {
 import {
   DialogueController,
   DialogueMessage,
+  getBadgeSlotRects,
   getModeCardRects,
+  getNotebookRowRects,
+  getPauseBackButtonRect,
+  getPauseMenuPanelRect,
+  getPauseOptionRects,
   PAUSE_OPTIONS,
   PauseSubView,
   renderEndingCeremony,
   renderModeSelectScreen,
   renderPauseMenu,
+  renderWelcomeScreen,
 } from './engine/uiRenderer';
 import { ChallengeRunner } from './minigames/challengeRunner';
 import {
@@ -43,7 +55,8 @@ export class PokeNoelGame {
   private ctx: CanvasRenderingContext2D;
   private input = new InputManager();
   private save: GlobalSaveData;
-  private scene: GameScene = 'MODE_SELECT';
+  private scene: GameScene = 'WELCOME';
+  private welcomeMessage = pickWelcomeMessage();
   private timer = 0;
 
   private modeCursor = 0;
@@ -77,7 +90,10 @@ export class PokeNoelGame {
 
     this.save = loadGlobalSave();
     soundEngine.setMuted(this.save.muted);
-    preloadPortraitUrls(Object.values(FAMILY_MEMBERS).map((m) => m.customPortraitUrl));
+    preloadPortraitUrls([
+      GAME_MASTER_LEO.customPortraitUrl,
+      ...Object.values(FAMILY_MEMBERS).map((m) => m.customPortraitUrl),
+    ]);
 
     this.input.attach(canvas, () => soundEngine.unlock());
     this.wireShellControls();
@@ -98,6 +114,16 @@ export class PokeNoelGame {
     this.shellEl = shell;
     this.syncShellTheme();
 
+    const isTouchDevice = () =>
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+    const isPadVisible = () =>
+      isTouchDevice()
+        ? !shell?.classList.contains('hide-pad')
+        : Boolean(shell?.classList.contains('show-pad'));
+
     const updateSoundLabel = () => {
       if (this.soundBtnEl) {
         this.soundBtnEl.textContent = soundEngine.isMuted() ? 'Coupé (M)' : 'Activé (M)';
@@ -105,7 +131,7 @@ export class PokeNoelGame {
     };
     const updatePadLabel = () => {
       if (padBtn) {
-        padBtn.textContent = shell?.classList.contains('show-pad') ? 'Affichée' : 'Masquée';
+        padBtn.textContent = isPadVisible() ? 'Affichée' : 'Masquée';
       }
     };
     updateSoundLabel();
@@ -113,11 +139,13 @@ export class PokeNoelGame {
 
     infoBtn?.addEventListener('click', () => {
       soundEngine.unlock();
+      this.input.clearHeld();
       if (infoDialog && !infoDialog.open) infoDialog.showModal();
     });
 
     settingsBtn?.addEventListener('click', () => {
       soundEngine.unlock();
+      this.input.clearHeld();
       updateSoundLabel();
       updatePadLabel();
       if (settingsDialog && !settingsDialog.open) settingsDialog.showModal();
@@ -130,7 +158,11 @@ export class PokeNoelGame {
     });
 
     padBtn?.addEventListener('click', () => {
-      shell?.classList.toggle('show-pad');
+      if (isTouchDevice()) {
+        shell?.classList.toggle('hide-pad');
+      } else {
+        shell?.classList.toggle('show-pad');
+      }
       updatePadLabel();
     });
 
@@ -169,13 +201,14 @@ export class PokeNoelGame {
         return;
       }
       this.save = decoded;
+      this.hintCycleByBadge.clear();
       saveGlobalSave(this.save);
       soundEngine.setMuted(this.save.muted);
       updateSoundLabel();
       soundEngine.playBadgeFanfare();
       feedback.textContent = 'Sauvegarde chargée avec succès !';
       feedback.classList.remove('error');
-      if (this.scene !== 'MODE_SELECT') {
+      if (this.scene !== 'MODE_SELECT' && this.scene !== 'WELCOME') {
         this.startMode(this.activeModeId);
       }
       setTimeout(() => dialog?.close(), 650);
@@ -187,6 +220,7 @@ export class PokeNoelGame {
     const textarea = document.querySelector<HTMLTextAreaElement>('#save-code-textarea');
     const feedback = document.querySelector<HTMLElement>('#save-code-feedback');
     if (!dialog || !textarea) return;
+    this.input.clearHeld();
     textarea.value = encodeSaveCode(this.save);
     if (feedback) {
       feedback.textContent = '';
@@ -198,7 +232,8 @@ export class PokeNoelGame {
   }
 
   private syncShellTheme(): void {
-    const nextTheme = this.scene === 'MODE_SELECT' ? 'title' : this.activeModeId;
+    const nextTheme =
+      this.scene === 'MODE_SELECT' || this.scene === 'WELCOME' ? 'title' : this.activeModeId;
     if (nextTheme === this.currentShellTheme) return;
     this.currentShellTheme = nextTheme;
     if (this.shellEl) {
@@ -242,6 +277,9 @@ export class PokeNoelGame {
   }
 
   private startMode(modeId: ModeId): void {
+    this.challengeRunner = null;
+    this.activeChallengeNpc = null;
+    this.dialogue.start([]);
     this.activeModeId = modeId;
     this.activeWorld = WORLDS[modeId];
     randomizeGuestsInWorld(this.activeWorld);
@@ -272,10 +310,14 @@ export class PokeNoelGame {
 
     // Welcome toast on fresh start
     if (modeSave.badges.length === 0 && modeSave.metNpcs.length === 0) {
+      const companions =
+        pair.members.length >= 3
+          ? `${pair.members[1].name} et ${pair.members[2].name}`
+          : pair.members[1].name;
       this.dialogue.start([
         {
           speaker: pair.members[0].name,
-          text: `Bienvenue à ${this.activeWorld.worldName}, ${pair.members[1].name} ! Collectons les 12 badges pour défier le Boss Final !`,
+          text: `Bienvenue à ${this.activeWorld.worldName}, ${companions} ! Collectons les 12 badges pour défier le Boss Final !`,
           appearance: pair.members[0].appearance,
           portrait: pair.members[0].portrait,
           customPortraitUrl: pair.members[0].customPortraitUrl,
@@ -374,12 +416,23 @@ export class PokeNoelGame {
               voicePitch: npc.voicePitch,
             },
           ]);
+          this.scene = 'DIALOGUE';
         } else {
           this.handleLockedGate(gate);
-          return;
         }
+      } else {
+        this.dialogue.start([
+          {
+            speaker: npc.name,
+            text: 'Poursuivez votre route vers le nord pour relever les prochains défis !',
+            appearance: npc.appearance,
+            portrait: npc.portrait,
+            customPortraitUrl: npc.customPortraitUrl,
+            voicePitch: npc.voicePitch,
+          },
+        ]);
+        this.scene = 'DIALOGUE';
       }
-      this.scene = 'DIALOGUE';
       return;
     }
 
@@ -464,7 +517,7 @@ export class PokeNoelGame {
       npc,
       badge,
       pair.members,
-      modeSave.leaderIndex,
+      0,
       npc.challenge,
       () => {
         modeSave.attempts++;
@@ -515,6 +568,20 @@ export class PokeNoelGame {
     }
 
     switch (this.scene) {
+      case 'WELCOME': {
+        const tap = this.input.consumeTap();
+        if (
+          this.input.justPressed('a') ||
+          this.input.justPressed('b') ||
+          this.input.justPressed('menu') ||
+          tap
+        ) {
+          soundEngine.playConfirm();
+          this.scene = 'MODE_SELECT';
+        }
+        break;
+      }
+
       case 'MODE_SELECT': {
         const hover = this.input.getCanvasHover();
         if (hover) {
@@ -544,11 +611,6 @@ export class PokeNoelGame {
           const vertMap = [3, 3, 4, 0, 2];
           this.modeCursor = vertMap[this.modeCursor] ?? 0;
           soundEngine.playSelect();
-        }
-        if (this.input.justPressed('swap')) {
-          soundEngine.playSelect();
-          this.openSaveDialog();
-          break;
         }
         const tap = this.input.consumeTap();
         if (tap) {
@@ -658,18 +720,47 @@ export class PokeNoelGame {
     saveGlobalSave(this.save);
     soundEngine.playBgm(this.activeWorld.bgmId);
 
-    // Trigger partner reaction + gate unlock reminder if milestone reached!
+    // Trigger duo reaction (attributing speaker & portrait accurately) + gate unlock reminder!
     const pair = FAMILY_PAIRS[this.activeModeId];
-    const partner = pair.members[modeSave.leaderIndex === 0 ? 1 : 0];
+    const [mA, mB] = pair.members;
     const msgs: DialogueMessage[] = [];
     if (npc.duoWinReaction) {
+      let speakerName = mB.name;
+      let speakerMember = mB;
+      let text = npc.duoWinReaction.trim();
+      const stripOuterQuotes = (s: string) =>
+        s.startsWith('«') && s.endsWith('»') ? s.slice(1, -1).trim() : s;
+
+      const legacyDuoPrefix = `${mA.name} & ${mB.name} :`;
+      if (text.startsWith(`${pair.label} :`)) {
+        speakerName = pair.label;
+        speakerMember = mA;
+        text = stripOuterQuotes(text.slice(`${pair.label} :`.length).trim());
+      } else if (text.startsWith(legacyDuoPrefix)) {
+        speakerName = pair.label;
+        speakerMember = mA;
+        text = stripOuterQuotes(text.slice(legacyDuoPrefix.length).trim());
+      } else if (text.startsWith(`${mA.name} :`)) {
+        speakerName = mA.name;
+        speakerMember = mA;
+        text = stripOuterQuotes(text.slice(`${mA.name} :`.length).trim());
+      } else if (text.startsWith(`${mB.name} :`)) {
+        speakerName = mB.name;
+        speakerMember = mB;
+        text = stripOuterQuotes(text.slice(`${mB.name} :`.length).trim());
+      } else if (pair.members[2] && text.startsWith(`${pair.members[2].name} :`)) {
+        speakerName = pair.members[2].name;
+        speakerMember = pair.members[2];
+        text = stripOuterQuotes(text.slice(`${pair.members[2].name} :`.length).trim());
+      }
+
       msgs.push({
-        speaker: partner.name,
-        text: npc.duoWinReaction,
-        appearance: partner.appearance,
-        portrait: partner.portrait,
-        customPortraitUrl: partner.customPortraitUrl,
-        voicePitch: partner.voicePitch,
+        speaker: speakerName,
+        text,
+        appearance: speakerMember.appearance,
+        portrait: speakerMember.portrait,
+        customPortraitUrl: speakerMember.customPortraitUrl,
+        voicePitch: speakerMember.voicePitch,
       });
     }
     if (modeSave.badges.length === 4 || modeSave.badges.length === 8 || modeSave.badges.length === 12) {
@@ -679,12 +770,12 @@ export class PokeNoelGame {
           ? 'Tous les 12 badges sont réunis ! La porte du Boss Final au tout nord est désormais ouverte !'
           : `Super ! Avec ${modeSave.badges.length} badges, le prochain quartier au nord est débloqué !`;
       msgs.push({
-        speaker: pair.members[modeSave.leaderIndex].name,
+        speaker: mA.name,
         text: targetMsg,
-        appearance: pair.members[modeSave.leaderIndex].appearance,
-        portrait: pair.members[modeSave.leaderIndex].portrait,
-        customPortraitUrl: pair.members[modeSave.leaderIndex].customPortraitUrl,
-        voicePitch: pair.members[modeSave.leaderIndex].voicePitch,
+        appearance: mA.appearance,
+        portrait: mA.portrait,
+        customPortraitUrl: mA.customPortraitUrl,
+        voicePitch: mA.voicePitch,
       });
     }
 
@@ -696,10 +787,56 @@ export class PokeNoelGame {
     }
   }
 
+  private activatePauseOption(idx: number): void {
+    soundEngine.playConfirm();
+    switch (idx) {
+      case 0:
+        this.pauseSubView = 'badges';
+        this.pauseSubCursor = 0;
+        break;
+      case 1:
+        this.pauseSubView = 'notebook';
+        this.pauseSubCursor = 0;
+        break;
+      case 2:
+        this.pauseSubView = 'map';
+        break;
+      case 3:
+        this.openSaveDialog();
+        break;
+      case 4:
+        saveGlobalSave(this.save);
+        soundEngine.playBgm('title');
+        this.scene = 'MODE_SELECT';
+        break;
+    }
+  }
+
+  private getWorldMapPlayerPos(): { x: number; y: number } {
+    const pos = this.overworld?.getPosition();
+    if (!pos) return { x: this.activeWorld.spawnX, y: this.activeWorld.spawnY };
+    if (pos.mapId !== this.activeWorld.overworldId) {
+      const b = this.activeWorld.buildings.find((bld) => bld.interiorMapId === pos.mapId);
+      if (b) return { x: b.doorX, y: b.doorY };
+    }
+    return { x: pos.x, y: pos.y };
+  }
+
   private updatePauseMenu(): void {
-    const modeSave = this.getActiveModeSave();
+    const hitRect = (pt: { x: number; y: number }, r: { x: number; y: number; w: number; h: number }) =>
+      pt.x >= r.x && pt.x <= r.x + r.w && pt.y >= r.y && pt.y <= r.y + r.h;
 
     if (this.pauseSubView === 'menu') {
+      const optRects = getPauseOptionRects();
+      const hover = this.input.getCanvasHover();
+      if (hover) {
+        const hIdx = optRects.findIndex((r) => hitRect(hover, r));
+        if (hIdx !== -1 && hIdx !== this.pauseCursor) {
+          this.pauseCursor = hIdx;
+          soundEngine.playSelect();
+        }
+      }
+
       if (this.input.justPressed('up')) {
         this.pauseCursor = (this.pauseCursor + PAUSE_OPTIONS.length - 1) % PAUSE_OPTIONS.length;
         soundEngine.playSelect();
@@ -709,41 +846,51 @@ export class PokeNoelGame {
       } else if (this.input.justPressed('b') || this.input.justPressed('menu')) {
         soundEngine.playCancel();
         this.scene = 'OVERWORLD';
-      } else if (this.input.justPressed('a') || this.input.consumeTap()) {
-        soundEngine.playConfirm();
-        switch (this.pauseCursor) {
-          case 0:
-            this.pauseSubView = 'badges';
-            this.pauseSubCursor = 0;
-            break;
-          case 1:
-            this.pauseSubView = 'notebook';
-            this.pauseSubCursor = 0;
-            break;
-          case 2:
-            this.pauseSubView = 'map';
-            break;
-          case 3:
-            this.openSaveDialog();
-            break;
-          case 4:
-            saveGlobalSave(this.save);
-            soundEngine.playBgm('title');
-            this.scene = 'MODE_SELECT';
-            break;
+      } else if (this.input.justPressed('a')) {
+        this.activatePauseOption(this.pauseCursor);
+      } else {
+        const tap = this.input.consumeTap();
+        if (tap) {
+          const hitIdx = optRects.findIndex((r) => hitRect(tap, r));
+          if (hitIdx !== -1) {
+            this.pauseCursor = hitIdx;
+            this.activatePauseOption(hitIdx);
+          } else if (!hitRect(tap, getPauseMenuPanelRect())) {
+            soundEngine.playCancel();
+            this.scene = 'OVERWORLD';
+          }
         }
       }
       return;
     }
 
-    if (this.input.justPressed('b') || this.input.justPressed('menu') || this.input.consumeTap()) {
+    if (this.input.justPressed('b') || this.input.justPressed('menu')) {
       soundEngine.playCancel();
       this.pauseSubView = 'menu';
       return;
     }
 
+    const backRect = getPauseBackButtonRect();
+    const tap = this.input.consumeTap();
+
     if (this.pauseSubView === 'badges') {
       const total = this.activeWorld.badges.length + 1;
+      const slots = getBadgeSlotRects(total);
+      if (tap) {
+        if (hitRect(tap, backRect)) {
+          soundEngine.playCancel();
+          this.pauseSubView = 'menu';
+          return;
+        }
+        const hitSlot = slots.findIndex((r) => hitRect(tap, r));
+        if (hitSlot !== -1) {
+          if (this.pauseSubCursor !== hitSlot) {
+            this.pauseSubCursor = hitSlot;
+            soundEngine.playSelect();
+          }
+          return;
+        }
+      }
       if (this.input.justPressed('right')) {
         this.pauseSubCursor = (this.pauseSubCursor + 1) % total;
         soundEngine.playSelect();
@@ -761,6 +908,22 @@ export class PokeNoelGame {
       const entries = this.activeWorld.npcs.filter(
         (n) => n.role === 'main' || n.role === 'boss'
       );
+      if (tap) {
+        if (hitRect(tap, backRect)) {
+          soundEngine.playCancel();
+          this.pauseSubView = 'menu';
+          return;
+        }
+        const rows = getNotebookRowRects(entries.length, this.pauseSubCursor);
+        const hitRow = rows.find((r) => hitRect(tap, r));
+        if (hitRow) {
+          if (this.pauseSubCursor !== hitRow.index) {
+            this.pauseSubCursor = hitRow.index;
+            soundEngine.playSelect();
+          }
+          return;
+        }
+      }
       if (this.input.justPressed('down') || this.input.justPressed('right')) {
         this.pauseSubCursor = (this.pauseSubCursor + 1) % entries.length;
         soundEngine.playSelect();
@@ -768,8 +931,12 @@ export class PokeNoelGame {
         this.pauseSubCursor = (this.pauseSubCursor + entries.length - 1) % entries.length;
         soundEngine.playSelect();
       }
+    } else if (this.pauseSubView === 'map') {
+      if (tap) {
+        soundEngine.playCancel();
+        this.pauseSubView = 'menu';
+      }
     }
-    void modeSave;
   }
 
   private render(): void {
@@ -780,6 +947,9 @@ export class PokeNoelGame {
     ctx.clearRect(0, 0, SCREEN_W, SCREEN_H);
 
     switch (this.scene) {
+      case 'WELCOME':
+        renderWelcomeScreen(ctx, this.welcomeMessage, this.timer);
+        break;
       case 'MODE_SELECT':
         renderModeSelectScreen(ctx, this.save, this.modeCursor, this.timer);
         break;
@@ -799,7 +969,7 @@ export class PokeNoelGame {
           this.pauseCursor,
           this.pauseSubView,
           this.pauseSubCursor,
-          this.overworld?.getPosition() ?? { x: 30, y: 39 }
+          this.getWorldMapPlayerPos()
         );
         break;
       case 'CHALLENGE':

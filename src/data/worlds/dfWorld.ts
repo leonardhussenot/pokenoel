@@ -63,7 +63,7 @@ const BADGES: BadgeDef[] = [
     icon: 'flower',
     color: '#2e7bb8',
     rimColor: '#f7f3e6',
-    description: 'Décerné par Clara Nunes, voix lumineuse de la samba et des traditions brésiliennes.',
+    description: 'Décerné par Clara Nunes, voix lumineuse du samba et des traditions brésiliennes.',
   },
   {
     id: 'df_elis',
@@ -236,7 +236,7 @@ export function createDfWorld(): WorldDefinition {
         lives: 4,
         rounds: [
           {
-            prompt: 'Classez ces 6 jalons musicaux du Brésil par date de création :',
+            prompt: 'Classez ces 6 jalons musicaux du Brésil par année de parution :',
             orderedItems: [
               '« Atraente » — C. Gonzaga',
               '« Ó Abre Alas » — C. Gonzaga',
@@ -331,19 +331,19 @@ export function createDfWorld(): WorldDefinition {
         questions: [
           {
             question: 'Quelle célèbre psychiatre brésilienne Dona Ivone Lara a-t-elle secondée à l’hôpital d’Engenho de Dentro en utilisant la musique comme thérapie ?',
-            options: ['Tarsila do Amaral', 'Nise da Silveira', 'Lygia Clark', 'Bertha Lutz'],
-            correctIndex: 1,
+            options: ['Nise da Silveira', 'Tarsila do Amaral', 'Lygia Clark', 'Bertha Lutz'],
+            correctIndex: 0,
             explanation: 'Dès 1947 à Engenho de Dentro, Dona Ivone Lara travailla avec Nise da Silveira, pionnière de l’art-thérapie.',
           },
           {
             question: 'Quel samba-enredo de 1965 Dona Ivone Lara cosigna-t-elle avec Silas de Oliveira et Bacalhau pour Império Serrano ?',
             options: [
               'Heróis da Liberdade',
-              'Os Cinco Bailes da História do Rio',
               'Aquarela Brasileira',
               'Exaltação a Tiradentes',
+              'Os Cinco Bailes da História do Rio',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Célébrant les 400 ans de Rio en 1965, ce samba fit d’elle la première compositrice d’une grande école.',
           },
           {
@@ -354,20 +354,20 @@ export function createDfWorld(): WorldDefinition {
           },
           {
             question: 'Fondée en août 1928 dans le quartier d’Estácio par Ismael Silva, quelle agremiação est reconnue comme la toute première école de samba ?',
-            options: ['Deixa Falar', 'Vai Como Pode', 'Vizinha Faladeira', 'Prazer da Serrinha'],
-            correctIndex: 0,
+            options: ['Vai Como Pode', 'Vizinha Faladeira', 'Deixa Falar', 'Prazer da Serrinha'],
+            correctIndex: 2,
             explanation: 'Ismael Silva et les bambas d’Estácio fondèrent « Deixa Falar » en 1928, inventant la cadence du samba de défilé.',
           },
           {
             question: 'Contre quel autre sambiste carioca Noel Rosa livra-t-il dans les années 1930 la célèbre « polêmica » autour de « Rapaz Folgado » ?',
-            options: ['Sinhô', 'Wilson Batista', 'Geraldo Pereira', 'Lamartine Babo'],
-            correctIndex: 1,
+            options: ['Wilson Batista', 'Sinhô', 'Geraldo Pereira', 'Lamartine Babo'],
+            correctIndex: 0,
             explanation: 'Déclenchée par « Lenço no Pescoço » (1933) de Wilson Batista, cette joute inspira jusqu’à « Feitiço da Vila ».',
           },
           {
             question: 'Dans quelle capitale européenne Pixinguinha et son groupe « Os Oito Batutas » triomphèrent-ils pendant six mois en 1922 ?',
-            options: ['Lisbonne', 'Buenos Aires', 'Paris', 'Madrid'],
-            correctIndex: 2,
+            options: ['Lisbonne', 'Londres', 'Madrid', 'Paris'],
+            correctIndex: 3,
             explanation: 'En 1922, Os Oito Batutas (Pixinguinha, Donga, João da Baiana) conquirent Paris, notamment au cabaret Shéhérazade.',
           },
         ],
@@ -550,12 +550,12 @@ export function createDfWorld(): WorldDefinition {
               'C’est un petit singe malicieux qui tourne involontairement le scoop décisif sur le port.',
             ],
             options: [
-              'Cadet d’eau douce',
               'L’Opérateur',
+              'Cadet d’eau douce',
               'Le Mécano de la General',
               'Fiancées en folie',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
             explanation: 'Sorti en 1928, L’Opérateur (The Cameraman) fut le dernier grand triomphe artistique de Keaton à la MGM.',
           },
           {
@@ -566,11 +566,11 @@ export function createDfWorld(): WorldDefinition {
             ],
             options: [
               'La Croisière du Navigator',
-              'Cadet d’eau douce',
               'La Maison démontable',
               'Les Lois de l’hospitalité',
+              'Cadet d’eau douce',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Dans Steamboat Bill, Jr. (1928), la fenêtre ne laissait que quelques centimètres de marge à Buster Keaton !',
           },
           {
@@ -591,11 +591,11 @@ export function createDfWorld(): WorldDefinition {
             ],
             options: [
               'Le Cirque',
-              'L’Opinion publique',
               'Monsieur Verdoux',
               'Les Feux de la rampe',
+              'L’Opinion publique',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Sorti en 1923, L’Opinion publique (A Woman of Paris) révéla un Chaplin dramaturge d’une modernité stupéfiante.',
           },
           {
@@ -604,8 +604,8 @@ export function createDfWorld(): WorldDefinition {
               'Un célèbre mouvement de grue remonte une façade jusqu’à une salle où s’alignent des centaines de bureaux identiques.',
               'La caméra s’éloigne finalement sur un rire anonyme fondu au milieu d’un public de music-hall.',
             ],
-            options: ['L’Aurore', 'Monte là-dessus !', 'La Foule', 'Les Ailes'],
-            correctIndex: 2,
+            options: ['La Foule', 'L’Aurore', 'Monte là-dessus !', 'Les Ailes'],
+            correctIndex: 0,
             explanation: 'Chef-d’œuvre humaniste de King Vidor (1928), La Foule annonçait déjà le réalisme social des années 1930.',
           },
         ],
@@ -652,8 +652,8 @@ export function createDfWorld(): WorldDefinition {
         blush: true,
       },
       introLines: [
-        '« O mar serenou quando ela pisou na areia… » Toute l’école de Portela est en bleu et blanc pour vous accueillir !',
-        'Prenez place sous nos guirlandes : montrez-moi que vous connaissez Portela, le carnaval de Rio et les trésors de la musique brésilienne !',
+        '« O mar serenou quando ela pisou na areia… » De Minas Gerais jusqu’à Rio de Janeiro, le cœur du samba bat ici à pleins tambours !',
+        'Prenez place sous nos guirlandes : montrez-moi que vous connaissez le carnaval de Rio, le choro et les trésors de la musique brésilienne !',
       ],
       alreadyWonLines: [
         'Vous connaissez le samba et les couleurs de Portela comme de vrais Cariocas ! La bateria entière vous salue !',
@@ -668,7 +668,7 @@ export function createDfWorld(): WorldDefinition {
       notebookBio: 'Interprète mythique du samba brésilien (« O Mar Serenou », « Canto das Três Raças »).',
       challenge: {
         kind: 'quiz',
-        title: 'Les Couleurs de Portela',
+        title: 'Les Trésors du Samba de Rio',
         instructions: 'Répondez aux questions de spécialiste de Clara Nunes sur le samba, le choro et la mémoire du Brésil !',
         themeStyle: 'music_br',
         timePerQuestionSec: 15,
@@ -706,7 +706,7 @@ export function createDfWorld(): WorldDefinition {
               'Garoto',
             ],
             correctIndex: 1,
-            explanation: 'Jacob do Bandolim (1918-1969) a élevé la mandoline brésilienne et préservé le répertoire du choro classique.',
+            explanation: 'Jacob do Bandolim (1918–1969) a élevé la mandoline brésilienne et préservé le répertoire du choro classique.',
           },
           {
             question: 'Quel album d’Elizeth Cardoso (1958, label Festa) réunit des chansons de Jobim et Vinícius et le tout premier enregistrement de « Chega de Saudade » ?',
@@ -723,12 +723,12 @@ export function createDfWorld(): WorldDefinition {
             question: 'À quelle école de samba de Rio Paulinho da Viola déclare-t-il son amour dans « Foi um Rio que Passou em Minha Vida » (1970) ?',
             options: ['Mangueira', 'Império Serrano', 'Salgueiro', 'Portela'],
             correctIndex: 3,
-            explanation: 'Fils du guitariste Cesar Faria, Paulinho da Viola y rend un hommage bouleversant à l’aigle bleu et blanc de Portela.',
+            explanation: 'Fils du guitariste César Faria, Paulinho da Viola y rend un hommage bouleversant à l’aigle bleu et blanc de Portela.',
           },
           {
             question: 'Quel virtuose du cavaquinho transforma son instrument en instrument soliste grâce au choro « Brasileirinho » (1947) ?',
-            options: ['Zequinha de Abreu', 'Waldir Azevedo', 'Pixinguinha', 'Ernesto Nazareth'],
-            correctIndex: 1,
+            options: ['Zequinha de Abreu', 'Pixinguinha', 'Waldir Azevedo', 'Ernesto Nazareth'],
+            correctIndex: 2,
             explanation: 'Composé en 1947, « Brasileirinho » de Waldir Azevedo demeure le plus célèbre solo de cavaquinho de l’histoire.',
           },
         ],
@@ -772,8 +772,8 @@ export function createDfWorld(): WorldDefinition {
         blush: true,
       },
       introLines: [
-        'On m’appelle « Pimentinha » — petit piment ! Quand j’entonne « Águas de Março » avec Tom Jobim, le studio entier prend feu !',
-        'É pau, é pedra, é o fim do caminho… Déchiffrez mes énigmes pour reconnaître les plus grandes chansons de la musique populaire brésilienne !',
+        'On m’appelle « Pimentinha » — petit piment ! Dès que les lampes du studio s’allument et que la bande tourne, je chante comme si chaque note était la dernière !',
+        'Fermez les yeux, écoutez battre le cœur du Brésil… Déchiffrez mes énigmes pour reconnaître les plus grandes chansons de la musique populaire brésilienne !',
       ],
       alreadyWonLines: [
         'Quelle culture musicale ! Vous avez le feu sacré de la MPB dans le cœur !',
@@ -801,8 +801,8 @@ export function createDfWorld(): WorldDefinition {
               'Elis Regina y clame le désenchantement d’une génération sous la dictature militaire.',
               'Son refrain constate avec amertume que, malgré tout, nous vivons encore « comme nos parents ».',
             ],
-            options: ['Madalena', 'Como Nossos Pais', 'Tiro ao Álvaro', 'Romaria'],
-            correctIndex: 1,
+            options: ['Como Nossos Pais', 'Madalena', 'Tiro ao Álvaro', 'Romaria'],
+            correctIndex: 0,
             explanation: 'Gravée par Elis Regina sur Falso Brilhante (1976), cette chanson de Belchior reste un monument de la MPB.',
           },
           {
@@ -829,10 +829,10 @@ export function createDfWorld(): WorldDefinition {
             options: [
               'Com Que Roupa ?',
               'Conversa de Botequim',
-              'Feitiço da Vila',
               'Último Desejo',
+              'Feitiço da Vila',
             ],
-            correctIndex: 2,
+            correctIndex: 3,
             explanation: 'Composé en 1934 avec Vadico, Feitiço da Vila immortalisa la fierté poétique de Vila Isabel.',
           },
           {
@@ -856,8 +856,8 @@ export function createDfWorld(): WorldDefinition {
               'Ses strophes se réorganisent en permutations vertigineuses sous l’orchestration de Rogério Duprat.',
               'Tour de force prosodique : chaque alexandrin se clôt par un mot proparoxyton.',
             ],
-            options: ['Cotidiano', 'A Banda', 'Construção', 'Roda Viva'],
-            correctIndex: 2,
+            options: ['Construção', 'Cotidiano', 'A Banda', 'Roda Viva'],
+            correctIndex: 0,
             explanation: 'Publiée en 1971, Construção est l’un des sommets poétiques et politiques de la musique brésilienne.',
           },
           {
@@ -868,11 +868,11 @@ export function createDfWorld(): WorldDefinition {
             ],
             options: [
               'Corcovado',
-              'Águas de Março',
               'Samba de Uma Nota Só',
               'Retrato em Branco e Preto',
+              'Águas de Março',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Écrite par Jobim en 1972 et gravée en duo sur Elis & Tom (1974), elle incarne la grâce absolue de la MPB.',
           },
         ],
@@ -918,7 +918,7 @@ export function createDfWorld(): WorldDefinition {
       },
       introLines: [
         '« De tous les bars de toutes les villes du monde, il a fallu que vous entriez dans le mien… » Baissez votre chapeau, il pleut en noir et blanc.',
-        'Si vous êtes vraiment des détectives du film noir, résolvez ces énigmes de mes classiques sans flancher !',
+        'Si vous êtes vraiment des détectives du film noir, résolvez ces énigmes sur les grands classiques du genre sans flancher !',
       ],
       alreadyWonLines: [
         '« Je crois que c’est le début d’une belle amitié… » Filez vers les collines d’Hollywood, les as !',
@@ -978,11 +978,11 @@ export function createDfWorld(): WorldDefinition {
             ],
             options: [
               'Key Largo',
-              'Le Violent',
               'Les Passagers de la nuit',
               'Ouragan sur le Caine',
+              'Le Violent',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Sorti en 1950, Le Violent (In a Lonely Place) offre à Bogart l’un de ses rôles les plus bouleversants.',
           },
           {
@@ -1019,10 +1019,10 @@ export function createDfWorld(): WorldDefinition {
             options: [
               'La Dame de Shanghai',
               'Le Troisième Homme',
-              'La Soif du mal',
               'Quand la ville dort',
+              'La Soif du mal',
             ],
-            correctIndex: 2,
+            correctIndex: 3,
             explanation: 'Sorti en 1958 avec Janet Leigh et Marlene Dietrich, La Soif du mal clôt magistralement le noir classique.',
           },
         ],
@@ -1094,11 +1094,11 @@ export function createDfWorld(): WorldDefinition {
             question: 'Quelle célèbre unité de production de la MGM, dirigée par un ancien parolier, a produit « Un jour à New York », « Un Américain à Paris » et « Chantons sous la pluie » ?',
             options: [
               'L’unité Pasternak',
-              'L’unité Arthur Freed',
               'L’unité Thalberg',
               'L’unité Selznick',
+              'L’unité Arthur Freed',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'La « Freed Unit » d’Arthur Freed réunit Minnelli, Donen, Kelly et Astaire à l’apogée de la MGM.',
           },
           {
@@ -1139,10 +1139,10 @@ export function createDfWorld(): WorldDefinition {
             options: [
               'Ginger Rogers',
               'Leslie Caron',
-              'Cyd Charisse',
               'Debbie Reynolds',
+              'Cyd Charisse',
             ],
-            correctIndex: 2,
+            correctIndex: 3,
             explanation: 'Cyd Charisse y enflamme avec Fred Astaire cette parodie éblouissante du film noir chorégraphiée par Michael Kidd.',
           },
           {
@@ -1209,7 +1209,7 @@ export function createDfWorld(): WorldDefinition {
       loseLines: [
         'Une petite dissonance dans les associations ! Respirez l’air marin d’Ipanema et réessayez.',
       ],
-      duoWinReaction: 'Francis : « Cartola, Noel Rosa, Portela, Mangueira : tout l’âme de Rio ! »',
+      duoWinReaction: 'Francis : « Cartola, Noel Rosa, Portela, Mangueira : toute l’âme de Rio ! »',
       notebookBio: 'Antônio Carlos Jobim (1927–1994), compositeur de Garota de Ipanema, Corcovado et Chega de Saudade.',
       challenge: {
         kind: 'pair_match',
@@ -1472,18 +1472,18 @@ export function createDfWorld(): WorldDefinition {
       },
       introLines: [
         'J’ai eu le bonheur de tourner « Sabrina » et « Ariane » pour Billy Wilder — l’un des géants absolus de notre Âge d’Or !',
-        'Avant d’ouvrir les portes d’Alfred Hitchcock, prouvez votre œil de cinéphile en attribuant huit chefs-d’œuvre à Billy Wilder, Howard Hawks ou John Ford !',
+        'Prouvez votre œil de cinéphile en attribuant huit chefs-d’œuvre à Billy Wilder, Howard Hawks ou John Ford pour mériter mon badge !',
       ],
       alreadyWonLines: [
-        'Douze badges en poche ! Alfred Hitchcock ajuste déjà son profil célèbre tout là-haut.',
+        'Quelle élégance ! Dès que vos douze badges seront réunis, Alfred Hitchcock vous attendra tout là-haut.',
       ],
       winLines: [
-        'Quelle grâce et quelle cinéphilie ! Prenez ce Badge Tiffany et filez chez le Maître du Suspense !',
+        'Quelle grâce et quelle cinéphilie ! Prenez ce Badge Tiffany : vous vous rapprochez du Maître du Suspense !',
       ],
       loseLines: [
         'Même Holly Golightly égarait parfois un générique ! Respirez et reprenez ce tri de grands cinéastes.',
       ],
-      duoWinReaction: 'Dominique & Francis : « Wilder, Hawks, Ford… Tous les 12 badges réunis ! Direction Hitchcock ! »',
+      duoWinReaction: 'Dominique & Francis : « Wilder, Hawks, Ford… Un sans-faute de cinéphiles pour le Badge Tiffany ! »',
       notebookBio: 'Actrice oscarisée pour Vacances romaines, héroïne de Sabrina, Diamants sur canapé et My Fair Lady.',
       challenge: {
         kind: 'category_sort',
@@ -1628,7 +1628,7 @@ export function createDfWorld(): WorldDefinition {
                   explanation: 'Salvador Dalí collabora avec Hitchcock sur Spellbound (1945), porté par la partition au thérémine de Miklós Rózsa.',
                 },
                 {
-                  question: 'Quel graphiste américain révolutionna les génériques de « Sueurs froides », « La Mort aux trousses » et « Psychose » ?',
+                  question: 'Quel graphiste américain créa la célèbre spirale hypnotique du générique de « Sueurs froides » (1958) ?',
                   options: [
                     'Saul Bass',
                     'Maurice Binder',
@@ -1636,21 +1636,21 @@ export function createDfWorld(): WorldDefinition {
                     'Kyle Cooper',
                   ],
                   correctIndex: 0,
-                  explanation: 'Saul Bass créa la spirale de Vertigo, la grille cinétique de North by Northwest et les barres tranchantes de Psycho.',
+                  explanation: 'Pionnier du générique moderne, Saul Bass marqua durablement l’identité visuelle des films d’Hitchcock et d’Otto Preminger.',
                 },
                 {
                   question: 'Dans « Les Enchaînés » (Notorious, 1946), situé à Rio de Janeiro, quel minerai caché dans des bouteilles de vin sert de MacGuffin ?',
                   options: [
                     'De la poudre de diamant',
-                    'Du minerai d’uranium',
                     'Un microfilm codé',
                     'Un poison tropical',
+                    'Du minerai d’uranium',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 3,
                   explanation: 'Cary Grant et Ingrid Bergman traquent du minerai d’uranium dissimulé dans la cave de Sebastian à Rio de Janeiro !',
                 },
                 {
-                  question: 'Quel film de 1948 Hitchcock construisit-il comme un unique faux plan-séquence en temps réel, masquant chaque changement de bobine ?',
+                  question: 'Quel film de 1948 Hitchcock construisit-il comme un unique faux plan-séquence en temps réel, dissimulant ses raccords entre bobines ?',
                   options: [
                     'L’Inconnu du Nord-Express',
                     'Le Crime était presque parfait',
@@ -1663,12 +1663,12 @@ export function createDfWorld(): WorldDefinition {
                 {
                   question: 'Quel est l’unique film qu’Alfred Hitchcock réalisa deux fois — version britannique en 1934 puis remake hollywoodien en 1956 avec James Stewart et Doris Day ?',
                   options: [
+                    'L’Homme qui en savait trop',
                     'Les 39 Marches',
                     'Une femme disparaît',
-                    'L’Homme qui en savait trop',
                     'Agent secret',
                   ],
-                  correctIndex: 2,
+                  correctIndex: 0,
                   explanation: 'Hitchcock disait que la version de 1934 était l’œuvre d’un « amateur doué » et celle de 1956 d’un « professionnel ».',
                 },
               ],
@@ -1747,12 +1747,12 @@ export function createDfWorld(): WorldDefinition {
                 {
                   prompt: 'Quel film d’Hitchcock N’a PAS un générique signé Saul Bass ?',
                   items: [
+                    'Les Oiseaux',
                     'Sueurs froides',
                     'La Mort aux trousses',
                     'Psychose',
-                    'Les Oiseaux',
                   ],
-                  intruderIndex: 3,
+                  intruderIndex: 0,
                   explanation: 'Saul Bass signa la trilogie Vertigo, La Mort aux trousses et Psychose ; Les Oiseaux (1963) fut confié à James S. Pollak.',
                 },
               ],
@@ -1823,7 +1823,7 @@ export function createDfWorld(): WorldDefinition {
     x: 28,
     y: 11,
     dir: 'down',
-    gateId: 'df_gk_3',
+    gateId: 'df_gate_3',
     voicePitch: 280,
     appearance: {
       skin: '#f2cba8',
@@ -2027,7 +2027,7 @@ export function createDfWorld(): WorldDefinition {
     // District 3
     {
       id: 'df_sec_9',
-      name: 'Vinicius de Moraes',
+      name: 'Vinícius de Moraes',
       title: 'O Poetinha',
       role: 'secondary',
       district: 3,
@@ -2046,7 +2046,7 @@ export function createDfWorld(): WorldDefinition {
       },
       portrait: { bgTop: '#264d47', bgBottom: '#122422', eyeColor: '#36281f', collar: 'normal' },
       hintTargetBadgeIds: ['df_jobim', 'df_gilberto'],
-      hintLines: ['Un poème, un café à Ipanema… et mon complice vous conseille de retrouver'],
+      hintLines: ['Un poème, un café à Ipanema… et je vous conseille vivement de retrouver'],
     },
     {
       id: 'df_sec_10',

@@ -257,7 +257,8 @@ export function drawFittedWrappedText(
     ctx.font = `${weight} ${size.toFixed(1)}px ${family}`;
     lines = wrapTextLines(ctx, text, maxWidth);
     lh = size * lineHeightRatio;
-    if (lines.length * lh <= maxHeight + 0.5 || size <= minSize) {
+    const fitsWidth = lines.every((l) => ctx.measureText(l).width <= maxWidth + 0.5);
+    if ((fitsWidth && lines.length * lh <= maxHeight + 0.5) || size <= minSize) {
       break;
     }
     size = Math.max(minSize, size - 0.4);
@@ -609,6 +610,8 @@ export function inferReflectionTheme(
   if (prop === 'basketball') return 'basketball';
 
   const mapId = npc.mapId ?? '';
+  if (mapId.includes('noir') || mapId.includes('polar')) return 'polar';
+  if (mapId.includes('manga')) return 'manga';
   if (mapId.includes('theater')) return 'theater';
   if (mapId.includes('salon')) return 'literature';
   if (mapId.includes('samba')) return 'music_br';
@@ -617,8 +620,6 @@ export function inferReflectionTheme(
   if (mapId.includes('darkroom')) return 'photography';
   if (mapId.includes('stadium')) return 'football';
   if (mapId.includes('court')) return 'basketball';
-  if (mapId.includes('manga')) return 'manga';
-  if (mapId.includes('noir')) return 'polar';
 
   if (npc.id.startsWith('pm_')) return 'literature';
   if (npc.id.startsWith('df_')) return 'music_br';
@@ -893,8 +894,10 @@ export function drawReflectionStageBackdrop(
     }
 
     // Subtle warm projector dust motes
+    const dustSpan = MG_W - 44;
     for (let i = 0; i < 10; i++) {
-      const px = 22 + ((i * 39 + Math.sin(elapsed * 0.8 + i) * 14) % (MG_W - 44));
+      const rawX = i * 39 + Math.sin(elapsed * 0.8 + i) * 14;
+      const px = 22 + (((rawX % dustSpan) + dustSpan) % dustSpan);
       const py = 36 + ((i * 27 + elapsed * 6) % (MG_H - 44));
       ctx.fillStyle = 'rgba(255, 240, 200, 0.22)';
       ctx.fillRect(px, py, 1.8, 1.8);

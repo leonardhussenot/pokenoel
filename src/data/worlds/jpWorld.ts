@@ -514,33 +514,33 @@ export function createJpWorld(): WorldDefinition {
       challenge: {
         kind: 'quiz',
         title: 'Archives & Secrets du Rolleiflex',
-        instructions: 'Répondez aux 6 questions d’expert sur Vivian Maier, le moyen format et l’argentique !',
+        instructions: 'Répondez aux questions d’expert sur Vivian Maier, le moyen format et l’argentique !',
         themeStyle: 'photography',
         timePerQuestionSec: 15,
         playerHp: 3,
         enemyHp: 4,
         questions: [
           {
-            question: 'Dans quel village des Hautes-Alpes, berceau de sa mère, Vivian Maier passa-t-elle une partie de sa jeunesse dans les années 1930 ?',
+            question: 'Dans quel bourg du Champsaur (Hautes-Alpes), qui abrite aujourd’hui un espace dédié à son œuvre, Vivian Maier passa-t-elle une partie de son enfance dans les années 1930 ?',
             options: ['Saint-Bonnet-en-Champsaur', 'Briançon', 'Barcelonnette', 'Chamonix'],
             correctIndex: 0,
-            explanation: 'Originaire par sa mère de Saint-Bonnet-en-Champsaur (Hautes-Alpes), Vivian Maier y séjourna enfant et y photographia la vie rurale !',
+            explanation: 'Issue par sa mère de la vallée du Champsaur (Saint-Julien), Vivian Maier vécut enfant à Saint-Bonnet-en-Champsaur (1934-1938) et y photographia la vie rurale !',
           },
           {
             question: 'En 2007, quel jeune collectionneur de Chicago acheta aux enchères un lot de garde-meuble révélant plus de 100 000 négatifs de Vivian Maier ?',
-            options: ['Robert Pledge', 'John Maloof', 'Martin Parr', 'Howard Greenberg'],
-            correctIndex: 1,
+            options: ['Robert Pledge', 'Martin Parr', 'John Maloof', 'Howard Greenberg'],
+            correctIndex: 2,
             explanation: 'John Maloof acquit aux enchères les cartons de négatifs non développés de Vivian Maier et fit découvrir son œuvre au monde entier.',
           },
           {
             question: 'Sur le verre dépoli du viseur de poitrine d’un Rolleiflex (bi-objectif TLR), quelle particularité optique déroute les débutants ?',
             options: [
               'L’image est inversée haut-bas',
-              'L’image est inversée gauche-droite',
               'La mise au point se fait au télémètre',
               'L’image reste toujours floue sur les bords',
+              'L’image est inversée gauche-droite',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Le miroir à 45° redresse la verticale mais laisse une inversion latérale gauche-droite : il faut pivoter à l’opposé pour suivre un passant !',
           },
           {
@@ -552,23 +552,23 @@ export function createJpWorld(): WorldDefinition {
           {
             question: 'Quel défaut de cadrage à courte distance affecte un bi-objectif (TLR) parce que l’objectif de visée est au-dessus de celui de prise de vue ?',
             options: [
-              'L’erreur de parallaxe',
               'L’effet Schwarzschild',
               'L’aberration chromatique',
+              'L’erreur de parallaxe',
               'Le vignettage mécanique',
             ],
-            correctIndex: 0,
+            correctIndex: 2,
             explanation: 'Le décalage vertical entre les deux objectifs crée une erreur de parallaxe en gros plan, compensée sur certains Rolleiflex par un cadre mobile.',
           },
           {
             question: 'Quel procédé sur négatif papier, breveté en 1841 par William Henry Fox Talbot, permit pour la première fois de tirer plusieurs épreuves d’un cliché ?',
             options: [
               'Le daguerréotype',
-              'Le calotype',
               'L’ambrotype',
               'Le ferrotype',
+              'Le calotype',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Contrairement au daguerréotype (plaque unique), le calotype (talbotype) inventa le procédé négatif-positif reproductible !',
           },
         ],
@@ -613,8 +613,8 @@ export function createJpWorld(): WorldDefinition {
         blush: true,
       },
       introLines: [
-        'Bienvenue à Valence ! J’adore marier le thé matcha, le chèvre de Banon, le poivre de Voatsiperifery et la bergamote — parfois même tout ça avant midi !',
-        'Aiguisez vos papilles : déchiffrez six grands secrets techniques, sauces et épices de haute gastronomie grâce à trois indices !',
+        'Bienvenue à Valence ! Ma cuisine cherche l’équilibre juste entre amertume végétale, notes fumées, épices rares et agrumes — parfois même tout ça avant midi !',
+        'Aiguisez vos papilles : déchiffrez mes grands secrets techniques, sauces et épices de haute gastronomie grâce à trois indices !',
       ],
       alreadyWonLines: [
         'Quel nez et quel palais ! Vous repérez une note de Voatsiperifery ou une gastrique à vingt mètres !',
@@ -630,7 +630,7 @@ export function createJpWorld(): WorldDefinition {
       challenge: {
         kind: 'riddle_word',
         title: 'L’Alchimie d’Anne-Sophie Pic',
-        instructions: 'Déchiffrez ces 6 termes, épices et sauces de haute gastronomie en 3 indices !',
+        instructions: 'Déchiffrez ces termes, épices et sauces de haute gastronomie en 3 indices !',
         themeStyle: 'gastronomy',
         timePerRiddleSec: 17,
         playerHp: 3,
@@ -752,7 +752,7 @@ export function createJpWorld(): WorldDefinition {
         'Précision millimétrée ! Même le Guide Michelin en redemande : voici le Badge Atelier Velours.',
       ],
       loseLines: [
-        'Aïe, on ne verse jamais le lait avant d’avoir monté au beurre froid ! Reprenez l’ordre exact des étapes et des repères.',
+        'Aïe, un geste technique ou une date a glissé hors de son rang ! Reprenez votre concentration et revérifiez l’ordre exact.',
       ],
       duoWinReaction: 'Juliette : « Les 6 étapes de la purée et de La Varenne (1651) à l’UNESCO (2010) : digne d’un 3 étoiles ! »',
       notebookBio: 'Surnommé « Chef du Siècle », recordman absolu des étoiles au Guide Michelin (32 étoiles).',
@@ -943,7 +943,7 @@ export function createJpWorld(): WorldDefinition {
       challenge: {
         kind: 'quiz',
         title: 'Les Carnets de Genesis',
-        instructions: 'Répondez aux 6 questions d’expert sur Sebastião Salgado et son œuvre documentaire !',
+        instructions: 'Répondez aux questions d’expert sur Sebastião Salgado et son œuvre documentaire !',
         themeStyle: 'photography',
         timePerQuestionSec: 16,
         playerHp: 3,
@@ -970,11 +970,11 @@ export function createJpWorld(): WorldDefinition {
             question: 'Quelle contrainte pratique poussa Salgado à passer de l’argentique (Pentax 645 / Kodak Tri-X) au numérique (Canon EOS-1Ds Mark III) durant Genesis ?',
             options: [
               'L’arrêt mondial du film 120',
-              'Les rayons X des aéroports voilant ses centaines de bobines',
               'Une interdiction du film en Antarctique',
               'Un contrat exclusif de tirage couleur',
+              'Les rayons X des aéroports voilant ses centaines de bobines',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Les scanners à rayons X des aéroports risquaient de voiler ses centaines de pellicules : il passa au numérique tout en préservant son grain Tri-X.',
           },
           {
@@ -985,8 +985,8 @@ export function createJpWorld(): WorldDefinition {
           },
           {
             question: 'Quelle agence parisienne Sebastião et Lélia Salgado ont-ils fondée en 1994 après son départ de Magnum Photos ?',
-            options: ['Gamma-Rapho', 'Amazonas Images', 'Agence Vu', 'Contact Press'],
-            correctIndex: 1,
+            options: ['Amazonas Images', 'Gamma-Rapho', 'Agence Vu', 'Contact Press'],
+            correctIndex: 0,
             explanation: 'Fondée à Paris en 1994, Amazonas Images gère exclusivement les archives, les livres et les expositions de Sebastião Salgado.',
           },
           {
@@ -1037,8 +1037,8 @@ export function createJpWorld(): WorldDefinition {
         prop: 'whisk',
       },
       introLines: [
-        '« La naturalité : du poisson, des légumes, des céréales… et une exigence de palace ! » Bienvenue au Louis XV à Monaco !',
-        'Posons les casseroles un instant : déchiffrez six créations signatures et grands jalons de ma maison grâce à trois indices précis !',
+        'Bienvenue à Monaco ! Entre la Méditerranée, les grands palaces parisiens et les ateliers d’artisans, ma cuisine exige une précision absolue à chaque instant.',
+        'Posons les casseroles un instant : déchiffrez les créations signatures et grands jalons de ma maison grâce à trois indices précis !',
       ],
       alreadyWonLines: [
         'Précision monégasque ! Vous connaissez ma cuisine de la Méditerranée jusqu’à la Station Spatiale Internationale !',
@@ -1053,7 +1053,7 @@ export function createJpWorld(): WorldDefinition {
       notebookBio: 'Chef multi-étoilé international (jusqu’à 21 étoiles Michelin), promoteur de la « naturalité » et des produits méditerranéens.',
       challenge: {
         kind: 'riddle_word',
-        title: 'Les Secrets du Louis XV',
+        title: 'Les Secrets d’Alain Ducasse',
         instructions: 'Déchiffrez les créations et jalons d’Alain Ducasse grâce aux 3 indices !',
         themeStyle: 'gastronomy',
         timePerRiddleSec: 17,
@@ -1273,8 +1273,8 @@ export function createJpWorld(): WorldDefinition {
         prop: 'camera',
       },
       introLines: [
-        '« Si vos photos ne sont pas assez bonnes, c’est que vous n’êtes pas assez près ! » Rangez le téléobjectif et asseyez-vous au bureau de Magnum !',
-        'Du magazine Vu à la Valise mexicaine et aux Contax II d’Omaha Beach, prouvez votre science du grand photojournalisme !',
+        '« Si vos photos ne sont pas assez bonnes, c’est que vous n’êtes pas assez près ! » Rangez le téléobjectif et venez vérifier vos archives de reporter !',
+        'De la guerre d’Espagne jusqu’au Jour J et aux grands reportages du XXe siècle, prouvez votre science du grand photojournalisme !',
       ],
       alreadyWonLines: [
         'Un reportage de première classe ! L’agence Magnum vous recrute quand vous voulez !',
@@ -1289,8 +1289,8 @@ export function createJpWorld(): WorldDefinition {
       notebookBio: 'Légendaire photojournaliste (né Endre Friedmann) et cofondateur de l’agence Magnum Photos en 1947.',
       challenge: {
         kind: 'quiz',
-        title: 'Les Dossiers Secrets de Magnum',
-        instructions: 'Répondez aux 6 questions d’expert sur Robert Capa et le photojournalisme !',
+        title: 'Les Dossiers Secrets de Capa',
+        instructions: 'Répondez aux questions d’expert sur Robert Capa et le photojournalisme !',
         themeStyle: 'photography',
         timePerQuestionSec: 15,
         playerHp: 3,
@@ -1310,12 +1310,12 @@ export function createJpWorld(): WorldDefinition {
           },
           {
             question: 'Quels boîtiers télémétriques 35 mm concurrents du Leica Robert Capa emporta-t-il sur Omaha Beach le 6 juin 1944 ?',
-            options: ['Deux Nikon S', 'Deux Contax II', 'Deux Argus C3', 'Deux Canon IVSb'],
-            correctIndex: 1,
+            options: ['Deux Nikon S', 'Deux Argus C3', 'Deux Canon IVSb', 'Deux Contax II'],
+            correctIndex: 3,
             explanation: 'Capa débarqua à Omaha Beach avec deux télémétriques Contax II 35 mm pour saisir les premières vagues au plus près de l’action.',
           },
           {
-            question: 'Pourquoi seuls onze clichés d’Omaha Beach (les « Magnificent Eleven ») ont-ils survécu au laboratoire londonien de Life ?',
+            question: 'Selon le célèbre récit du laboratoire londonien de Life, pourquoi seuls onze clichés d’Omaha Beach (les « Magnificent Eleven ») ont-ils survécu ?',
             options: [
               'Une bobine a été saisie par la censure',
               'Un excès de chaleur au séchage fit fondre l’émulsion des autres négatifs',
@@ -1323,23 +1323,23 @@ export function createJpWorld(): WorldDefinition {
               'Ses boîtiers ont pris l’eau de mer avant le rembobinage',
             ],
             correctIndex: 1,
-            explanation: 'Dans la précipitation au labo londonien de Life, l’armoire de séchage trop chaude fit fondre la plupart des négatifs.',
+            explanation: 'Selon le récit célèbre de Capa et de Life, dans la précipitation au labo londonien, l’armoire de séchage trop chaude fit fondre la plupart des négatifs.',
           },
           {
             question: 'Quel trésor d’environ 4 500 négatifs de la guerre d’Espagne (Capa, Gerda Taro et Chim) fut retrouvé et remis à l’ICP de New York en 2007 ?',
             options: [
-              'Les Archives de Barcelone',
               'La Valise mexicaine',
+              'Les Archives de Barcelone',
               'Le Coffre de Budapest',
               'Les Bobines de Montrouge',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
             explanation: 'Perdue depuis 1939, la « Valise mexicaine » (trois boîtes de négatifs) a révolutionné la connaissance du travail de Capa, Taro et Chim !',
           },
           {
             question: 'En 1947, avec Henri Cartier-Bresson, David « Chim » Seymour, George Rodger et William Vandivert, quelle coopérative Capa fonda-t-il ?',
-            options: ['Agence Rapho', 'Magnum Photos', 'Agence Sygma', 'Black Star'],
-            correctIndex: 1,
+            options: ['Agence Rapho', 'Agence Sygma', 'Black Star', 'Magnum Photos'],
+            correctIndex: 3,
             explanation: 'Fondée en 1947, Magnum Photos fut la première grande agence coopérative assurant aux photographes la propriété de leurs négatifs !',
           },
         ],
@@ -1382,19 +1382,19 @@ export function createJpWorld(): WorldDefinition {
         prop: 'camera',
       },
       introLines: [
-        'Mon Leica est camouflé au ruban adhésif noir, et attention : interdiction absolue de recadrer au tirage ! Tout est affaire de géométrie et d’œil !',
-        'Avant de vous ouvrir la table de Monsieur Paul, déchiffrez mes grands repères photographiques en trois indices — sans jamais perdre le fil !',
+        '« Photographier, c’est mettre sur la même ligne de mire la tête, l’œil et le cœur ! » Ici, tout est affaire de géométrie, de patience et de regard.',
+        'Prêts pour mon épreuve d’observation ? Déchiffrez mes grands repères photographiques grâce à trois indices — sans jamais perdre le fil !',
       ],
       alreadyWonLines: [
-        'Douze badges en poche et zéro recadrage ! Le grand Paul Bocuse vous attend pour le banquet final !',
+        'Quel sens de la géométrie et du cadre ! Dès que vous aurez réuni les douze badges, le grand Paul Bocuse vous ouvrira sa table.',
       ],
       winLines: [
-        'La tête, l’œil et le cœur sur la même ligne ! Voici le Badge Instant Décisif. En route vers Monsieur Paul !',
+        'La tête, l’œil et le cœur sur la même ligne ! Voici le Badge Instant Décisif : un grand pas vers la table de Monsieur Paul !',
       ],
       loseLines: [
         'Une fraction de seconde d’hésitation et la géométrie s’envole ! Relisez mes trois indices et retentez l’épreuve.',
       ],
-      duoWinReaction: 'Juliette & Pierre : « Douze badges ! On file s’attabler chez Paul Bocuse ! »',
+      duoWinReaction: 'Pierre : « L’œil du siècle conquis sans trembler — quel badge ! »',
       notebookBio: 'Pionnier du photojournalisme au Leica, cofondateur de Magnum Photos et maître de « l’instant décisif ».',
       challenge: {
         kind: 'riddle_word',
@@ -1517,8 +1517,8 @@ export function createJpWorld(): WorldDefinition {
         prop: 'whisk',
       },
       introLines: [
-        'Bonjour Juliette et Pierre ! Douze badges réunis, bienvenue à Collonges-au-Mont-d’Or ! Ici à Lyon, il y a trois secrets en cuisine : le beurre, la crème… et encore un peu de beurre !',
-        'Pour décrocher mon Badge Collonges d’Or, il faudra réussir mes TROIS SERVICES FINAUX sans flancher ! En cuisine, la brigade !',
+        'Bonjour Juliette et Pierre ! Douze badges réunis, bienvenue dans mon Auberge des bords de Saône ! Ici à Lyon, il y a trois secrets en cuisine : le beurre, la crème… et encore un peu de beurre !',
+        'Pour décrocher mon trophée suprême, il faudra réussir mes TROIS SERVICES FINAUX sans flancher ! En cuisine, la brigade !',
       ],
       alreadyWonLines: [
         '« Il n’y a qu’une cuisine : la bonne ! » Et la vôtre mérite toutes les étoiles de Lyon et de France !',
@@ -1537,11 +1537,11 @@ export function createJpWorld(): WorldDefinition {
         phases: [
           {
             phaseTitle: 'Service I — L’Examen du Col Tricolore',
-            taunt: 'Avant d’allumer les fourneaux de Collonges, prouvez votre maîtrise de l’histoire lyonnaise et des grands maîtres !',
+            taunt: 'Avant d’allumer mes fourneaux, prouvez votre maîtrise de l’histoire lyonnaise et des grands maîtres !',
             challenge: {
               kind: 'quiz',
               title: 'Service I : La Lignée de Monsieur Paul',
-              instructions: 'Répondez aux 6 questions d’expert de Paul Bocuse !',
+              instructions: 'Répondez aux questions d’expert de Paul Bocuse !',
               themeStyle: 'gastronomy',
               timePerQuestionSec: 14,
               playerHp: 2,
@@ -1570,15 +1570,15 @@ export function createJpWorld(): WorldDefinition {
                   explanation: 'À La Pyramide à Vienne, Fernand Point forma toute une génération d’or, de Paul Bocuse aux frères Troisgros !',
                 },
                 {
-                  question: 'Dans quelle enveloppe traditionnelle Paul Bocuse pochait-il sa célèbre Volaille de Bresse truffée, héritée de la Mère Fillioux ?',
+                  question: 'Quel mouvement culinaire des années 1970, codifié en 1973 par Henri Gault et Christian Millau, Paul Bocuse incarna-t-il aux côtés des frères Troisgros et de Michel Guérard ?',
                   options: [
-                    'En croûte de sel',
-                    'En vessie',
-                    'En croûte d’argile',
-                    'En crépine dorée',
+                    'La Cuisine moléculaire',
+                    'La Bistronomie',
+                    'La Nouvelle Cuisine',
+                    'La Cuisine bourgeoise',
                   ],
-                  correctIndex: 1,
-                  explanation: 'Pochée en vessie avec truffes et bouillon, la volaille de Bresse confit dans ses propres sucs sans jamais se dessécher !',
+                  correctIndex: 2,
+                  explanation: 'Codifiée en 1973 par Gault & Millau, la Nouvelle Cuisine prônait cuissons courtes, sauces allégées et respect absolu du produit frais !',
                 },
                 {
                   question: 'Quel poisson de Méditerranée Paul Bocuse et son chef Roger Jaloux habillaient-ils de fines rondelles de pommes de terre imitant des écailles croustillantes ?',
@@ -1617,12 +1617,12 @@ export function createJpWorld(): WorldDefinition {
             },
           },
           {
-            phaseTitle: 'Service II — Les Plats Mythiques de Collonges',
+            phaseTitle: 'Service II — Les Plats Mythiques de Monsieur Paul',
             taunt: 'Reconnaissez maintenant mes plats signatures et les hauts lieux de ma légende en trois indices — sans tricher !',
             challenge: {
               kind: 'riddle_word',
               title: 'Service II : Les Icônes de Monsieur Paul',
-              instructions: 'Identifiez les 5 plats et repères mythiques de Paul Bocuse en 3 indices !',
+              instructions: 'Identifiez les plats et repères mythiques de Paul Bocuse en 3 indices !',
               themeStyle: 'gastronomy',
               timePerRiddleSec: 16,
               playerHp: 3,
@@ -1690,7 +1690,7 @@ export function createJpWorld(): WorldDefinition {
                     'Elle arrive gonflée comme un ballon à table, où le maître d’hôtel la perce et la découpe avec une sauce crémée.',
                   ],
                   options: [
-                    'La Poularde demi-deuil',
+                    'Le Coq au vin de Bourgogne',
                     'La Volaille de Bresse en vessie',
                     'Le Chapon rôti à la broche',
                     'La Fricassée de volaille aux morilles',
@@ -1716,7 +1716,7 @@ export function createJpWorld(): WorldDefinition {
                   orderedItems: [
                     'Pocher volaille et tailler garnitures',
                     'Verser Noilly Prat et garnitures au bol',
-                    'Mouiller avec le bouillon chaud',
+                    'Mouiller avec le consommé froid',
                     'Sceller chaque bol de pâte feuilletée',
                     'Badigeonner la pâte au jaune d’œuf',
                     'Enfourner jusqu’au dôme doré et gonflé',
@@ -1724,13 +1724,13 @@ export function createJpWorld(): WorldDefinition {
                   revealTags: ['Étape 1', 'Étape 2', 'Étape 3', 'Étape 4', 'Étape 5', 'Étape 6'],
                   hintLabels: ['▲ Plus tôt', '▼ Plus tard'],
                   explanation:
-                    'Volaille pochée & garnitures → Noilly Prat au bol → bouillon chaud → pâte feuilletée scellée → dorure au jaune → cuisson en dôme !',
+                    'Volaille pochée & garnitures → Noilly Prat au bol → consommé froid (pour ne pas faire fondre la pâte) → pâte feuilletée scellée → dorure → cuisson en dôme !',
                 },
                 {
                   prompt: 'Classez ces 6 grands jalons de la vie de Paul Bocuse du plus ancien au plus récent :',
                   orderedItems: [
                     'Apprentissage chez la Mère Brazier',
-                    'Reprise de l’Auberge à Collonges',
+                    'Retour et 1re étoile à Collonges',
                     'Titre de Meilleur Ouvrier de France',
                     'Obtention de la 3e étoile Michelin',
                     'Création de la Soupe V.G.E. à l’Élysée',
@@ -1739,7 +1739,7 @@ export function createJpWorld(): WorldDefinition {
                   revealTags: ['1946', '1958', '1961', '1965', '1975', '1987'],
                   hintLabels: ['▲ Plus tôt', '▼ Plus tard'],
                   explanation:
-                    'Mère Brazier (1946), retour à Collonges (1958), MOF (1961), 3e étoile Michelin (1965), Soupe V.G.E. (1975) et Bocuse d’Or (1987) !',
+                    'Mère Brazier (1946), retour et 1re étoile à Collonges (1958), MOF (1961), 3e étoile Michelin (1965), Soupe V.G.E. (1975) et Bocuse d’Or (1987) !',
                 },
               ],
             },

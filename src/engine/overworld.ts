@@ -3,6 +3,7 @@ import {
   Direction,
   DistrictGate,
   FamilyMember,
+  FamilyTeamMembers,
   MapData,
   ModeSaveData,
   NpcEntity,
@@ -147,17 +148,22 @@ export class OverworldEngine {
   private followerY: number;
   private followerDir: Direction = 'down';
 
+  private follower2X: number;
+  private follower2Y: number;
+  private follower2Dir: Direction = 'down';
+
   private moving = false;
   private moveProgress = 0; // 0..1
   private moveStartX = 0;
   private moveStartY = 0;
   private followerStartX = 0;
   private followerStartY = 0;
+  private follower2StartX = 0;
+  private follower2StartY = 0;
   private stepToggle = false;
   private bumpCooldown = 0;
   private warpCooldown = 0;
   private fadeAlpha = 0;
-  private swapHopTimer = 0;
   private animTimer = 0;
   private toastMessage = '';
   private toastTimer = 0;
@@ -165,20 +171,26 @@ export class OverworldEngine {
 
   constructor(
     private world: WorldDefinition,
-    private pairMembers: [FamilyMember, FamilyMember],
+    private pairMembers: FamilyTeamMembers,
     private save: ModeSaveData,
     private callbacks: OverworldCallbacks
   ) {
     const startMap = world.maps[save.lastMapId] ? save.lastMapId : world.overworldId;
     this.mapId = startMap;
-    const map = world.maps[startMap];
+    const candidateMap = world.maps[startMap];
     const validPos =
+      Number.isInteger(save.lastX) &&
+      Number.isInteger(save.lastY) &&
       save.lastX >= 0 &&
-      save.lastX < map.width &&
+      save.lastX < candidateMap.width &&
       save.lastY >= 0 &&
-      save.lastY < map.height &&
-      this.canStandOnTile(map, save.lastX, save.lastY);
+      save.lastY < candidateMap.height &&
+      this.canStandOnTile(candidateMap, save.lastX, save.lastY);
 
+    if (!validPos) {
+      this.mapId = world.overworldId;
+    }
+    const map = world.maps[this.mapId];
     this.leaderX = validPos ? save.lastX : world.spawnX;
     this.leaderY = validPos ? save.lastY : world.spawnY;
     this.followerX = this.leaderX;
@@ -187,10 +199,21 @@ export class OverworldEngine {
       this.followerX = this.leaderX;
       this.followerY = this.leaderY;
     }
+    this.follower2X = this.followerX;
+    this.follower2Y = Math.min(map.height - 2, this.followerY + 1);
+    if (
+      (this.follower2X === this.followerX && this.follower2Y === this.followerY) ||
+      !this.canStandOnTile(map, this.follower2X, this.follower2Y)
+    ) {
+      this.follower2X = this.followerX;
+      this.follower2Y = this.followerY;
+    }
     this.moveStartX = this.leaderX;
     this.moveStartY = this.leaderY;
     this.followerStartX = this.followerX;
     this.followerStartY = this.followerY;
+    this.follower2StartX = this.follower2X;
+    this.follower2StartY = this.follower2Y;
     this.atmosphere.resetForMap(map);
   }
 
@@ -253,7 +276,6 @@ export class OverworldEngine {
     if (this.bumpCooldown > 0) this.bumpCooldown -= dt;
     if (this.warpCooldown > 0) this.warpCooldown -= dt;
     if (this.fadeAlpha > 0) this.fadeAlpha = Math.max(0, this.fadeAlpha - dt * 3.8);
-    if (this.swapHopTimer > 0) this.swapHopTimer = Math.max(0, this.swapHopTimer - dt);
     if (this.toastTimer > 0) this.toastTimer = Math.max(0, this.toastTimer - dt);
 
     if (input.justPressed('menu') || input.justPressed('b')) {
@@ -322,11 +344,37 @@ export class OverworldEngine {
     this.moveStartY = this.leaderY;
     this.followerStartX = this.followerX;
     this.followerStartY = this.followerY;
+    this.follower2StartX = this.follower2X;
+    this.follower2StartY = this.follower2Y;
 
-    // Follower steps onto leader's vacated tile
+    // 2nd follower (if trio) steps onto 1st follower's vacated tile
+    const prevFollowerX = this.followerX;
+    const prevFollowerY = this.followerY;
     const prevLeaderX = this.leaderX;
     const prevLeaderY = this.leaderY;
-    if (prevLeaderX !== this.followerX || prevLeaderY !== this.followerY) {
+    const followerWillMove = prevLeaderX !== this.followerX || prevLeaderY !== this.followerY;
+
+    if (followerWillMove && this.pairMembers.length >= 3) {
+      if (prevFollowerX !== this.follower2X || prevFollowerY !== this.follower2Y) {
+        const f2dx = prevFollowerX - this.follower2X;
+        const f2dy = prevFollowerY - this.follower2Y;
+        if (Math.abs(f2dx) + Math.abs(f2dy) === 1) {
+          if (f2dx > 0) this.follower2Dir = 'right';
+          else if (f2dx < 0) this.follower2Dir = 'left';
+          else if (f2dy > 0) this.follower2Dir = 'down';
+          else if (f2dy < 0) this.follower2Dir = 'up';
+          this.follower2X = prevFollowerX;
+          this.follower2Y = prevFollowerY;
+        } else {
+          this.follower2X = prevFollowerX;
+          this.follower2Y = prevFollowerY;
+          this.follower2Dir = this.followerDir;
+        }
+      }
+    }
+
+    // 1st follower steps onto leader's vacated tile
+    if (followerWillMove) {
       const fdx = prevLeaderX - this.followerX;
       const fdy = prevLeaderY - this.followerY;
       if (Math.abs(fdx) + Math.abs(fdy) === 1) {
@@ -382,6 +430,11 @@ export class OverworldEngine {
     this.followerStartX = this.followerX;
     this.followerStartY = this.followerY;
     this.followerDir = warp.targetDir;
+    this.follower2X = this.followerX;
+    this.follower2Y = this.followerY;
+    this.follower2StartX = this.follower2X;
+    this.follower2StartY = this.follower2Y;
+    this.follower2Dir = warp.targetDir;
 
     this.save.lastMapId = this.mapId;
     this.save.lastX = this.leaderX;
@@ -455,6 +508,13 @@ export class OverworldEngine {
       ? this.followerStartY + (this.followerY - this.followerStartY) * this.moveProgress
       : this.followerY;
 
+    const f2LerpX = this.moving
+      ? this.follower2StartX + (this.follower2X - this.follower2StartX) * this.moveProgress
+      : this.follower2X;
+    const f2LerpY = this.moving
+      ? this.follower2StartY + (this.follower2Y - this.follower2StartY) * this.moveProgress
+      : this.follower2Y;
+
     // Camera calculation
     const mapPxW = map.width * TILE_SIZE;
     const mapPxH = map.height * TILE_SIZE;
@@ -499,7 +559,7 @@ export class OverworldEngine {
       }
     }
 
-    // 2. Ground-layer atmosphere (lamp pools, water glints, cloud shadows, dust puffs, swap sparkles)
+    // 2. Ground-layer atmosphere (lamp pools, water glints, cloud shadows, dust puffs)
     this.atmosphere.renderGroundEffects(ctx, map, camX, camY, this.animTimer);
 
     // 3. Collect drawable entities for Y-sorting
@@ -519,10 +579,6 @@ export class OverworldEngine {
 
     // Leader
     const leaderMember = this.getLeaderMember();
-    const hopOffset =
-      this.swapHopTimer > 0
-        ? -Math.round(Math.sin((this.swapHopTimer / 0.28) * Math.PI) * 5.5)
-        : 0;
     actors.push({
       sortY: lerpY,
       draw: () => {
@@ -532,13 +588,13 @@ export class OverworldEngine {
           this.leaderDir,
           walkFrame,
           Math.round(lerpX * TILE_SIZE - camX),
-          Math.round(lerpY * TILE_SIZE - camY - 8 + hopOffset),
+          Math.round(lerpY * TILE_SIZE - camY - 8),
           leaderMember.customSpriteSheetUrl
         );
       },
     });
 
-    // Follower
+    // Follower 1
     const followerMember = this.getFollowerMember();
     if (fLerpX !== lerpX || fLerpY !== lerpY) {
       actors.push({
@@ -552,6 +608,29 @@ export class OverworldEngine {
             Math.round(fLerpX * TILE_SIZE - camX),
             Math.round(fLerpY * TILE_SIZE - camY - 8),
             followerMember.customSpriteSheetUrl
+          );
+        },
+      });
+    }
+
+    // Follower 2 (for 3-member trio)
+    const follower2Member = this.pairMembers[2];
+    if (
+      follower2Member &&
+      (f2LerpX !== fLerpX || f2LerpY !== fLerpY) &&
+      (f2LerpX !== lerpX || f2LerpY !== lerpY)
+    ) {
+      actors.push({
+        sortY: f2LerpY,
+        draw: () => {
+          drawOverworldSprite(
+            ctx,
+            follower2Member.appearance,
+            this.follower2Dir,
+            walkFrame,
+            Math.round(f2LerpX * TILE_SIZE - camX),
+            Math.round(f2LerpY * TILE_SIZE - camY - 8),
+            follower2Member.customSpriteSheetUrl
           );
         },
       });
@@ -572,7 +651,12 @@ export class OverworldEngine {
             drawOverworldSprite(ctx, npc.partnerAppearance, npc.dir, 0, sx + TILE_SIZE, sy);
             this.drawTag(ctx, sx + 12, sy - 10 + bob, '♥', '#ff7096');
           } else if (npc.role === 'main' || npc.role === 'boss') {
-            const won = npc.badgeId ? this.save.badges.includes(npc.badgeId) : this.save.bossDefeated;
+            const won =
+              npc.role === 'boss'
+                ? this.save.bossDefeated
+                : npc.badgeId
+                  ? this.save.badges.includes(npc.badgeId)
+                  : false;
             this.drawTag(
               ctx,
               sx + 4,
@@ -609,7 +693,7 @@ export class OverworldEngine {
     this.atmosphere.renderAirEffects(ctx, map, camX, camY, this.animTimer);
 
     // 6. Sleek Top HUD
-    this.renderHud(ctx, leaderMember);
+    this.renderHud(ctx);
 
     // Toast notification
     if (this.toastTimer > 0 && this.toastMessage) {
@@ -655,7 +739,7 @@ export class OverworldEngine {
       const centerX = b.doorX * TILE_SIZE - camX + 8;
       const roofY = (b.doorY - (b.isBoss ? 4 : 3)) * TILE_SIZE - camY;
 
-      if (centerX < -60 || centerX > SCREEN_W + 60 || roofY < 10 || roofY > SCREEN_H + 30) {
+      if (centerX < -80 || centerX > SCREEN_W + 80 || roofY < 10 || roofY > SCREEN_H + 30) {
         continue;
       }
 
@@ -693,7 +777,7 @@ export class OverworldEngine {
       ctx.font = '600 6px system-ui, -apple-system, "Segoe UI", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(shortLabel, px + 14.5, py + 6.2);
+      ctx.fillText(shortLabel, px + 14.5, py + 6.2, pillW - 19);
     }
     ctx.restore();
   }
@@ -718,7 +802,7 @@ export class OverworldEngine {
     ctx.restore();
   }
 
-  private renderHud(ctx: CanvasRenderingContext2D, leader: FamilyMember): void {
+  private renderHud(ctx: CanvasRenderingContext2D): void {
     const hudTheme = THEME_HUD_STYLE[this.world.modeId];
     const hudH = 21;
     ctx.save();
@@ -759,13 +843,15 @@ export class OverworldEngine {
     ctx.fillStyle = trimGrad;
     ctx.fillRect(0, hudH - 0.9, SCREEN_W, 0.9);
 
-    // Two crisp gilded miniature portrait lockets side-by-side for the duo!
-    const [memA, memB] = this.pairMembers;
+    // Two or three crisp gilded miniature portrait lockets side-by-side for the team!
+    const members = this.pairMembers;
+    const isTrio = members.length >= 3;
     const frameGrad = ctx.createLinearGradient(3, 2, 3, 19);
     frameGrad.addColorStop(0, '#fff4cf');
     frameGrad.addColorStop(0.5, hudTheme.trimMid);
     frameGrad.addColorStop(1, '#a97a2c');
 
+    const locketStep = isTrio ? 18 : 19;
     const drawHudLocket = (lx: number, member: FamilyMember) => {
       ctx.fillStyle = 'rgba(8, 8, 16, 0.92)';
       safeRoundRectFill(ctx, lx, 2, 17, 17, 3);
@@ -774,8 +860,9 @@ export class OverworldEngine {
       ctx.lineWidth = 0.95;
       safeRoundRectStroke(ctx, lx + 0.4, 2.4, 16.2, 16.2, 2.6);
     };
-    drawHudLocket(3, memA);
-    drawHudLocket(22, memB);
+    members.forEach((m, idx) => {
+      drawHudLocket(3 + idx * locketStep, m);
+    });
 
     // Compute right-hand badge pill first so left text never collides
     const pillY = 3.6;
@@ -787,26 +874,29 @@ export class OverworldEngine {
     const bw = Math.ceil(ctx.measureText(badgeStr).width) + 12;
     const bx = SCREEN_W - 4 - bw;
 
-    // Duo names + golden diamond separator + district name (gracefully clipped if long)
-    const nameX = 43.5;
+    // Team names + golden diamond separator + district name (gracefully clipped if long)
+    const nameX = 3 + (members.length - 1) * locketStep + 17 + 4.5;
     const maxTextRight = bx - 6;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
 
-    const duoLabel = `${memA.name} & ${memB.name}`;
-    ctx.font = '700 8px system-ui, -apple-system, "Segoe UI", sans-serif';
+    const teamLabel =
+      members.length >= 3
+        ? `${members[0].name}, ${members[1].name} & ${members[2].name}`
+        : `${members[0].name} & ${members[1].name}`;
+    ctx.font = `700 ${isTrio ? 7.2 : 8}px system-ui, -apple-system, "Segoe UI", sans-serif`;
     ctx.fillStyle = '#fff7e4';
-    ctx.fillText(duoLabel, nameX, 10.6);
-    const nameW = ctx.measureText(duoLabel).width;
+    ctx.fillText(teamLabel, nameX, 10.6);
+    const nameW = ctx.measureText(teamLabel).width;
 
-    const sepX = nameX + nameW + 4;
+    const sepX = nameX + nameW + 3.5;
     ctx.font = '700 5.5px system-ui, -apple-system, "Segoe UI", sans-serif';
     ctx.fillStyle = 'rgba(244, 206, 118, 0.85)';
     ctx.fillText('◆', sepX, 10.5);
 
-    const distX = sepX + 7.5;
+    const distX = sepX + 7;
     const availW = Math.max(24, maxTextRight - distX);
-    ctx.font = '500 7.7px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.font = `500 ${isTrio ? 7.2 : 7.7}px system-ui, -apple-system, "Segoe UI", sans-serif`;
     let districtName = this.getCurrentDistrictName();
     if (ctx.measureText(districtName).width > availW) {
       while (districtName.length > 4 && ctx.measureText(`${districtName}…`).width > availW) {
@@ -816,7 +906,6 @@ export class OverworldEngine {
     }
     ctx.fillStyle = '#e3d9c5';
     ctx.fillText(districtName, distX, 10.6);
-    void leader;
 
     // Refined gilded badge pill
     const badgeGrad = ctx.createLinearGradient(0, pillY, 0, pillY + pillH);

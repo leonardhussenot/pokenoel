@@ -28,7 +28,7 @@ function m(midi: number): number {
 // Note constants for crisp, readable chiptune compositions
 const R = null;
 const C3 = m(48), D3 = m(50), E3 = m(52), F3 = m(53), Fs3 = m(54), G3 = m(55), A3 = m(57), Bb3 = m(58), B3 = m(59);
-const C4 = m(60), Cs4 = m(61), D4 = m(62), E4 = m(64), F4 = m(65), Fs4 = m(66), G4 = m(67), A4 = m(69), Bb4 = m(70), B4 = m(71);
+const C4 = m(60), Cs4 = m(61), D4 = m(62), E4 = m(64), F4 = m(65), Fs4 = m(66), G4 = m(67), Ab4 = m(68), A4 = m(69), Bb4 = m(70), B4 = m(71);
 const C5 = m(72), Cs5 = m(73), D5 = m(74), Eb5 = m(75), E5 = m(76), F5 = m(77), Fs5 = m(78), G5 = m(79), Ab5 = m(80), A5 = m(81), Bb5 = m(82), B5 = m(83);
 const C6 = m(84);
 
@@ -216,7 +216,7 @@ const TRACKS: Record<BgmTrackId, TrackDef> = {
       C4, E4, A4, E4, B3, E4, G4, E4,
       A3, C4, F4, C4, B3, E4, G4, E4,
       A3, D4, F4, D4, G3, C4, E4, C4,
-      B3, E4, Ab5, E4, C4, E4, A4, R,
+      B3, E4, Ab4, E4, C4, E4, A4, R,
     ],
     perc: [
       3, 1, 0, 1, 2, 1, 1, 0,

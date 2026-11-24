@@ -31,10 +31,11 @@ interface FlyCardAnim {
 }
 
 // Single non-leaking module-level digit shortcut dispatcher (AZERTY + QWERTY friendly)
-let activeDigitTarget: {
+interface DigitTarget {
   lastTickMs: number;
   queueDigit: (idx: number) => void;
-} | null = null;
+}
+let activeDigitTarget: DigitTarget | null = null;
 let digitListenerAttached = false;
 
 function ensureDigitListener(): void {
@@ -42,6 +43,7 @@ function ensureDigitListener(): void {
   digitListenerAttached = true;
   window.addEventListener('keydown', (e) => {
     if (!activeDigitTarget) return;
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     if (Date.now() - activeDigitTarget.lastTickMs > 500) {
       activeDigitTarget = null;
       return;
@@ -90,11 +92,20 @@ export class CategorySortGame implements MiniGameInstance {
   private bucketPopTimers: number[];
   private flyAnim: FlyCardAnim | null = null;
   private particles: MgParticle[] = [];
+  private digitTarget: DigitTarget;
 
   constructor(private cfg: CategorySortChallengeConfig) {
     this.lives = Math.max(1, cfg.lives);
     this.bucketCounts = cfg.categories.map(() => 0);
     this.bucketPopTimers = cfg.categories.map(() => 0);
+    this.digitTarget = {
+      lastTickMs: Date.now(),
+      queueDigit: (idx: number) => {
+        if (this.result === 'playing' && this.revealTimer <= 0 && idx < this.cfg.categories.length) {
+          this.pendingDigit = idx;
+        }
+      },
+    };
 
     // Fisher-Yates shuffle copy so card order isn't predictable
     const copy = cfg.items.map((it) => ({ ...it }));
@@ -116,14 +127,14 @@ export class CategorySortGame implements MiniGameInstance {
   }
 
   private registerActiveDigitTarget(): void {
-    activeDigitTarget = {
-      lastTickMs: Date.now(),
-      queueDigit: (idx: number) => {
-        if (this.result === 'playing' && this.revealTimer <= 0 && idx < this.cfg.categories.length) {
-          this.pendingDigit = idx;
-        }
-      },
-    };
+    this.digitTarget.lastTickMs = Date.now();
+    activeDigitTarget = this.digitTarget;
+  }
+
+  private releaseActiveDigitTarget(): void {
+    if (activeDigitTarget === this.digitTarget) {
+      activeDigitTarget = null;
+    }
   }
 
   private getCardRect() {
@@ -241,12 +252,12 @@ export class CategorySortGame implements MiniGameInstance {
 
     if (this.lives <= 0) {
       this.result = 'lost';
-      activeDigitTarget = null;
+      this.releaseActiveDigitTarget();
       return;
     }
     if (this.itemIndex + 1 >= this.items.length) {
       this.result = 'won';
-      activeDigitTarget = null;
+      this.releaseActiveDigitTarget();
       return;
     }
     this.itemIndex++;
@@ -255,7 +266,7 @@ export class CategorySortGame implements MiniGameInstance {
 
   update(dt: number, input: InputManager): void {
     if (this.result !== 'playing') {
-      activeDigitTarget = null;
+      this.releaseActiveDigitTarget();
       return;
     }
     this.registerActiveDigitTarget();
@@ -536,7 +547,7 @@ export class CategorySortGame implements MiniGameInstance {
         }
       );
 
-      // Bottom action / reveal ribbon
+      // Bottom action / reveal ribbon (never reveal right bucket on wrong pick!)
       if (isTrueBucket) {
         ctx.fillStyle = '#66f28d';
         drawRoundRectPath(ctx, rx + 10, ry + r.h - 15, r.w - 20, 11, 3);
@@ -545,11 +556,7 @@ export class CategorySortGame implements MiniGameInstance {
         ctx.font = 'bold 6.5px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(
-          this.lastCorrect ? '✓ BIEN CLASSÉ' : '✓ BONNE CATÉGORIE',
-          rx + r.w / 2,
-          ry + r.h - 9.3
-        );
+        ctx.fillText('✓ BIEN CLASSÉ', rx + r.w / 2, ry + r.h - 9.3);
       } else if (isWrongPick) {
         ctx.fillStyle = '#ff7584';
         drawRoundRectPath(ctx, rx + 14, ry + r.h - 15, r.w - 28, 11, 3);
@@ -693,7 +700,7 @@ export class CategorySortGame implements MiniGameInstance {
     }
 
     // Calm Untimed Top HUD
-    const completed = this.itemIndex + (inReveal ? 1 : 0);
+    const completed = this.itemIndex + (inReveal && this.lives > 0 ? 1 : 0);
     const progress = completed / Math.max(1, this.items.length);
     drawMiniGameHud(
       ctx,

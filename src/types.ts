@@ -165,6 +165,7 @@ export interface PortraitSpec {
 export type FamilyMemberId =
   | 'pola'
   | 'marguerite'
+  | 'pierre_pm'
   | 'dominique'
   | 'francis'
   | 'juliette'
@@ -186,6 +187,8 @@ export interface FamilyMember {
   customSpriteSheetUrl?: string;
 }
 
+export type FamilyTeamMembers = [FamilyMember, FamilyMember, ...FamilyMember[]];
+
 export interface FamilyPair {
   modeId: ModeId;
   shortCode: string;
@@ -194,7 +197,7 @@ export interface FamilyPair {
   worldName: string;
   primaryColor: string;
   secondaryColor: string;
-  members: [FamilyMember, FamilyMember];
+  members: FamilyTeamMembers;
 }
 
 export type BadgeIconShape =
@@ -574,6 +577,7 @@ export interface GlobalSaveData {
 }
 
 export type GameScene =
+  | 'WELCOME'
   | 'MODE_SELECT'
   | 'OVERWORLD'
   | 'DIALOGUE'

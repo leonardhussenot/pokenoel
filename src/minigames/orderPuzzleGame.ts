@@ -137,6 +137,10 @@ export class OrderPuzzleGame implements MiniGameInstance {
 
   private loadRound(idx: number): void {
     const round = this.rounds[idx];
+    if (!round) {
+      this.result = 'won';
+      return;
+    }
     const items: OrderSlot[] = round.orderedItems.map((text, pos) => ({
       text,
       revealTag: round.revealTags?.[pos],
@@ -174,6 +178,7 @@ export class OrderPuzzleGame implements MiniGameInstance {
     this.feedbackElapsed = 0;
     this.wrongHintText = '';
     this.wrongHintTimer = 0;
+    this.mistakes = [];
   }
 
   private spawnSparkles(cx: number, cy: number, color: string, count = 10): void {
@@ -291,12 +296,18 @@ export class OrderPuzzleGame implements MiniGameInstance {
     this.shakeTimer = 0.36;
     soundEngine.playHitMiss();
 
-    // Capture exact inverted pairs from the player's submitted order (adjacent inversions first)
+    // Capture exact inverted pairs from the player's submitted order (unlocked pairs first!)
     const round = this.rounds[this.roundIndex];
     const chronoSignal = `${round.hintLabels?.join(' ') ?? ''} ${round.prompt}`.toLowerCase();
-    const chronological = /tôt|tard|ancien|récent|chronolog|sortie|date|année|siècle|carrière|film/.test(
-      chronoSignal
-    );
+    const hasYearTags =
+      Array.isArray(round.revealTags) &&
+      round.revealTags.length > 0 &&
+      round.revealTags.every((t) => /\b\d{4}\b/.test(t));
+    const chronological =
+      /tôt|tard|ancien|récent|chronolog|sortie|date|année|siècle|carrière|film/.test(
+        chronoSignal
+      ) ||
+      (!round.hintLabels && hasYearTags);
     const latestMistakes: ChallengeMistake[] = [];
     const seenPairs = new Set<string>();
     const addInversion = (earlier: string, later: string) => {
@@ -310,7 +321,26 @@ export class OrderPuzzleGame implements MiniGameInstance {
         chronological,
       });
     };
-    // Pass 1: adjacent inversions (most directly confusing pairs!)
+    // Pass 1: adjacent unlocked-vs-unlocked inversions (most directly confusing wrong pair!)
+    for (let i = 0; i < this.slots.length - 1; i++) {
+      const a = this.slots[i];
+      const b = this.slots[i + 1];
+      if (!a.locked && !b.locked && a.correctPos > b.correctPos) {
+        addInversion(b.text, a.text);
+      }
+    }
+    // Pass 2: non-adjacent unlocked-vs-unlocked inversions (crucial when locked slots sit between swapped cards!)
+    for (let i = 0; i < this.slots.length && latestMistakes.length < 3; i++) {
+      const a = this.slots[i];
+      if (a.locked) continue;
+      for (let j = i + 2; j < this.slots.length && latestMistakes.length < 3; j++) {
+        const b = this.slots[j];
+        if (!b.locked && a.correctPos > b.correctPos) {
+          addInversion(b.text, a.text);
+        }
+      }
+    }
+    // Pass 3: remaining adjacent inversions (including locked-vs-unlocked context)
     for (let i = 0; i < this.slots.length - 1; i++) {
       const a = this.slots[i];
       const b = this.slots[i + 1];
@@ -318,7 +348,7 @@ export class OrderPuzzleGame implements MiniGameInstance {
         addInversion(b.text, a.text);
       }
     }
-    // Pass 2: non-adjacent inversions if fewer than 3 found
+    // Pass 4: remaining non-adjacent inversions if fewer than 3 found
     for (let i = 0; i < this.slots.length && latestMistakes.length < 3; i++) {
       for (let j = i + 2; j < this.slots.length && latestMistakes.length < 3; j++) {
         const a = this.slots[i];

@@ -39,41 +39,45 @@ export function createDefaultGlobalSave(): GlobalSaveData {
   };
 }
 
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === 'string' && v.trim().length > 0;
+}
+
 function isValidMistake(m: unknown): m is ChallengeMistake {
   if (!m || typeof m !== 'object') return false;
   const o = m as Record<string, unknown>;
   switch (o.kind) {
     case 'order_puzzle':
       return (
-        typeof o.earlierItem === 'string' &&
-        typeof o.laterItem === 'string' &&
+        isNonEmptyString(o.earlierItem) &&
+        isNonEmptyString(o.laterItem) &&
         typeof o.chronological === 'boolean'
       );
     case 'pair_match':
       return (
-        typeof o.leftText === 'string' &&
-        typeof o.wrongRightText === 'string' &&
-        typeof o.correctRightText === 'string'
+        isNonEmptyString(o.leftText) &&
+        isNonEmptyString(o.wrongRightText) &&
+        isNonEmptyString(o.correctRightText)
       );
     case 'intruder_hunt':
-      return typeof o.pickedItem === 'string' && typeof o.intruderItem === 'string';
+      return isNonEmptyString(o.pickedItem) && isNonEmptyString(o.intruderItem);
     case 'category_sort':
       return (
-        typeof o.itemLabel === 'string' &&
-        typeof o.wrongCategory === 'string' &&
-        typeof o.correctCategory === 'string'
+        isNonEmptyString(o.itemLabel) &&
+        isNonEmptyString(o.wrongCategory) &&
+        isNonEmptyString(o.correctCategory)
       );
     case 'quiz':
       return (
-        typeof o.question === 'string' &&
-        typeof o.wrongAnswer === 'string' &&
-        typeof o.correctAnswer === 'string'
+        isNonEmptyString(o.question) &&
+        isNonEmptyString(o.wrongAnswer) &&
+        isNonEmptyString(o.correctAnswer)
       );
     case 'riddle_word':
       return (
-        typeof o.clue === 'string' &&
-        typeof o.wrongAnswer === 'string' &&
-        typeof o.correctAnswer === 'string'
+        isNonEmptyString(o.clue) &&
+        isNonEmptyString(o.wrongAnswer) &&
+        isNonEmptyString(o.correctAnswer)
       );
     default:
       return false;
@@ -114,8 +118,8 @@ function sanitizeModeSave(modeId: ModeId, raw: unknown): ModeSaveData {
     attempts: typeof obj.attempts === 'number' && Number.isFinite(obj.attempts) ? Math.max(0, Math.floor(obj.attempts)) : 0,
     leaderIndex: obj.leaderIndex === 1 ? 1 : 0,
     lastMapId: typeof obj.lastMapId === 'string' && obj.lastMapId.length > 0 ? obj.lastMapId : def.lastMapId,
-    lastX: typeof obj.lastX === 'number' && Number.isFinite(obj.lastX) ? obj.lastX : def.lastX,
-    lastY: typeof obj.lastY === 'number' && Number.isFinite(obj.lastY) ? obj.lastY : def.lastY,
+    lastX: typeof obj.lastX === 'number' && Number.isFinite(obj.lastX) ? Math.floor(obj.lastX) : def.lastX,
+    lastY: typeof obj.lastY === 'number' && Number.isFinite(obj.lastY) ? Math.floor(obj.lastY) : def.lastY,
     ...(failedMistakes ? { failedMistakes } : {}),
   };
 }
@@ -190,19 +194,26 @@ export function encodeSaveCode(data: GlobalSaveData): string {
   const json = JSON.stringify(sanitizeGlobalSave(data));
   const payload = utf8ToBase64(json);
   const check = computeChecksum(payload);
-  return `PKN1-${check}-${payload}`;
+  return `NOEL1-${check}-${payload}`;
 }
 
 export function decodeSaveCode(code: string): GlobalSaveData | null {
   try {
-    const clean = code.trim();
-    const match = /^PKN1-([A-Z0-9]{6})-([A-Za-z0-9\-_]+)$/.exec(clean);
+    const clean = code.replace(/\s+/g, '');
+    const match = /^(?:NOEL1|PKN1)-([A-Z0-9]{6})-([A-Za-z0-9\-_]+)$/.exec(clean);
     if (!match) return null;
     const [, check, payload] = match;
     if (computeChecksum(payload) !== check) return null;
     const json = base64ToUtf8(payload);
     const parsed = JSON.parse(json);
-    if (!parsed || typeof parsed !== 'object' || parsed.version !== 1 || !parsed.modes) {
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      parsed.version !== 1 ||
+      !parsed.modes ||
+      typeof parsed.modes !== 'object' ||
+      Array.isArray(parsed.modes)
+    ) {
       return null;
     }
     return sanitizeGlobalSave(parsed);

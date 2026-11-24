@@ -6,11 +6,13 @@ import {
   ChallengeConfig,
   ChallengeMistake,
   FamilyMember,
+  FamilyTeamMembers,
   NpcEntity,
   SingleChallengeConfig,
 } from '../types';
 import { CategorySortGame } from './categorySortGame';
 import {
+  drawFittedSingleLine,
   drawFittedWrappedText,
   drawPanelBox,
   drawRoundRectPath,
@@ -89,7 +91,7 @@ export class ChallengeRunner {
   constructor(
     private challenger: NpcEntity,
     private badge: BadgeDef,
-    private pair: [FamilyMember, FamilyMember],
+    private pair: FamilyTeamMembers,
     private leaderIndex: 0 | 1,
     private config: ChallengeConfig,
     private onAttemptIncrement: () => void,
@@ -240,6 +242,7 @@ export class ChallengeRunner {
         if (tap.x < MG_W / 2 && tap.y > 165) {
           this.retry();
         } else if (tap.x >= MG_W / 2 && tap.y > 165) {
+          soundEngine.playCancel();
           this.done = 'aborted';
         }
         return;
@@ -353,46 +356,72 @@ export class ChallengeRunner {
       const leftX = Math.round(-68 + slide * 94);
       const rightX = Math.round(MG_W + 20 - slide * 116);
 
-      // Crisp golden portrait frames for duo
-      ctx.fillStyle = '#0e1326';
-      ctx.fillRect(leftX - 2, 80, 52, 52);
-      ctx.strokeStyle = '#66c2ff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(leftX - 1.5, 80.5, 51, 51);
-      drawPortrait(
-        ctx,
-        this.pair[0].appearance,
-        this.pair[0].portrait,
-        leftX,
-        82,
-        48,
-        this.pair[0].customPortraitUrl
-      );
+      // Crisp golden portrait frames for duo or trio
+      if (this.pair.length >= 3) {
+        const [mA, mB, mC] = this.pair;
+        const pW = 32;
+        const positions = [
+          { x: leftX - 4, y: 84, m: mA },
+          { x: leftX + 32, y: 80, m: mB },
+          { x: leftX + 68, y: 84, m: mC },
+        ];
+        for (const p of positions) {
+          ctx.fillStyle = '#0e1326';
+          ctx.fillRect(p.x - 1.5, p.y - 1.5, pW + 3, pW + 3);
+          ctx.strokeStyle = '#66c2ff';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(p.x - 1, p.y - 1, pW + 2, pW + 2);
+          drawPortrait(ctx, p.m.appearance, p.m.portrait, p.x, p.y, pW, p.m.customPortraitUrl);
+        }
+      } else {
+        ctx.fillStyle = '#0e1326';
+        ctx.fillRect(leftX - 2, 80, 52, 52);
+        ctx.strokeStyle = '#66c2ff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(leftX - 1.5, 80.5, 51, 51);
+        drawPortrait(
+          ctx,
+          this.pair[0].appearance,
+          this.pair[0].portrait,
+          leftX,
+          82,
+          48,
+          this.pair[0].customPortraitUrl
+        );
 
-      ctx.fillStyle = '#0e1326';
-      ctx.fillRect(leftX + 54, 90, 44, 44);
-      ctx.strokeStyle = '#66c2ff';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(leftX + 54.5, 90.5, 43, 43);
-      drawPortrait(
-        ctx,
-        this.pair[1].appearance,
-        this.pair[1].portrait,
-        leftX + 56,
-        92,
-        40,
-        this.pair[1].customPortraitUrl
-      );
+        ctx.fillStyle = '#0e1326';
+        ctx.fillRect(leftX + 54, 90, 44, 44);
+        ctx.strokeStyle = '#66c2ff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(leftX + 54.5, 90.5, 43, 43);
+        drawPortrait(
+          ctx,
+          this.pair[1].appearance,
+          this.pair[1].portrait,
+          leftX + 56,
+          92,
+          40,
+          this.pair[1].customPortraitUrl
+        );
+      }
 
-      // Duo nameplate
+      // Team nameplate
+      const teamLabel =
+        this.pair.length >= 3
+          ? `${this.pair[0].name}, ${this.pair[1].name} & ${this.pair[2].name}`
+          : `${this.pair[0].name} & ${this.pair[1].name}`;
       ctx.fillStyle = 'rgba(10, 14, 28, 0.85)';
-      drawRoundRectPath(ctx, leftX - 2, 138, 100, 15, 3);
+      drawRoundRectPath(ctx, leftX - 4, 138, 108, 15, 3);
       ctx.fill();
       ctx.fillStyle = '#d8ebff';
-      ctx.font = 'bold 8px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`${this.pair[0].name} & ${this.pair[1].name}`, leftX + 48, 145.5);
+      drawFittedSingleLine(ctx, teamLabel, leftX + 50, 145.5, 102, {
+        preferredSize: this.pair.length >= 3 ? 7.0 : 8,
+        minSize: 5.4,
+        weight: 'bold',
+        family: 'sans-serif',
+        align: 'center',
+        baseline: 'middle',
+      });
 
       // Crisp framed Challenger portrait
       ctx.fillStyle = '#0e1326';
@@ -414,8 +443,14 @@ export class ChallengeRunner {
       drawRoundRectPath(ctx, rightX - 18, 142, 92, 15, 3);
       ctx.fill();
       ctx.fillStyle = '#ffe58f';
-      ctx.font = 'bold 8px sans-serif';
-      ctx.fillText(this.challenger.name, rightX + 28, 149.5);
+      drawFittedSingleLine(ctx, this.challenger.name, rightX + 28, 149.5, 86, {
+        preferredSize: 8,
+        minSize: 5.6,
+        weight: 'bold',
+        family: 'sans-serif',
+        align: 'center',
+        baseline: 'middle',
+      });
 
       // Pulsing electric VS medallion in center!
       const vsPulse = 1 + Math.sin(this.timer * 14) * 0.08;
@@ -448,13 +483,22 @@ export class ChallengeRunner {
 
       // Top Header Banner
       ctx.fillStyle = this.isBoss ? '#ffd94d' : '#ffffff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText(
+      drawFittedSingleLine(
+        ctx,
         this.isBoss
           ? `★ BOSS FINAL : ${this.challenger.name.toUpperCase()} ★`
           : `DÉFI : ${this.challenger.name.toUpperCase()}`,
         MG_W / 2,
-        30
+        30,
+        MG_W - 20,
+        {
+          preferredSize: 12,
+          minSize: 8.2,
+          weight: 'bold',
+          family: 'sans-serif',
+          align: 'center',
+          baseline: 'middle',
+        }
       );
 
       // Bottom Badge Preview Pill
@@ -469,10 +513,17 @@ export class ChallengeRunner {
       ctx.fillStyle = '#9aa8d4';
       ctx.font = 'bold 7.5px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('ENJEU DU DÉFI :', 124, 203);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(formatFrenchText('ENJEU DU DÉFI :'), 124, 203);
       ctx.fillStyle = '#ffe58f';
-      ctx.font = 'bold 9.5px sans-serif';
-      ctx.fillText(this.badge.name, 124, 216);
+      drawFittedSingleLine(ctx, this.badge.name, 124, 216, 168, {
+        preferredSize: 9.5,
+        minSize: 6.8,
+        weight: 'bold',
+        family: 'sans-serif',
+        align: 'left',
+        baseline: 'middle',
+      });
       return;
     }
 
@@ -519,10 +570,14 @@ export class ChallengeRunner {
       );
 
       ctx.fillStyle = '#ffe27a';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillText(this.challenger.name, 76, 22);
+      drawFittedSingleLine(ctx, this.challenger.name, 76, 28, 260, {
+        preferredSize: 12,
+        minSize: 8.5,
+        weight: 'bold',
+        family: 'sans-serif',
+        align: 'left',
+        baseline: 'middle',
+      });
 
       // Badge preview in top right
       drawBadgeIcon(ctx, this.badge, true, MG_W - 38, 24, 1);
@@ -531,13 +586,17 @@ export class ChallengeRunner {
         this.drawBossGems(ctx, 76, 43);
         if (isCalmReflectionKind(cfg.kind)) {
           ctx.fillStyle = 'rgba(255, 226, 122, 0.16)';
-          drawRoundRectPath(ctx, 156, 42, 92, 15, 4);
+          drawRoundRectPath(ctx, 156, 42, 114, 15, 4);
           ctx.fill();
           ctx.fillStyle = '#ffe58f';
-          ctx.font = 'bold 7px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('✦ Réflexion • Sans chrono', 202, 49.5);
+          drawFittedSingleLine(ctx, '✦ Réflexion • Sans chrono', 213, 49.5, 106, {
+            preferredSize: 7,
+            minSize: 5.8,
+            weight: 'bold',
+            family: 'sans-serif',
+            align: 'center',
+            baseline: 'middle',
+          });
         }
       } else {
         // Challenge kind pill tag under name
@@ -564,10 +623,15 @@ export class ChallengeRunner {
       drawPanelBox(ctx, 14, 74, MG_W - 28, 118, '#f8f4ea', this.isBoss ? '#d93848' : '#3a548c');
 
       ctx.fillStyle = '#182038';
-      ctx.font = 'bold 10.5px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillText(boxTitle, 26, 84);
+      const boxTitleMaxW = this.config.kind === 'boss_gauntlet' ? MG_W - 146 : MG_W - 52;
+      drawFittedSingleLine(ctx, boxTitle, 26, 89.5, boxTitleMaxW, {
+        preferredSize: 10.5,
+        minSize: 6.4,
+        weight: 'bold',
+        family: 'sans-serif',
+        align: 'left',
+        baseline: 'middle',
+      });
 
       // Kind tag in card corner for boss phases
       if (this.config.kind === 'boss_gauntlet') {
@@ -663,26 +727,56 @@ export class ChallengeRunner {
         26
       );
 
-      // Duo celebrating on left & right of the badge!
+      // Team celebrating on left & right of the badge!
       const cheerBob = Math.round(Math.abs(Math.sin(this.timer * 6)) * 3);
-      drawPortrait(
-        ctx,
-        this.pair[0].appearance,
-        this.pair[0].portrait,
-        36,
-        54 - cheerBob,
-        38,
-        this.pair[0].customPortraitUrl
-      );
-      drawPortrait(
-        ctx,
-        this.pair[1].appearance,
-        this.pair[1].portrait,
-        MG_W - 74,
-        54 - cheerBob,
-        38,
-        this.pair[1].customPortraitUrl
-      );
+      if (this.pair.length >= 3) {
+        drawPortrait(
+          ctx,
+          this.pair[0].appearance,
+          this.pair[0].portrait,
+          28,
+          56 - cheerBob,
+          34,
+          this.pair[0].customPortraitUrl
+        );
+        drawPortrait(
+          ctx,
+          this.pair[1].appearance,
+          this.pair[1].portrait,
+          66,
+          58 - Math.round(Math.abs(Math.cos(this.timer * 6)) * 3),
+          34,
+          this.pair[1].customPortraitUrl
+        );
+        drawPortrait(
+          ctx,
+          this.pair[2].appearance,
+          this.pair[2].portrait,
+          MG_W - 68,
+          56 - cheerBob,
+          34,
+          this.pair[2].customPortraitUrl
+        );
+      } else {
+        drawPortrait(
+          ctx,
+          this.pair[0].appearance,
+          this.pair[0].portrait,
+          36,
+          54 - cheerBob,
+          38,
+          this.pair[0].customPortraitUrl
+        );
+        drawPortrait(
+          ctx,
+          this.pair[1].appearance,
+          this.pair[1].portrait,
+          MG_W - 74,
+          54 - cheerBob,
+          38,
+          this.pair[1].customPortraitUrl
+        );
+      }
 
       // Glowing aura & bobbing earned badge icon!
       const badgeBob = Math.round(Math.sin(this.timer * 4.5) * 3);
@@ -717,20 +811,26 @@ export class ChallengeRunner {
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(this.badge.name, MG_W / 2, 113.5);
+      drawFittedSingleLine(ctx, this.badge.name, MG_W / 2, 113.5, 168, {
+        preferredSize: 10,
+        minSize: 6.8,
+        weight: 'bold',
+        family: 'sans-serif',
+        align: 'center',
+        baseline: 'middle',
+      });
 
       // Congratulatory quote
       ctx.fillStyle = '#dde6fa';
-      ctx.font = '9px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
       const msg =
         this.challenger.winLines?.[0] ??
         `Bravo ${this.pair[0].name} et ${this.pair[1].name} ! Vous méritez ce badge.`;
-      drawWrappedText(ctx, `« ${msg} »`, 36, 132, MG_W - 72, 12);
+      drawFittedWrappedText(ctx, `« ${msg} »`, 36, 130, MG_W - 72, 60, {
+        preferredSize: 9.0,
+        minSize: 6.8,
+        weight: '500',
+        lineHeightRatio: 1.3,
+      });
 
       // Shimmering falling confetti on top!
       for (const c of this.confetti) {
@@ -815,9 +915,10 @@ export class ChallengeRunner {
       const taunt =
         this.challenger.loseLines?.[0] ??
         'Presque ! Prenez une grande respiration et retentez votre chance.';
-      const fullLoseSpeech = this.loseHelperTip
-        ? `« ${taunt} ${this.loseHelperTip.speechLine} »`
-        : `« ${taunt} »`;
+      const fullLoseSpeech =
+        !this.isBoss && this.loseHelperTip
+          ? `« ${taunt} ${this.loseHelperTip.speechLine} »`
+          : `« ${taunt} »`;
       drawFittedWrappedText(ctx, fullLoseSpeech, 106, 62, MG_W - 150, 62, {
         preferredSize: 8.4,
         minSize: 6.4,
@@ -826,20 +927,31 @@ export class ChallengeRunner {
       });
 
       ctx.fillStyle = '#b4a8cc';
-      ctx.font = 'bold 8px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillText(`— ${this.challenger.name}`, 106, 130);
+      drawFittedSingleLine(ctx, `— ${this.challenger.name}`, 106, 134, MG_W - 150, {
+        preferredSize: 8,
+        minSize: 6.2,
+        weight: 'bold',
+        family: 'sans-serif',
+        align: 'left',
+        baseline: 'middle',
+      });
 
       if (!this.isBoss && this.loseHelperTip) {
         ctx.fillStyle = '#ffd978';
-        ctx.font = 'bold 7.4px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(
+        drawFittedSingleLine(
+          ctx,
           `Astuce : quittez pour aller demander un indice à ${this.loseHelperTip.helperName} !`,
           MG_W / 2,
-          156
+          156,
+          MG_W - 56,
+          {
+            preferredSize: 7.4,
+            minSize: 5.8,
+            weight: 'bold',
+            family: 'sans-serif',
+            align: 'center',
+            baseline: 'middle',
+          }
         );
       }
 

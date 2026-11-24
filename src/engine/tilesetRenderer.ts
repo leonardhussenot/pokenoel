@@ -362,6 +362,10 @@ function renderTileToCanvas(
         // Crisp mowed stadium turf sparkle
         px(4, 9, 2, 1, '#68cf73');
         px(20, 21, 2, 1, '#68cf73');
+      } else if (theme === 'sd') {
+        // Subtle sakura petals & nocturnal cyan moss glint
+        px(10, 9, 2, 1, '#f28cb1');
+        px(23, 25, 2, 1, '#58d8e6');
       }
       break;
     }
@@ -394,6 +398,11 @@ function renderTileToCanvas(
         px(22 - sway, 14, 2, 6, '#b091eb');
         px(22 - sway, 23, 1, 4, '#3d7844');
         drawBloom(14, 22, '#ffe066', '#d48224');
+      } else if (theme === 'sd') {
+        // Neo-Tokyo sakura pink & glowing cyan-amber blossoms
+        drawBloom(9, 9, '#f59ab8', '#fff0c4');
+        drawBloom(22, 19, '#6ee8f5', '#ffffff');
+        drawBloom(11, 23, '#f2c472', '#fff7dc');
       } else {
         // Arena celebratory gold & blue flowers
         drawBloom(9, 9, '#ffd242', '#ffffff');
@@ -438,6 +447,16 @@ function renderTileToCanvas(
         px(18, 18, 12, 12, p.path2);
         px(2, 2, 11, 2, 'rgba(255,248,225,0.35)');
         px(18, 18, 11, 2, 'rgba(255,248,225,0.35)');
+      } else if (theme === 'sd') {
+        // Rain-slicked Neo-Tokyo & Quai des Orfèvres stone sidewalk with subtle cyan/amber sheen
+        px(0, 0, HD, 1, p.pathGrout);
+        px(0, 16, HD, 1, p.pathGrout);
+        px(0, 0, 1, HD, p.pathGrout);
+        px(16, 0, 1, HD, p.pathGrout);
+        px(2, 2, 13, 13, p.path2);
+        px(18, 18, 13, 13, p.path2);
+        px(4, 5, 6, 1, 'rgba(46, 196, 214, 0.25)');
+        px(20, 23, 6, 1, 'rgba(240, 196, 86, 0.25)');
       } else {
         // Arena modern concrete concourse with athletic blue/gold accent line
         px(0, 0, HD, 1, p.pathGrout);
@@ -495,6 +514,18 @@ function renderTileToCanvas(
         px(0, 0, 1, HD, 'rgba(90,72,54,0.25)');
         px(16, 0, 1, HD, 'rgba(90,72,54,0.25)');
         px(14, 14, 4, 4, p.plazaAccent);
+      } else if (theme === 'sd') {
+        // Sleek dark-slate Neo-Tokyo & Noir plaza with inlaid cyan-and-gold cyber trim
+        px(0, 0, HD, HD, p.plaza1);
+        px(1, 1, 14, 14, p.plaza2);
+        px(17, 17, 14, 14, p.plaza2);
+        px(0, 0, HD, 1, 'rgba(76, 224, 240, 0.16)');
+        px(0, 16, HD, 1, 'rgba(76, 224, 240, 0.12)');
+        px(0, 0, 1, HD, 'rgba(76, 224, 240, 0.14)');
+        px(16, 0, 1, HD, 'rgba(76, 224, 240, 0.12)');
+        px(14, 14, 5, 5, '#121b29');
+        px(15, 15, 3, 3, p.plazaAccent);
+        px(16, 16, 1, 1, p.trim);
       } else {
         // PM: Place des Vosges cream limestone flagstones with gilded corner rosettes
         px(0, 0, HD, HD, p.plaza1);
@@ -580,6 +611,10 @@ function renderTileToCanvas(
       } else if (theme === 'df') {
         // Bright tropical turquoise surf sparkle
         px((10 + shift) % 28, 12, 3, 2, '#ffffff');
+      } else if (theme === 'sd') {
+        // Neon-cyan & amber noir reflection shimmer on canal water
+        px((18 - shift + 32) % 28, 11, 5, 2, 'rgba(76, 228, 245, 0.42)');
+        px((6 + shift) % 28, 22, 4, 2, 'rgba(240, 196, 86, 0.35)');
       }
       break;
     }
@@ -606,6 +641,17 @@ function renderTileToCanvas(
         px(0, 28, HD, 1, '#e0b853');
         for (let x = 3; x < HD; x += 6) {
           px(x, 6, 1, 20, '#b8ae9c');
+        }
+      } else if (theme === 'sd') {
+        // Noir cast-iron & neon-trimmed canal footbridge
+        px(0, 2, HD, 28, '#38465c');
+        px(0, 5, HD, 22, '#4c5c75');
+        px(0, 2, HD, 3, '#182233');
+        px(0, 27, HD, 3, '#182233');
+        px(0, 4, HD, 1, '#2ec4d6');
+        px(0, 27, HD, 1, '#f0c456');
+        for (let x = 4; x < HD; x += 8) {
+          px(x, 6, 1, 20, '#2e394d');
         }
       } else {
         // Warm timber boardwalk / canal footbridge
@@ -697,6 +743,22 @@ function renderTileToCanvas(
         safeEllipse(ctx, 13, 8, 6, 5);
         ctx.fillStyle = p.treeAccent;
         safeEllipse(ctx, 12, 6, 3, 2);
+      } else if (theme === 'sd') {
+        // Nocturnal Tokyo sakura-accented tree
+        px(13, 20, 6, 9, p.trunk);
+        px(13, 20, 2, 9, p.trunkDark);
+        ctx.fillStyle = p.treeDark;
+        safeEllipse(ctx, 16, 15, 13, 10);
+        ctx.fillStyle = p.treeMid;
+        safeEllipse(ctx, 15, 12, 11, 9);
+        ctx.fillStyle = p.treeLight;
+        safeEllipse(ctx, 13, 9, 7, 6);
+        // Delicate cherry-blossom pink clusters
+        ctx.fillStyle = p.treeAccent;
+        safeEllipse(ctx, 21, 11, 4.5, 3.2);
+        safeEllipse(ctx, 10, 14, 3.5, 2.5);
+        safeEllipse(ctx, 16, 6, 4, 2.5);
+        px(20, 10, 2, 2, '#ffd6e6');
       } else {
         // PM: Lush Parisian Luxembourg chestnut tree with warm autumn gold leaves!
         px(12, 20, 8, 9, p.trunk);
@@ -774,6 +836,29 @@ function renderTileToCanvas(
           px(8, 9, 16, 12, '#232833');
           px(10, 12, 12, 7, '#a8b2c4');
           px(13, 14, 6, 5, '#4c566b');
+        }
+      } else if (theme === 'sd') {
+        if (isA) {
+          // Quai des Orfèvres / French Noir carved warm stone facade with sepia brass trim
+          px(0, 0, HD, 3, '#8a5229');
+          px(0, 3, HD, 1, p.trim);
+          px(0, 11, HD, 1, 'rgba(90, 76, 58, 0.22)');
+          px(0, 20, HD, 1, 'rgba(90, 76, 58, 0.22)');
+          px(0, 26, HD, 6, '#6e6456');
+          px(3, 6, 3, 18, shade);
+          px(26, 6, 3, 18, shade);
+        } else {
+          // Neo-Tokyo Akihabara dark indigo cyber tower with glowing cyan neon rail
+          px(0, 0, HD, 3, '#1d7e91');
+          px(0, 3, HD, 2, '#5ee6f5');
+          px(0, 27, HD, 5, shade);
+          px(0, 5, 3, 22, shade);
+          px(15, 5, 2, 22, shade);
+          px(29, 5, 3, 22, shade);
+          px(5, 9, 8, 14, '#15384a');
+          px(19, 9, 8, 14, '#15384a');
+          px(6, 11, 6, 2, '#4ce4f5');
+          px(20, 11, 6, 2, '#f0c456');
         }
       } else {
         // AJ: Modern glass-and-steel stadium facade with LED ribbon!
@@ -863,6 +948,23 @@ function renderTileToCanvas(
         }
         px(0, HD - 4, HD, 2, p.trim);
         px(0, HD - 2, HD, 2, '#101829');
+      } else if (theme === 'sd') {
+        // Neo-Tokyo cyber teal roof (roof_a) & French Noir sepia-copper cinema marquee roof (roof_b)
+        const grad = ctx.createLinearGradient(0, 0, 0, HD);
+        grad.addColorStop(0, light);
+        grad.addColorStop(1, base);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, HD, HD);
+        for (let x = 4; x < HD; x += 8) {
+          px(x, 0, 1, HD - 5, 'rgba(255,255,255,0.16)');
+          px(x + 1, 0, 1, HD - 5, 'rgba(0,0,0,0.22)');
+        }
+        px(0, HD - 5, HD, 5, '#121b29');
+        px(0, HD - 6, HD, 2, isA ? '#4ce4f5' : p.trim);
+        for (let x = 3; x < HD; x += 8) {
+          const lit = ((Math.floor(x / 8) + f2) % 2) === 0;
+          px(x, HD - 3, 3, 2, isA ? (lit ? '#9ef6ff' : '#2ec4d6') : lit ? '#fff0b3' : '#d99a32');
+        }
       } else {
         // JP gallery skylight roof
         px(0, 0, HD, HD, base);
@@ -912,6 +1014,17 @@ function renderTileToCanvas(
         px(14, 13, 4, 4, '#f27999');
         px(20, 14, 4, 3, '#e0a943');
         px(2, 26, 28, 3, p.trim);
+      } else if (theme === 'sd') {
+        // Neo-Tokyo & Noir glowing twin-tone studio window (cyan + warm noir venetian blind glow)
+        px(3, 4, 26, 22, '#1b2638');
+        px(5, 6, 10, 18, '#55d8eb');
+        px(6, 7, 4, 14, '#b8f7ff');
+        px(17, 6, 10, 18, '#f0c46c');
+        for (let y = 8; y < 22; y += 3) {
+          px(17, y, 10, 1, 'rgba(60, 38, 18, 0.35)');
+        }
+        px(15, 6, 2, 18, '#1b2638');
+        px(2, 26, 28, 3, p.trim);
       } else {
         // AJ: Panoramic stadium skybox glass with bright interior glow & diagonal sheen
         px(3, 4, 26, 22, '#1d2c4a');
@@ -929,9 +1042,17 @@ function renderTileToCanvas(
       px(4, 2, 24, 30, '#2a201b');
       // Inviting door leaves
       const doorCol =
-        theme === 'aj' ? '#1c448f' : theme === 'df' ? '#9e322e' : theme === 'jp' ? '#633822' : '#6e2330';
+        theme === 'aj'
+          ? '#1c448f'
+          : theme === 'df'
+            ? '#9e322e'
+            : theme === 'jp'
+              ? '#633822'
+              : theme === 'sd'
+                ? '#174659'
+                : '#6e2330';
       const doorLit =
-        theme === 'aj' ? '#70c2ff' : '#ffe285';
+        theme === 'aj' ? '#70c2ff' : theme === 'sd' ? '#7ceef7' : '#ffe285';
       px(6, 4, 20, 26, doorCol);
       // Center seam
       px(15, 4, 2, 26, '#2a201b');
@@ -975,6 +1096,14 @@ function renderTileToCanvas(
         px(0, 25, HD, 3, '#102652');
         px(4, 15, 10, 4, '#ffffff');
         px(18, 15, 10, 4, '#ffd242');
+      } else if (theme === 'sd') {
+        // Sleek Neo-Tokyo & Quai dark-iron railing with cyan neon rail
+        px(0, 11, HD, 2, '#1a2433');
+        px(0, 10, HD, 1, '#2ec4d6');
+        px(0, 24, HD, 2, '#1a2433');
+        for (let x = 3; x < HD; x += 6) {
+          px(x, 12, 2, 16, '#2e3c52');
+        }
       } else {
         // JP warm wooden bistro planter railing
         px(2, 8, 4, 21, '#6e4528');
@@ -992,7 +1121,7 @@ function renderTileToCanvas(
     case 'lamp': {
       px(0, 0, HD, HD, p.path1);
       // Warm ground halo preview baked softly
-      ctx.fillStyle = 'rgba(255, 224, 128, 0.16)';
+      ctx.fillStyle = theme === 'sd' ? 'rgba(76, 224, 240, 0.16)' : 'rgba(255, 224, 128, 0.16)';
       safeEllipse(ctx, 16, 26, 12, 5);
 
       const glowCol = f2 === 0 ? '#ffe787' : '#fff7cc';
@@ -1012,6 +1141,14 @@ function renderTileToCanvas(
         px(10, 4, 12, 8, '#1f3b31');
         px(12, 6, 8, 5, glowCol);
         px(14, 2, 4, 2, '#e0b853');
+      } else if (theme === 'sd') {
+        // Nocturnal Tokyo-Noir lantern post with glowing cyan/amber bezel
+        px(11, 26, 10, 5, '#1b2636');
+        px(14, 11, 4, 16, '#2d3d54');
+        px(9, 4, 14, 8, '#1b2636');
+        px(11, 6, 5, 4, f2 === 0 ? '#5ee6f5' : '#aef8ff');
+        px(16, 6, 5, 4, glowCol);
+        px(13, 2, 6, 2, '#2ec4d6');
       } else {
         // Art Deco globe / Parisian guinguette amber lamp
         px(12, 26, 8, 5, '#2d3345');
@@ -1054,6 +1191,15 @@ function renderTileToCanvas(
         px(9, 10, 14, 2, '#f5ebd8');
         px(9, 14, 10, 2, '#ffe082');
         px(9, 17, 12, 1, '#f5ebd8');
+      } else if (theme === 'sd') {
+        // Sleek Neo-Tokyo / Polar neon-cyan & amber dossier kiosk
+        px(13, 21, 6, 8, '#26334a');
+        px(4, 4, 24, 18, '#131d2b');
+        px(5, 5, 22, 16, '#1c2b40');
+        px(5, 5, 22, 2, '#2ec4d6');
+        px(8, 10, 16, 2, '#f0c456');
+        px(8, 14, 13, 2, '#e8e2d5');
+        px(8, 18, 10, 1, '#5ee6f5');
       } else {
         // DF Retro Hollywood clapperboard signpost
         px(14, 21, 4, 8, '#5c3b24');
@@ -1180,9 +1326,34 @@ function renderTileToCanvas(
         px(13, 13, 6, 6, '#e0b853');
         px(14, 14, 4, 4, '#8c2235');
       } else {
-        const w1 = theme === 'theater' ? '#8c4e2d' : theme === 'samba_club' ? '#9e6234' : '#bf8854';
-        const w2 = theme === 'theater' ? '#733c20' : theme === 'samba_club' ? '#824d25' : '#a36e3e';
-        const line = theme === 'theater' ? '#4f2713' : '#7a502b';
+        const w1 =
+          theme === 'theater'
+            ? '#8c4e2d'
+            : theme === 'samba_club'
+              ? '#9e6234'
+              : theme === 'manga_studio'
+                ? '#455469'
+                : theme === 'noir_cinema'
+                  ? '#695240'
+                  : '#bf8854';
+        const w2 =
+          theme === 'theater'
+            ? '#733c20'
+            : theme === 'samba_club'
+              ? '#824d25'
+              : theme === 'manga_studio'
+                ? '#364354'
+                : theme === 'noir_cinema'
+                  ? '#544031'
+                  : '#a36e3e';
+        const line =
+          theme === 'theater'
+            ? '#4f2713'
+            : theme === 'manga_studio'
+              ? '#242e3b'
+              : theme === 'noir_cinema'
+                ? '#3b2c21'
+                : '#7a502b';
         px(0, 0, HD, HD, w1);
         for (let y = 0; y < HD; y += 8) {
           px(0, y, HD, 1, line);
@@ -1234,7 +1405,21 @@ function renderTileToCanvas(
     }
 
     case 'exit_mat': {
-      px(0, 0, HD, HD, theme === 'stadium' ? '#39a34c' : theme === 'court' ? '#dfa25d' : '#a36e3e');
+      px(
+        0,
+        0,
+        HD,
+        HD,
+        theme === 'stadium'
+          ? '#39a34c'
+          : theme === 'court'
+            ? '#dfa25d'
+            : theme === 'manga_studio'
+              ? '#364354'
+              : theme === 'noir_cinema'
+                ? '#544031'
+                : '#a36e3e'
+      );
       px(2, 5, 28, 22, '#992632');
       px(4, 7, 24, 18, '#d43f4d');
       px(6, 9, 20, 1, '#ffe078');

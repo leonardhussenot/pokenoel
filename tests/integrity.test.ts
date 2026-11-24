@@ -1,10 +1,34 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from 'vitest';
 import { WORLDS } from '../src/data';
-import { FAMILY_MEMBERS, FAMILY_PAIRS, MODE_ORDER } from '../src/data/familyAvatars';
+import {
+  FAMILY_MEMBERS,
+  FAMILY_PAIRS,
+  GAME_MASTER_LEO,
+  LEO_WELCOME_MESSAGES,
+  MODE_ORDER,
+  pickWelcomeMessage,
+} from '../src/data/familyAvatars';
 import { randomizeGuestsInWorld } from '../src/data/guests';
-import { decodeSaveCode, encodeSaveCode } from '../src/engine/saveSystem';
+import { OverworldEngine, SCREEN_H, SCREEN_W } from '../src/engine/overworld';
+import {
+  createDefaultGlobalSave,
+  createDefaultModeSave,
+  decodeSaveCode,
+  encodeSaveCode,
+  sanitizeGlobalSave,
+} from '../src/engine/saveSystem';
 import { isTileWalkable } from '../src/engine/tilesetRenderer';
+import {
+  getBadgeSlotRects,
+  getModeCardRects,
+  getPauseBackButtonRect,
+  getPauseMenuPanelRect,
+  getPauseOptionRects,
+  renderEndingCeremony,
+  renderPauseMenu,
+  renderWelcomeScreen,
+} from '../src/engine/uiRenderer';
 import { ChallengeConfig, MapData, ModeSaveData, NpcEntity, ReflectionTheme, SingleChallengeConfig, WorldDefinition } from '../src/types';
 
 const REFLECTION_KINDS = [
@@ -110,12 +134,18 @@ function hasAdjacentInSet(set: Set<string>, x: number, y: number): boolean {
 }
 
 describe('Noël 2026 : Intégrité globale des 5 mondes', () => {
-  it('contient exactement les 5 binômes et les 10 membres de la famille', () => {
+  it('contient exactement les 5 équipes et les 11 membres de la famille', () => {
     expect(MODE_ORDER).toEqual(['pm', 'df', 'jp', 'aj', 'sd']);
-    expect(Object.keys(FAMILY_MEMBERS)).toHaveLength(10);
+    expect(Object.keys(FAMILY_MEMBERS)).toHaveLength(11);
+    expect(FAMILY_PAIRS.pm.label).toBe('Pola, Marguerite & Pierre');
+    expect(FAMILY_PAIRS.pm.members).toHaveLength(3);
+    expect(FAMILY_MEMBERS.pierre_pm.id).not.toBe(FAMILY_MEMBERS.pierre.id);
+    expect(FAMILY_MEMBERS.pierre_pm.customPortraitUrl).not.toBe(
+      FAMILY_MEMBERS.pierre.customPortraitUrl
+    );
     for (const mode of MODE_ORDER) {
       expect(FAMILY_PAIRS[mode]).toBeDefined();
-      expect(FAMILY_PAIRS[mode].members).toHaveLength(2);
+      expect(FAMILY_PAIRS[mode].members).toHaveLength(mode === 'pm' ? 3 : 2);
       expect(WORLDS[mode]).toBeDefined();
     }
   });
@@ -174,6 +204,18 @@ describe('Noël 2026 : Intégrité globale des 5 mondes', () => {
         expect(gks).toHaveLength(3);
         expect(world.badges).toHaveLength(12);
         expect(world.gates.map((g) => g.requiredBadges)).toEqual([4, 8, 12]);
+        for (const gk of gks) {
+          expect(
+            world.gates.some((g) => g.id === gk.gateId),
+            `${gk.id} a un gateId invalide (${gk.gateId})`
+          ).toBe(true);
+        }
+        for (const gate of world.gates) {
+          expect(
+            gks.some((gk) => gk.id === gate.gatekeeperNpcId),
+            `Portail ${gate.id} pointe vers un gardien inexistant (${gate.gatekeeperNpcId})`
+          ).toBe(true);
+        }
       });
 
       it('impose 100 % quiz & jeux de réflexion (0 arcade dynamique) et utilise les 6 genres sur les 15 phases', () => {
@@ -523,13 +565,199 @@ describe('Noël 2026 : Intégrité globale des 5 mondes', () => {
     };
 
     const code = encodeSaveCode(original);
-    expect(code.startsWith('PKN1-')).toBe(true);
+    expect(code.startsWith('NOEL1-')).toBe(true);
 
     const decoded = decodeSaveCode(code);
     expect(decoded).toEqual(original);
 
+    // Whitespace / line-wrapped paste must still decode cleanly
+    const wrapped = `${code.slice(0, 20)}\n  ${code.slice(20, 50)}\r\n${code.slice(50)}`;
+    expect(decodeSaveCode(wrapped)).toEqual(original);
+
+    // Backwards-compatibility: legacy PKN1- prefix & legacy 4-mode save (missing `sd`) must decode cleanly
+    const legacyCode = code.replace(/^NOEL1-/, 'PKN1-');
+    expect(decodeSaveCode(legacyCode)).toEqual(original);
+
+    const legacyFourModeRaw = {
+      version: 1,
+      muted: false,
+      modes: {
+        pm: sampleMode('pm'),
+        df: sampleMode('df'),
+        jp: sampleMode('jp'),
+        aj: sampleMode('aj'),
+      },
+    };
+    const sanitizedLegacy = sanitizeGlobalSave(legacyFourModeRaw);
+    expect(sanitizedLegacy.modes.pm.badges).toEqual(['pm_badge_1', 'pm_badge_2']);
+    expect(sanitizedLegacy.modes.sd).toEqual(createDefaultModeSave('sd'));
+
+    // Fractional coordinates are floored and empty failedMistakes entries are stripped
+    const dirty = createDefaultGlobalSave();
+    dirty.modes.pm.lastX = 12.7;
+    dirty.modes.pm.lastY = 19.9;
+    dirty.modes.pm.failedMistakes = {
+      pm_hugo: [{ kind: 'quiz', question: '   ', wrongAnswer: '', correctAnswer: 'X' }],
+    };
+    const cleaned = sanitizeGlobalSave(dirty);
+    expect(cleaned.modes.pm.lastX).toBe(12);
+    expect(cleaned.modes.pm.lastY).toBe(19);
+    expect(cleaned.modes.pm.failedMistakes).toBeUndefined();
+
     // Corrupted checksum or payload must return null
-    expect(decodeSaveCode(code.replace(/^PKN1-[A-Z0-9]{6}/, 'PKN1-ZZZZZZ'))).toBeNull();
+    expect(decodeSaveCode(code.replace(/^NOEL1-[A-Z0-9]{6}/, 'NOEL1-ZZZZZZ'))).toBeNull();
     expect(decodeSaveCode('invalid-code')).toBeNull();
+  });
+
+  it('vérifie la géométrie sans chevauchement des 5 cartes de mode et des hitboxes du menu pause', () => {
+    const rectsOverlap = (
+      a: { x: number; y: number; w: number; h: number },
+      b: { x: number; y: number; w: number; h: number }
+    ) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+    const cards = getModeCardRects();
+    expect(cards).toHaveLength(5);
+    for (let i = 0; i < cards.length; i++) {
+      const c = cards[i];
+      expect(c.x).toBeGreaterThanOrEqual(0);
+      expect(c.y).toBeGreaterThanOrEqual(0);
+      expect(c.x + c.w).toBeLessThanOrEqual(SCREEN_W);
+      expect(c.y + c.h).toBeLessThanOrEqual(SCREEN_H);
+      for (let j = i + 1; j < cards.length; j++) {
+        expect(rectsOverlap(c, cards[j])).toBe(false);
+      }
+    }
+
+    const panel = getPauseMenuPanelRect();
+    const opts = getPauseOptionRects();
+    expect(opts).toHaveLength(5);
+    for (const opt of opts) {
+      expect(opt.x).toBeGreaterThanOrEqual(panel.x);
+      expect(opt.x + opt.w).toBeLessThanOrEqual(panel.x + panel.w);
+      expect(opt.y).toBeGreaterThanOrEqual(panel.y);
+      expect(opt.y + opt.h).toBeLessThanOrEqual(panel.y + panel.h);
+    }
+
+    const back = getPauseBackButtonRect();
+    expect(back.x + back.w).toBeLessThanOrEqual(SCREEN_W);
+    const badgeSlots = getBadgeSlotRects(13);
+    expect(badgeSlots).toHaveLength(13);
+    for (let i = 0; i < badgeSlots.length; i++) {
+      for (let j = i + 1; j < badgeSlots.length; j++) {
+        expect(rectsOverlap(badgeSlots[i], badgeSlots[j])).toBe(false);
+      }
+    }
+  });
+
+  it('replace le joueur sur l’overworld si une sauvegarde pointe vers une case invalide d’un intérieur', () => {
+    const world = WORLDS.pm;
+    const firstBuilding = world.buildings[0];
+    const brokenSave = createDefaultModeSave('pm');
+    brokenSave.lastMapId = firstBuilding.interiorMapId;
+    brokenSave.lastX = 0; // wall tile
+    brokenSave.lastY = 0;
+
+    const engine = new OverworldEngine(world, FAMILY_PAIRS.pm.members, brokenSave, {
+      onInteractNpc: () => {},
+      onInspectSign: () => {},
+      onLockedGateBump: () => {},
+      onOpenPauseMenu: () => {},
+    });
+    const pos = engine.getPosition();
+    expect(pos.mapId).toBe(world.overworldId);
+    expect(pos.x).toBe(world.spawnX);
+    expect(pos.y).toBe(world.spawnY);
+  });
+
+  it('affiche correctement le statut du Boss vaincu dans le carnet et l’élision française sur l’écran de fin', () => {
+    const createMockCtx = () => {
+      const texts: string[] = [];
+      const noop = () => {};
+      const grad = () => ({ addColorStop: noop });
+      const ctx = {
+        fillStyle: '#000',
+        strokeStyle: '#000',
+        lineWidth: 1,
+        globalAlpha: 1,
+        font: '10px sans-serif',
+        textAlign: 'left',
+        textBaseline: 'top',
+        imageSmoothingEnabled: false,
+        imageSmoothingQuality: 'high',
+        fillRect: noop,
+        strokeRect: noop,
+        clearRect: noop,
+        beginPath: noop,
+        closePath: noop,
+        moveTo: noop,
+        lineTo: noop,
+        arc: noop,
+        ellipse: noop,
+        quadraticCurveTo: noop,
+        fill: noop,
+        stroke: noop,
+        clip: noop,
+        save: noop,
+        restore: noop,
+        translate: noop,
+        scale: noop,
+        rotate: noop,
+        drawImage: noop,
+        createLinearGradient: grad,
+        createRadialGradient: grad,
+        measureText: (t: string) => ({ width: t.length * 5 }),
+        fillText: (t: string) => {
+          texts.push(t);
+        },
+      } as unknown as CanvasRenderingContext2D;
+      return { ctx, texts };
+    };
+
+    const origDocument = globalThis.document;
+    (globalThis as unknown as { document: unknown }).document = {
+      createElement: () => ({ width: 0, height: 0, getContext: () => createMockCtx().ctx }),
+    };
+    try {
+      const dfWorld = WORLDS.df;
+      const boss = dfWorld.npcs.find((n) => n.role === 'boss')!;
+      const entries = dfWorld.npcs.filter((n) => n.role === 'main' || n.role === 'boss');
+      const bossIdx = entries.findIndex((n) => n.id === boss.id);
+
+      const save = createDefaultModeSave('df');
+      save.badges = dfWorld.badges.map((b) => b.id);
+      save.bossDefeated = true;
+      save.metNpcs = [boss.id];
+
+      const nb = createMockCtx();
+      renderPauseMenu(nb.ctx, dfWorld, save, 1, 'notebook', bossIdx, { x: 30, y: 39 });
+      expect(nb.texts.join(' ')).toContain('Badge obtenu ✓');
+      expect(nb.texts.join(' ')).not.toContain('À défier !');
+
+      const endCap = createMockCtx();
+      renderEndingCeremony(endCap.ctx, 'df', dfWorld, save, 1.5);
+      const endText = endCap.texts.join(' ');
+      expect(endText).toContain('d’Alfred Hitchcock');
+      expect(endText).not.toContain('de Alfred Hitchcock');
+
+      // Léo Game Master welcome screen & pause menu "Besoin d'aide ?" bubble
+      expect(GAME_MASTER_LEO.customPortraitUrl).toBeTruthy();
+      expect(LEO_WELCOME_MESSAGES.length).toBeGreaterThanOrEqual(4);
+      const welcomeMsg = pickWelcomeMessage();
+      expect(LEO_WELCOME_MESSAGES).toContain(welcomeMsg);
+
+      const welcomeCap = createMockCtx();
+      renderWelcomeScreen(welcomeCap.ctx, welcomeMsg, 1.2);
+      const welcomeText = welcomeCap.texts.join(' ');
+      expect(welcomeText).toContain('Léo • Maître du Jeu');
+      expect(welcomeText).toContain('Choisir notre équipe');
+
+      const pauseCap = createMockCtx();
+      renderPauseMenu(pauseCap.ctx, dfWorld, save, 0, 'menu', 0, { x: 30, y: 39 });
+      const pauseText = pauseCap.texts.join(' ');
+      expect(pauseText).toContain('Léo');
+      expect(pauseText).toContain('Besoin d’aide ?');
+    } finally {
+      (globalThis as unknown as { document: unknown }).document = origDocument;
+    }
   });
 });

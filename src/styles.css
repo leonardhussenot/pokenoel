@@ -484,6 +484,7 @@ body[data-theme='sd'] {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  touch-action: manipulation;
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 244, 212, 0.12);
@@ -542,7 +543,7 @@ body[data-theme='sd'] {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  .touch-controls {
+  .gba-shell:not(.hide-pad) .touch-controls {
     display: flex;
   }
 }
@@ -738,6 +739,8 @@ body[data-theme='sd'] {
   padding: 10px;
   resize: vertical;
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.55);
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 #save-code-textarea:focus {
@@ -925,6 +928,7 @@ body[data-theme='sd'] {
 }
 
 @media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+  html,
   body {
     overflow: hidden;
     height: 100dvh;
@@ -1033,18 +1037,26 @@ body[data-theme='sd'] {
   }
 
   .screen-bezel,
-  .touch-controls,
   .center-cluster {
     display: contents;
+  }
+
+  .gba-shell:not(.hide-pad) .touch-controls {
+    display: contents;
+  }
+
+  .gba-shell.hide-pad .touch-controls {
+    display: none;
   }
 
   .screen-frame {
     position: relative;
     z-index: 1;
-    --frame-h: calc(100dvh - 4px);
+    --frame-h: min(calc(100dvh - 4px), calc(100vw * 240 / 384));
     height: var(--frame-h);
-    width: min(100vw, calc(var(--frame-h) * 384 / 240));
+    width: calc(var(--frame-h) * 384 / 240);
     max-height: 100dvh;
+    max-width: 100vw;
     min-width: 240px;
     min-height: 150px;
     border-radius: 7px;

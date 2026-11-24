@@ -6,13 +6,19 @@ import { drawBadgeIcon, drawOverworldSprite, drawPortrait } from '../src/engine/
 import { drawTile } from '../src/engine/tilesetRenderer';
 import { CategorySortGame } from '../src/minigames/categorySortGame';
 import { ChallengeRunner } from '../src/minigames/challengeRunner';
-import { MiniGameInstance } from '../src/minigames/common';
+import {
+  drawReflectionStageBackdrop,
+  getReflectionThemePalette,
+  inferReflectionTheme,
+  MiniGameInstance,
+} from '../src/minigames/common';
 import { IntruderHuntGame } from '../src/minigames/intruderHuntGame';
 import { OrderPuzzleGame } from '../src/minigames/orderPuzzleGame';
 import { PairMatchGame } from '../src/minigames/pairMatchGame';
 import { QuizRiddleGame } from '../src/minigames/quizRiddleGame';
 import {
   CategorySortChallengeConfig,
+  ChallengeMistake,
   FamilyMember,
   IntruderHuntChallengeConfig,
   NpcEntity,
@@ -20,6 +26,7 @@ import {
   PairMatchChallengeConfig,
   QuizChallengeConfig,
   ReflectionTheme,
+  RiddleChallengeConfig,
   SingleChallengeConfig,
 } from '../src/types';
 
@@ -462,7 +469,7 @@ function assertMathematicalPlayability(cfg: SingleChallengeConfig): void {
   }
 }
 
-describe('PokéNoël : Tests unitaires des 6 moteurs de réflexion & quiz', () => {
+describe('Noël 2026 : Tests unitaires des 6 moteurs de réflexion & quiz', () => {
   const ctx = createMockCtx();
 
   it('OrderPuzzleGame (7 films de Chaplin) : revealTags cachés avant verrouillage, indices hintDir, verrouillage partiel en vert, victoire et défaite', () => {
@@ -974,9 +981,518 @@ describe('PokéNoël : Tests unitaires des 6 moteurs de réflexion & quiz', () =
     input.endFrame();
     expect(retryRunner.getStatus()).toBe('aborted');
   });
+
+  it('No-spoiler strict sur mauvaise réponse pour les 6 moteurs + célébration/explication sur bonne réponse', () => {
+    const input = new TestInput();
+
+    // 1) Quiz & 2) RiddleWord: no spoiler on wrong pick, full explanation on right pick
+    for (const kind of ['quiz', 'riddle_word'] as const) {
+      let foundNpc: NpcEntity | undefined;
+      for (const modeId of MODE_ORDER) {
+        const hit = WORLDS[modeId].npcs.find((n) => n.role === 'main' && n.challenge?.kind === kind);
+        if (hit) {
+          foundNpc = hit;
+          break;
+        }
+      }
+      expect(foundNpc).toBeDefined();
+      const cfg = foundNpc!.challenge as QuizChallengeConfig | RiddleChallengeConfig;
+      const leader = FAMILY_MEMBERS.pola;
+
+      const wrongGame = new QuizRiddleGame(cfg, leader, foundNpc!);
+      const firstItem = cfg.kind === 'quiz' ? cfg.questions[0] : cfg.riddles[0];
+      const wrongIdx = (firstItem.correctIndex + 1) % 4;
+      (wrongGame as unknown as { cursor: number }).cursor = wrongIdx;
+      input.tapButton('a');
+      input.releaseButton('a');
+      wrongGame.update(0.016, input);
+      input.endFrame();
+
+      const wrongTexts: string[] = [];
+      wrongGame.render(createMockCtx(wrongTexts));
+      const wrongJoined = wrongTexts.join(' ');
+      expect(wrongJoined).toContain('PAS TOUT À FAIT');
+      expect(wrongJoined).not.toContain('Bonne réponse');
+      expect(wrongJoined).not.toContain('C’était');
+      if (firstItem.explanation) {
+        expect(wrongJoined).not.toContain(firstItem.explanation.slice(0, 18));
+      }
+
+      const rightGame = new QuizRiddleGame(cfg, leader, foundNpc!);
+      (rightGame as unknown as { cursor: number }).cursor = firstItem.correctIndex;
+      input.tapButton('a');
+      input.releaseButton('a');
+      rightGame.update(0.016, input);
+      input.endFrame();
+
+      const rightTexts: string[] = [];
+      rightGame.render(createMockCtx(rightTexts));
+      const rightJoined = rightTexts.join(' ');
+      if (firstItem.explanation) {
+        expect(rightJoined).toContain(firstItem.explanation.slice(0, 18));
+      }
+    }
+
+    // 3) PairMatchGame: wrong pairing never reveals explanation; solving all pairs shows explanation
+    const pmNpc = WORLDS.pm.npcs.find((n) => n.id === 'pm_rimbaud')!;
+    const pmCfg = pmNpc.challenge as PairMatchChallengeConfig;
+    const pmGame = new PairMatchGame(pmCfg);
+    const wrongRightIdx = pmGame.rightItems.findIndex((it) => it.pairId !== pmGame.leftItems[0].pairId);
+    pmGame.leftCursor = 0;
+    input.tapButton('a');
+    input.releaseButton('a');
+    pmGame.update(0.016, input);
+    input.endFrame();
+    pmGame.rightCursor = wrongRightIdx;
+    input.tapButton('a');
+    input.releaseButton('a');
+    pmGame.update(0.016, input);
+    input.endFrame();
+
+    const pmWrongTexts: string[] = [];
+    pmGame.render(createMockCtx(pmWrongTexts));
+    expect(pmWrongTexts.join(' ')).not.toContain(pmCfg.rounds[0].explanation.slice(0, 18));
+    expect(pmWrongTexts.join(' ')).toContain('Association incorrecte');
+
+    // 4) IntruderHuntGame: wrong pick never displays C’ÉTAIT L’INTRUS or explanation
+    const intrNpc = WORLDS.jp.npcs.find((n) => n.id === 'jp_escoffier')!;
+    const intrCfg = intrNpc.challenge as IntruderHuntChallengeConfig;
+    const intrGame = new IntruderHuntGame(intrCfg);
+    intrGame.cursor = (intrCfg.rounds[0].intruderIndex + 1) % 4;
+    input.tapButton('a');
+    input.releaseButton('a');
+    intrGame.update(0.016, input);
+    input.endFrame();
+    const intrWrongTexts: string[] = [];
+    intrGame.render(createMockCtx(intrWrongTexts));
+    const intrWrongJoined = intrWrongTexts.join(' ');
+    expect(intrWrongJoined).not.toContain('C’ÉTAIT L’INTRUS');
+    expect(intrWrongJoined).not.toContain(intrCfg.rounds[0].explanation.slice(0, 18));
+    expect(intrWrongJoined).toContain('PAS L’INTRUS');
+
+    // 5) CategorySortGame: wrong pick never displays BONNE CATÉGORIE or explanation
+    const sortNpc = WORLDS.pm.npcs.find((n) => n.challenge?.kind === 'category_sort')!;
+    const sortCfg = sortNpc.challenge as CategorySortChallengeConfig;
+    const sortGame = new CategorySortGame(sortCfg);
+    const item0 = sortGame.items[0];
+    sortGame.cursor = (item0.categoryIndex + 1) % sortCfg.categories.length;
+    input.tapButton('a');
+    input.releaseButton('a');
+    sortGame.update(0.016, input);
+    input.endFrame();
+    const sortWrongTexts: string[] = [];
+    sortGame.render(createMockCtx(sortWrongTexts));
+    const sortWrongJoined = sortWrongTexts.join(' ');
+    expect(sortWrongJoined).not.toContain('BONNE CATÉGORIE');
+    expect(sortWrongJoined).not.toContain(item0.explanation.slice(0, 18));
+    expect(sortWrongJoined).toContain('MAUVAISE CATÉGORIE');
+  });
+
+  it('Capture des erreurs (getMistakes) sur cas limites : OrderPuzzle verrous partiels & manche 2, PairMatch manche 2 & dédup, Quiz wrap-around', () => {
+    const input = new TestInput();
+
+    // 1) OrderPuzzleGame: locked slots sit between swapped unlocked slots [0(L), 4(U), 2(L), 3(L), 1(U)]
+    const orderCfg: OrderPuzzleChallengeConfig = {
+      kind: 'order_puzzle',
+      title: 'Test Ordre Cas Limites',
+      instructions: 'Ordonnez',
+      themeStyle: 'manga',
+      lives: 2,
+      rounds: [
+        {
+          prompt: 'Classez ces 5 œuvres dans l’ordre',
+          orderedItems: ['Oeuvre A', 'Oeuvre B', 'Oeuvre C', 'Oeuvre D', 'Oeuvre E'],
+          revealTags: ['1980', '1985', '1990', '1995', '2000'],
+          explanation: 'Explication manche 1.',
+        },
+        {
+          prompt: 'Classez ces 4 films dans l’ordre',
+          orderedItems: ['Film 1', 'Film 2', 'Film 3', 'Film 4'],
+          revealTags: ['1960', '1970', '1980', '1990'],
+          explanation: 'Explication manche 2.',
+        },
+      ],
+    };
+    const og = new OrderPuzzleGame(orderCfg);
+    og.slots = [0, 4, 2, 3, 1].map((pos) => og.slots.find((s) => s.correctPos === pos)!);
+    og.cursor = og.slots.length;
+    input.tapButton('a');
+    input.releaseButton('a');
+    og.update(0.016, input);
+    input.endFrame();
+    const partialMistakes = og.getMistakes();
+    expect(partialMistakes.length).toBeGreaterThan(0);
+    // Must prioritize the exact unlocked swapped pair (Oeuvre B before Oeuvre E)!
+    expect(partialMistakes[0]).toEqual({
+      kind: 'order_puzzle',
+      earlierItem: 'Oeuvre B',
+      laterItem: 'Oeuvre E',
+      chronological: true,
+    });
+
+    // Solve Round 1 -> Round 2 must clear Round 1 mistakes and capture Round 2 mistakes on loss
+    og.slots = [0, 1, 2, 3, 4].map((pos) => og.slots.find((s) => s.correctPos === pos)!);
+    og.cursor = og.slots.length;
+    input.tapButton('a');
+    input.releaseButton('a');
+    og.update(0.016, input);
+    input.endFrame();
+    og.update(3.2, input);
+    input.endFrame();
+    expect(og.roundIndex).toBe(1);
+    expect(og.getMistakes()).toHaveLength(0);
+
+    // Lose on Round 2 (1 life remaining)
+    og.slots = [0, 2, 1, 3].map((pos) => og.slots.find((s) => s.correctPos === pos)!);
+    og.cursor = og.slots.length;
+    input.tapButton('a');
+    input.releaseButton('a');
+    og.update(0.016, input);
+    input.endFrame();
+    expect(og.getResult()).toBe('lost');
+    expect(og.getMistakes()[0]).toEqual({
+      kind: 'order_puzzle',
+      earlierItem: 'Film 2',
+      laterItem: 'Film 3',
+      chronological: true,
+    });
+
+    // 2) PairMatchGame: touch re-tap deselects left card, dedups per leftText, captures Round 2 loss
+    const pairCfg: PairMatchChallengeConfig = {
+      kind: 'pair_match',
+      title: 'Test Paires 2 Manches',
+      instructions: 'Reliez',
+      themeStyle: 'polar',
+      lives: 3,
+      rounds: [
+        {
+          prompt: 'Manche 1',
+          pairs: [
+            { left: 'L1', right: 'R1' },
+            { left: 'L2', right: 'R2' },
+            { left: 'L3', right: 'R3' },
+            { left: 'L4', right: 'R4' },
+          ],
+          explanation: 'Exp 1',
+        },
+        {
+          prompt: 'Manche 2',
+          pairs: [
+            { left: 'M1', right: 'N1' },
+            { left: 'M2', right: 'N2' },
+            { left: 'M3', right: 'N3' },
+            { left: 'M4', right: 'N4' },
+          ],
+          explanation: 'Exp 2',
+        },
+      ],
+    };
+    const pg = new PairMatchGame(pairCfg);
+    // Tap left[0] -> selects, re-tap left[0] -> deselects cleanly
+    input.tapAt(80, 86);
+    pg.update(0.016, input);
+    input.endFrame();
+    expect(pg.selectedLeft).toBe(0);
+    expect(pg.phase).toBe('pick_right');
+    input.tapAt(80, 86);
+    pg.update(0.016, input);
+    input.endFrame();
+    expect(pg.selectedLeft).toBeNull();
+    expect(pg.phase).toBe('pick_left');
+
+    // Make 2 DIFFERENT wrong attempts on L1 -> deduplicated into 1 latest mistake for L1
+    const wrongR1 = pg.rightItems.findIndex((r) => r.pairId === 1);
+    const wrongR2 = pg.rightItems.findIndex((r) => r.pairId === 2);
+    for (const rIdx of [wrongR1, wrongR2]) {
+      pg.leftCursor = 0;
+      input.tapButton('a');
+      input.releaseButton('a');
+      pg.update(0.016, input);
+      input.endFrame();
+      pg.rightCursor = rIdx;
+      input.tapButton('a');
+      input.releaseButton('a');
+      pg.update(0.016, input);
+      input.endFrame();
+    }
+    expect(pg.getMistakes()).toHaveLength(1);
+    expect(pg.getMistakes()[0]).toEqual({
+      kind: 'pair_match',
+      leftText: 'L1',
+      wrongRightText: 'R3',
+      correctRightText: 'R1',
+    });
+
+    // Solve Round 1 -> lose on Round 2 -> mistakes[0] is Round 2's mistake
+    for (let i = 0; i < 4; i++) {
+      const rIdx = pg.rightItems.findIndex((r) => r.pairId === pg.leftItems[i].pairId);
+      pg.leftCursor = i;
+      input.tapButton('a');
+      input.releaseButton('a');
+      pg.update(0.016, input);
+      input.endFrame();
+      pg.rightCursor = rIdx;
+      input.tapButton('a');
+      input.releaseButton('a');
+      pg.update(0.016, input);
+      input.endFrame();
+    }
+    pg.update(3.0, input);
+    input.endFrame();
+    expect(pg.roundIndex).toBe(1);
+    const wrongM2 = pg.rightItems.findIndex((r) => r.pairId !== pg.leftItems[0].pairId);
+    pg.leftCursor = 0;
+    input.tapButton('a');
+    input.releaseButton('a');
+    pg.update(0.016, input);
+    input.endFrame();
+    pg.rightCursor = wrongM2;
+    input.tapButton('a');
+    input.releaseButton('a');
+    pg.update(0.016, input);
+    input.endFrame();
+    expect(pg.getResult()).toBe('lost');
+    const pm2 = pg.getMistakes()[0];
+    expect(pm2.kind).toBe('pair_match');
+    if (pm2.kind === 'pair_match') {
+      expect(pm2.leftText).toBe('M1');
+    }
+
+    // 3) QuizRiddleGame: wraps this.index cleanly when questions.length < total turns
+    const shortQuizCfg: QuizChallengeConfig = {
+      kind: 'quiz',
+      title: 'Quiz Court',
+      instructions: 'Répondez',
+      themeStyle: 'polar',
+      timePerQuestionSec: 0,
+      playerHp: 3,
+      enemyHp: 3,
+      questions: [
+        { question: 'Q1 ?', options: ['A1', 'B1', 'C1', 'D1'], correctIndex: 0 },
+        { question: 'Q2 ?', options: ['A2', 'B2', 'C2', 'D2'], correctIndex: 1 },
+      ],
+    };
+    const challenger = WORLDS.sd.npcs.find((n) => n.id === 'sd_simenon')!;
+    const qg = new QuizRiddleGame(shortQuizCfg, FAMILY_MEMBERS.sam, challenger);
+    // Miss Q1 with B1, miss Q2 with C2, wrap to Q1 and miss with D1 -> loses without crashing, deduped to 2 mistakes
+    const choices = [1, 2, 3];
+    for (const ch of choices) {
+      (qg as unknown as { cursor: number }).cursor = ch;
+      input.tapButton('a');
+      input.releaseButton('a');
+      qg.update(0.016, input);
+      input.endFrame();
+      qg.update(2.0, input);
+      input.endFrame();
+    }
+    expect(qg.getResult()).toBe('lost');
+    const qMistakes = qg.getMistakes();
+    expect(qMistakes).toHaveLength(2);
+    expect(qMistakes[0]).toEqual({
+      kind: 'quiz',
+      question: 'Q1 ?',
+      wrongAnswer: 'D1',
+      correctAnswer: 'A1',
+    });
+  });
+
+  it('ChallengeRunner : aucun .title célèbre affiché, onChallengeLost + loseHelperTip + hitboxes tactiles (y > 165) + reset retry', () => {
+    const world = WORLDS.sd;
+    const pair = FAMILY_PAIRS.sd;
+    const npc = world.npcs.find((n) => n.id === 'sd_simenon')!;
+    const badge = world.badges.find((b) => b.id === npc.badgeId)!;
+    const cfg = npc.challenge as SingleChallengeConfig;
+    const helperTip = {
+      helperName: 'Fred Vargas',
+      speechLine: 'Allez demander de l’aide à Fred Vargas juste dehors : elle aura peut-être un indice pour vous aider !',
+    };
+
+    const lostBatches: ChallengeMistake[][] = [];
+    let attempts = 0;
+    const runner = new ChallengeRunner(
+      npc,
+      badge,
+      pair.members,
+      0,
+      cfg,
+      () => {
+        attempts++;
+      },
+      (mistakes) => {
+        lostBatches.push(mistakes);
+      },
+      helperTip
+    );
+    const rInt = runner as unknown as { phase: string; currentMini: MiniGameInstance | null };
+    const input = new TestInput();
+
+    // VS splash must NEVER display npc.title
+    const splashTexts: string[] = [];
+    runner.render(createMockCtx(splashTexts));
+    expect(splashTexts.join(' ')).not.toContain(npc.title);
+
+    // Brief must NEVER display npc.title
+    runner.update(1.7, input);
+    expect(rInt.phase).toBe('brief');
+    const briefTexts: string[] = [];
+    runner.render(createMockCtx(briefTexts));
+    expect(briefTexts.join(' ')).not.toContain(npc.title);
+
+    // Start playing -> lose -> onChallengeLost receives exact non-empty mistakes
+    input.tapButton('a');
+    input.releaseButton('a');
+    runner.update(0.016, input);
+    input.endFrame();
+    driveMiniGameToLoss(rInt.currentMini!, cfg, ctx, (dt, inp) => {
+      runner.update(dt, inp);
+      runner.render(ctx);
+    });
+    expect(rInt.phase).toBe('lost');
+    expect(lostBatches).toHaveLength(1);
+    expect(lostBatches[0].length).toBeGreaterThan(0);
+
+    // Lose screen renders named helper tip & speech without npc.title
+    const lostTexts: string[] = [];
+    runner.render(createMockCtx(lostTexts));
+    const lostJoined = lostTexts.join(' ');
+    expect(lostJoined).toContain('Fred Vargas');
+    expect(lostJoined).toContain(npc.name);
+    expect(lostJoined).not.toContain(npc.title);
+
+    // Tap above buttons (y <= 165) must NOT trigger retry or quit
+    input.tapAt(100, 120);
+    runner.update(0.016, input);
+    input.endFrame();
+    expect(rInt.phase).toBe('lost');
+    expect(attempts).toBe(1);
+
+    // Tap left button (x < 192, y > 165) triggers retry with fresh mini-game
+    input.tapAt(110, 180);
+    runner.update(0.016, input);
+    input.endFrame();
+    expect(rInt.phase).toBe('playing');
+    expect(attempts).toBe(2);
+    expect(rInt.currentMini!.getMistakes?.() ?? []).toHaveLength(0);
+
+    // Lose again -> tap right button (x >= 192, y > 165) triggers quit
+    driveMiniGameToLoss(rInt.currentMini!, cfg, ctx, (dt, inp) => {
+      runner.update(dt, inp);
+      runner.render(ctx);
+    });
+    expect(rInt.phase).toBe('lost');
+    expect(lostBatches).toHaveLength(2);
+    input.tapAt(260, 180);
+    runner.update(0.016, input);
+    input.endFrame();
+    expect(runner.getStatus()).toBe('aborted');
+  });
+
+  it('common.ts : couvre les 10 ReflectionTheme (dont manga & polar) et inferReflectionTheme sur noir_cinema', () => {
+    const allThemes: ReflectionTheme[] = [
+      'literature',
+      'theater',
+      'music_br',
+      'cinema',
+      'gastronomy',
+      'photography',
+      'football',
+      'basketball',
+      'manga',
+      'polar',
+    ];
+    for (const theme of allThemes) {
+      const pal = getReflectionThemePalette(theme);
+      expect(pal.accent).toBeTruthy();
+      expect(pal.cardBg).toBeTruthy();
+      drawReflectionStageBackdrop(ctx, theme, 1.25);
+    }
+
+    expect(inferReflectionTheme({ id: 'sd_melville', mapId: 'sd_int_noir_cinema' })).toBe('polar');
+    expect(inferReflectionTheme({ id: 'sd_araki', mapId: 'sd_int_manga_studio' })).toBe('manga');
+    expect(inferReflectionTheme({ id: 'sd_custom' })).toBe('manga');
+    expect(inferReflectionTheme({ id: 'df_chaplin', mapId: 'df_int_cinema_set' })).toBe('cinema');
+  });
+
+  it('CategorySortGame : raccourcis clavier 1/2/3 ignorent les modificateurs (Cmd/Ctrl/Alt), repeat, et les instances inactives', () => {
+    const listeners: Array<(e: Partial<KeyboardEvent>) => void> = [];
+    const origWin = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    Object.defineProperty(globalThis, 'window', {
+      value: {
+        addEventListener: (ev: string, fn: (e: Partial<KeyboardEvent>) => void) => {
+          if (ev === 'keydown') listeners.push(fn);
+        },
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    try {
+      const cfg: CategorySortChallengeConfig = {
+        kind: 'category_sort',
+        title: 'Tri Test',
+        instructions: 'Triez',
+        themeStyle: 'manga',
+        lives: 2,
+        prompt: 'Classez',
+        categories: ['Cat A', 'Cat B'],
+        items: [
+          { label: 'Item 1', categoryIndex: 0, explanation: 'Exp 1' },
+          { label: 'Item 2', categoryIndex: 1, explanation: 'Exp 2' },
+        ],
+      };
+
+      const g1 = new CategorySortGame(cfg);
+      const input = new TestInput();
+      g1.update(0.016, input);
+      input.endFrame();
+
+      // Modifier key (metaKey / ctrlKey / altKey) and repeat must be ignored!
+      for (const fn of listeners) {
+        fn({ code: 'Digit1', key: '1', metaKey: true, ctrlKey: false, altKey: false, repeat: false });
+        fn({ code: 'Digit2', key: '2', metaKey: false, ctrlKey: true, altKey: false, repeat: false });
+        fn({ code: 'Digit1', key: '1', metaKey: false, ctrlKey: false, altKey: false, repeat: true });
+      }
+      g1.update(0.016, input);
+      input.endFrame();
+      expect(g1.revealTimer).toBe(0);
+
+      // Plain Digit1 works cleanly
+      for (const fn of listeners) {
+        fn({ code: 'Digit1', key: '1', metaKey: false, ctrlKey: false, altKey: false, repeat: false });
+      }
+      g1.update(0.016, input);
+      input.endFrame();
+      expect(g1.revealTimer).toBeGreaterThan(0);
+      expect(g1.lastPickedBucket).toBe(0);
+
+      // Finish g1 -> create g2 -> calling g1.update() after g1 ended must NOT clobber g2's digit target
+      driveMiniGameToWin(g1, cfg, ctx);
+      expect(g1.getResult()).toBe('won');
+
+      const g2 = new CategorySortGame(cfg);
+      g2.update(0.016, input);
+      input.endFrame();
+      g1.update(0.016, input); // stale instance tick
+      input.endFrame();
+
+      for (const fn of listeners) {
+        fn({ code: 'Digit2', key: '2', metaKey: false, ctrlKey: false, altKey: false, repeat: false });
+      }
+      g2.update(0.016, input);
+      input.endFrame();
+      expect(g2.revealTimer).toBeGreaterThan(0);
+      expect(g2.lastPickedBucket).toBe(1);
+    } finally {
+      if (origWin) {
+        Object.defineProperty(globalThis, 'window', origWin);
+      } else {
+        delete (globalThis as { window?: unknown }).window;
+      }
+    }
+  });
 });
 
-describe('PokéNoël : Simulation bout-en-bout (Victoire + Défaite + Rendu) des 75 phases & 5 Boss', () => {
+describe('Noël 2026 : Simulation bout-en-bout (Victoire + Défaite + Rendu) des 75 phases & 5 Boss', () => {
   const ctx = createMockCtx();
   const seenThemeStyles = new Set<string>();
   const seenKinds = new Set<SingleChallengeConfig['kind']>();

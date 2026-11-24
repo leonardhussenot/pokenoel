@@ -43,6 +43,9 @@ export class IntruderHuntGame implements MiniGameInstance {
   constructor(private cfg: IntruderHuntChallengeConfig) {
     this.rounds = cfg.rounds;
     this.lives = Math.max(1, cfg.lives);
+    if (this.rounds.length === 0) {
+      this.result = 'won';
+    }
   }
 
   private getCardRects() {
@@ -86,6 +89,7 @@ export class IntruderHuntGame implements MiniGameInstance {
 
   private selectCard(idx: number): void {
     const round = this.rounds[this.roundIndex];
+    if (!round) return;
     this.selectedIdx = idx;
     this.wasCorrect = idx === round.intruderIndex;
     this.revealTimer = 2.6;
@@ -244,22 +248,18 @@ export class IntruderHuntGame implements MiniGameInstance {
       ctx.save();
       if (dimmed) ctx.globalAlpha = 0.45;
 
-      // Soft focus glow for active selection or revealed intruder
+      // Soft focus glow for active selection or revealed intruder (only when correctly identified)
       if (isCursor || isIntruder) {
         const pulse = 0.22 + 0.14 * Math.sin(this.elapsed * 7);
         ctx.fillStyle = isIntruder
-          ? this.wasCorrect
-            ? `rgba(102, 242, 141, ${pulse + 0.12})`
-            : `rgba(255, 130, 142, ${pulse + 0.12})`
+          ? `rgba(102, 242, 141, ${pulse + 0.12})`
           : `rgba(255, 218, 92, ${pulse})`;
         drawRoundRectPath(ctx, rx - 3, r.y - 3, r.w + 6, r.h + 6, 6);
         ctx.fill();
       }
 
       const bg = isIntruder
-        ? this.wasCorrect
-          ? '#1a5e3a'
-          : '#5e2236'
+        ? '#1a5e3a'
         : isWrongPick
           ? '#6e202c'
           : isCursor
@@ -267,9 +267,7 @@ export class IntruderHuntGame implements MiniGameInstance {
             : pal.cardBg;
 
       const border = isIntruder
-        ? this.wasCorrect
-          ? '#66f28d'
-          : '#ff8a96'
+        ? '#66f28d'
         : isWrongPick
           ? '#ff7070'
           : isCursor
@@ -284,13 +282,7 @@ export class IntruderHuntGame implements MiniGameInstance {
       ctx.strokeRect(rx + 5.5, r.y + 5.5, r.w - 11, r.h - 11);
 
       // Roman numeral medallion top-left
-      ctx.fillStyle = isIntruder
-        ? this.wasCorrect
-          ? '#66f28d'
-          : '#ffe066'
-        : isCursor
-          ? '#ffe066'
-          : '#2c3858';
+      ctx.fillStyle = isIntruder ? '#66f28d' : isCursor ? '#ffe066' : '#2c3858';
       drawRoundRectPath(ctx, rx + 8, r.y + 8, 18, 13, 3);
       ctx.fill();
       ctx.fillStyle = isCursor || isIntruder ? '#141826' : '#cfd8f5';
@@ -299,10 +291,10 @@ export class IntruderHuntGame implements MiniGameInstance {
       ctx.textBaseline = 'middle';
       ctx.fillText(CARD_NUMERALS[i], rx + 17, r.y + 15);
 
-      // Card label text (auto-fitted, never clips!)
+      // Card label text (auto-fitted below medallion, never clips!)
       ctx.fillStyle = isCursor || isIntruder ? '#fff9db' : '#f2f5ff';
-      const labelTop = r.y + 18;
-      const labelMaxH = isIntruder || isWrongPick ? r.h - 38 : r.h - 24;
+      const labelTop = r.y + 21;
+      const labelMaxH = isIntruder || isWrongPick ? r.h - 40 : r.h - 27;
       drawFittedWrappedText(ctx, round.items[i], rx + r.w / 2, labelTop, r.w - 20, labelMaxH, {
         preferredSize: 8.5,
         minSize: 6.2,
@@ -312,9 +304,9 @@ export class IntruderHuntGame implements MiniGameInstance {
         verticalCenter: true,
       });
 
-      // Reveal stamp ribbon at bottom of card
+      // Reveal stamp ribbon at bottom of card (never reveal true intruder on wrong pick!)
       if (isIntruder) {
-        ctx.fillStyle = this.wasCorrect ? '#66f28d' : '#ff8a96';
+        ctx.fillStyle = '#66f28d';
         drawRoundRectPath(ctx, rx + 24, r.y + r.h - 17, r.w - 48, 13, 3);
         ctx.fill();
         ctx.fillStyle = '#121824';
@@ -322,7 +314,7 @@ export class IntruderHuntGame implements MiniGameInstance {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
-          formatFrenchText(this.wasCorrect ? '★ INTRUS DÉMASQUÉ !' : '★ C’ÉTAIT L’INTRUS !'),
+          formatFrenchText('★ INTRUS DÉMASQUÉ !'),
           rx + r.w / 2,
           r.y + r.h - 10.5
         );
@@ -413,7 +405,7 @@ export class IntruderHuntGame implements MiniGameInstance {
 
     // Calm Untimed Top HUD
     const progress =
-      (this.roundIndex + (inReveal ? 1 : 0)) / Math.max(1, this.rounds.length);
+      (this.roundIndex + (inReveal && this.lives > 0 ? 1 : 0)) / Math.max(1, this.rounds.length);
     drawMiniGameHud(
       ctx,
       this.cfg.title,

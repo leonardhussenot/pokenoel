@@ -238,6 +238,19 @@ export class WorldMapBuilder {
         this.setTile(57, y, y % 3 === 0 ? 'tree' : 'grass_flower');
         this.setTile(3, y, y % 4 === 0 ? 'lamp' : 'plaza');
         this.setTile(56, y, y % 4 === 0 ? 'lamp' : 'plaza');
+      } else if (this.theme === 'sd') {
+        // SD: Reflective Neo-Tokyo / Noir canals + dark slate quays + neon streetlamps & sakura trees
+        this.setTile(2, y, 'water');
+        this.setTile(57, y, 'water');
+        this.setTile(3, y, 'plaza');
+        this.setTile(56, y, 'plaza');
+        if (y % 5 === 0) {
+          this.setTile(4, y, 'lamp');
+          this.setTile(55, y, 'lamp');
+        } else if (y % 5 === 3) {
+          this.setTile(4, y, 'tree');
+          this.setTile(55, y, 'tree');
+        }
       } else {
         // AJ: Olympic park turf + painted streetball plazas + towering stadium floodlights
         this.setTile(2, y, y % 5 === 0 ? 'lamp' : 'fence');
@@ -388,7 +401,7 @@ export class WorldMapBuilder {
       ],
       gatekeeperNpcId: gatekeeper.id,
     });
-    this.npcs.push(gatekeeper);
+    this.npcs.push({ ...gatekeeper, gateId: id });
   }
 
   placeLandmark(input: LandmarkInput): void {
@@ -604,6 +617,43 @@ export class WorldMapBuilder {
       tiles[6][13] = 'spotlight';
       tiles[9][2] = 'statue';
       tiles[9][12] = 'statue';
+    } else if (theme === 'manga_studio') {
+      tiles[2][1] = 'bookshelf';
+      tiles[2][2] = 'bookshelf';
+      tiles[2][3] = 'bookshelf';
+      tiles[2][11] = 'bookshelf';
+      tiles[2][12] = 'bookshelf';
+      tiles[2][13] = 'bookshelf';
+      tiles[2][5] = 'equipment';
+      tiles[2][9] = 'equipment';
+      tiles[4][2] = 'table';
+      tiles[4][12] = 'table';
+      tiles[6][1] = 'spotlight';
+      tiles[6][13] = 'spotlight';
+      tiles[8][2] = 'table';
+      tiles[8][12] = 'table';
+      tiles[10][1] = 'plant';
+      tiles[10][13] = 'plant';
+    } else if (theme === 'noir_cinema') {
+      tiles[2][1] = 'bookshelf';
+      tiles[2][2] = 'bookshelf';
+      tiles[2][3] = 'bookshelf';
+      tiles[2][11] = 'bookshelf';
+      tiles[2][12] = 'bookshelf';
+      tiles[2][13] = 'bookshelf';
+      tiles[2][5] = 'spotlight';
+      tiles[2][9] = 'spotlight';
+      tiles[3][6] = 'rug';
+      tiles[3][7] = 'rug';
+      tiles[3][8] = 'rug';
+      tiles[4][4] = 'equipment';
+      tiles[4][10] = 'equipment';
+      tiles[5][1] = 'plant';
+      tiles[5][13] = 'plant';
+      tiles[7][2] = 'table';
+      tiles[7][12] = 'table';
+      tiles[9][1] = 'plant';
+      tiles[9][13] = 'plant';
     } else if (theme === 'boss_hall') {
       tiles[2][2] = 'pillar';
       tiles[2][12] = 'pillar';

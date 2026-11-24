@@ -91,6 +91,9 @@ export class QuizRiddleGame implements MiniGameInstance {
     this.displayPlayerHp = cfg.playerHp;
     this.displayEnemyHp = cfg.enemyHp;
     this.theme = inferReflectionTheme(challenger, cfg.themeStyle);
+    if (this.getTotalItems() === 0) {
+      this.result = 'won';
+    }
   }
 
   private getTotalItems(): number {
@@ -144,7 +147,10 @@ export class QuizRiddleGame implements MiniGameInstance {
       this.result = 'lost';
       return;
     }
-    this.index = (this.index + 1) % this.getTotalItems();
+    const total = this.getTotalItems();
+    if (total > 0) {
+      this.index = (this.index + 1) % total;
+    }
     this.cursor = 0;
   }
 
@@ -251,6 +257,7 @@ export class QuizRiddleGame implements MiniGameInstance {
       this.cfg.kind === 'quiz'
         ? this.cfg.questions[this.index]
         : this.cfg.riddles[this.index];
+    if (!item) return;
     const correctIdx = item.correctIndex;
     const explanation = item.explanation?.trim() ?? '';
 
@@ -289,30 +296,26 @@ export class QuizRiddleGame implements MiniGameInstance {
       if (wrongAnswer && correctAnswer) {
         if (this.cfg.kind === 'quiz') {
           const question = this.cfg.questions[this.index].question;
-          const already = this.mistakes.some(
-            (m) => m.kind === 'quiz' && m.question === question && m.wrongAnswer === wrongAnswer
+          this.mistakes = this.mistakes.filter(
+            (m) => !(m.kind === 'quiz' && m.question === question)
           );
-          if (!already) {
-            this.mistakes.unshift({
-              kind: 'quiz',
-              question,
-              wrongAnswer,
-              correctAnswer,
-            });
-          }
+          this.mistakes.unshift({
+            kind: 'quiz',
+            question,
+            wrongAnswer,
+            correctAnswer,
+          });
         } else {
           const clue = this.cfg.riddles[this.index].clues[0] ?? '';
-          const already = this.mistakes.some(
-            (m) => m.kind === 'riddle_word' && m.clue === clue && m.wrongAnswer === wrongAnswer
+          this.mistakes = this.mistakes.filter(
+            (m) => !(m.kind === 'riddle_word' && m.clue === clue)
           );
-          if (!already) {
-            this.mistakes.unshift({
-              kind: 'riddle_word',
-              clue,
-              wrongAnswer,
-              correctAnswer,
-            });
-          }
+          this.mistakes.unshift({
+            kind: 'riddle_word',
+            clue,
+            wrongAnswer,
+            correctAnswer,
+          });
         }
       }
       this.playerHp = Math.max(0, this.playerHp - 1);
@@ -672,15 +675,20 @@ export class QuizRiddleGame implements MiniGameInstance {
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 8px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(name, x + 6, y + 4);
+    drawFittedSingleLine(ctx, name, x + 6, y + 8.5, Math.max(40, w - 34), {
+      preferredSize: 8,
+      minSize: 5.8,
+      weight: 'bold',
+      family: 'sans-serif',
+      align: 'left',
+      baseline: 'middle',
+    });
 
     ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     ctx.fillStyle = '#b9c6e8';
     ctx.font = 'bold 7.5px sans-serif';
-    ctx.fillText(`${hp}/${maxHp}`, x + w - 6, y + 4.5);
+    ctx.fillText(`${hp}/${maxHp}`, x + w - 6, y + 8.5);
 
     const barX = x + 6;
     const barY = y + 17;

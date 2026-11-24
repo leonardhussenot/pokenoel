@@ -1,7 +1,9 @@
-import { FAMILY_PAIRS, MODE_ORDER } from '../data/familyAvatars';
+import { FAMILY_PAIRS, GAME_MASTER_LEO, MODE_ORDER } from '../data/familyAvatars';
 import { drawBadgeIcon, drawOverworldSprite, drawPortrait } from './pixelRenderer';
+import { formatFrenchDeName } from './secondaryHints';
 import {
   drawFittedSingleLine,
+  drawFittedWrappedText,
   drawPanelBox,
   drawRoundRectPath,
   drawStarPath,
@@ -36,6 +38,15 @@ export class DialogueController {
   private onComplete: (() => void) | null = null;
 
   start(messages: DialogueMessage[], onComplete?: () => void): void {
+    if (messages.length === 0) {
+      this.queue = [];
+      this.index = 0;
+      this.charCount = 0;
+      this.blipTick = 0;
+      this.onComplete = null;
+      onComplete?.();
+      return;
+    }
     this.queue = messages;
     this.index = 0;
     this.charCount = 0;
@@ -122,12 +133,40 @@ export class DialogueController {
     ctx.textBaseline = 'middle';
     ctx.fillText(msg.speaker, textX + 6, boxY - 2);
 
-    // Wrapped typewriter text
+    // Wrapped typewriter text (size computed on full message so typewriter never jumps or clips)
+    const countWrappedLines = (fullText: string, maxWidth: number): number => {
+      const words = fullText.split(' ');
+      let line = '';
+      let lines = 1;
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines++;
+          line = word;
+        } else {
+          line = test;
+        }
+      }
+      return lines;
+    };
+
     ctx.fillStyle = '#1b2033';
-    ctx.font = '600 9.5px system-ui, -apple-system, "Segoe UI", sans-serif';
     ctx.textBaseline = 'top';
+    let fontSize = 9.5;
+    let lineH = 13;
+    ctx.font = `600 ${fontSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+    if (countWrappedLines(msg.text, textW) > 4) {
+      fontSize = 8.5;
+      lineH = 11.2;
+      ctx.font = `600 ${fontSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+      if (countWrappedLines(msg.text, textW) > 4) {
+        fontSize = 7.8;
+        lineH = 10.2;
+        ctx.font = `600 ${fontSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+      }
+    }
     const shown = msg.text.slice(0, Math.floor(this.charCount));
-    drawWrappedText(ctx, shown, textX, boxY + 11, textW, 13);
+    drawWrappedText(ctx, shown, textX, boxY + 10, textW, lineH);
 
     if (this.charCount >= msg.text.length && Math.floor(animTimer * 3) % 2 === 0) {
       ctx.fillStyle = '#c93838';
@@ -179,13 +218,12 @@ function drawGiftBow(ctx: CanvasRenderingContext2D, cx: number, cy: number): voi
   ctx.restore();
 }
 
-export function renderModeSelectScreen(
-  ctx: CanvasRenderingContext2D,
-  save: GlobalSaveData,
-  selectedIndex: number,
-  timer = 0
-): void {
-  // 1. Illustrated Winter Christmas Eve Night Sky
+export function getWelcomeContinueButtonRect() {
+  return { x: 96, y: 186, w: 192, h: 28 };
+}
+
+function drawFestiveNightBackdrop(ctx: CanvasRenderingContext2D, timer: number): void {
+  // Illustrated Winter Christmas Eve Night Sky
   const sky = ctx.createLinearGradient(0, 0, 0, MG_H);
   sky.addColorStop(0, '#0a1026');
   sky.addColorStop(0.45, '#142044');
@@ -209,7 +247,10 @@ export function renderModeSelectScreen(
     const sx = (i * 53 + 17) % MG_W;
     const sy = 4 + ((i * 29) % 190);
     const twinkle = 0.22 + 0.55 * (0.5 + 0.5 * Math.sin(timer * (1.8 + (i % 4) * 0.5) + i * 1.7));
-    ctx.fillStyle = i % 3 === 0 ? `rgba(255, 232, 160, ${twinkle.toFixed(2)})` : `rgba(218, 232, 255, ${(twinkle * 0.75).toFixed(2)})`;
+    ctx.fillStyle =
+      i % 3 === 0
+        ? `rgba(255, 232, 160, ${twinkle.toFixed(2)})`
+        : `rgba(218, 232, 255, ${(twinkle * 0.75).toFixed(2)})`;
     const sz = i % 5 === 0 ? 1.5 : 1;
     ctx.fillRect(sx, sy, sz, sz);
   }
@@ -238,7 +279,7 @@ export function renderModeSelectScreen(
     ctx.fill();
   }
 
-  // 2. Festive Header with Golden Fairy-Light Garland
+  // Festive Header with Golden Fairy-Light Garland
   const headerGrad = ctx.createLinearGradient(0, 0, 0, 31);
   headerGrad.addColorStop(0, 'rgba(12, 16, 36, 0.92)');
   headerGrad.addColorStop(1, 'rgba(18, 24, 48, 0.55)');
@@ -289,6 +330,174 @@ export function renderModeSelectScreen(
   ruleGrad.addColorStop(1, 'rgba(244, 206, 118, 0.12)');
   ctx.fillStyle = ruleGrad;
   ctx.fillRect(0, 30, MG_W, 0.9);
+}
+
+export function renderWelcomeScreen(
+  ctx: CanvasRenderingContext2D,
+  welcomeMessage: string,
+  timer = 0
+): void {
+  drawFestiveNightBackdrop(ctx, timer);
+
+  // Header Crest
+  ctx.fillStyle = '#fff0bc';
+  ctx.font = 'bold 10.5px system-ui, -apple-system, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✦ LE GRAND JEU DE NOËL 2026 ✦', MG_W / 2, 20.5);
+
+  // Left: Gilded Portrait of Léo (Maître du Jeu) with warm breathing halo
+  const px = 22;
+  const py = 49;
+  const pSize = 86;
+  const glowPulse = 0.24 + 0.12 * Math.sin(timer * 2.8);
+  if (typeof ctx.createRadialGradient === 'function') {
+    const halo = ctx.createRadialGradient(
+      px + pSize / 2,
+      py + pSize / 2,
+      18,
+      px + pSize / 2,
+      py + pSize / 2,
+      64
+    );
+    halo.addColorStop(0, `rgba(255, 218, 122, ${glowPulse.toFixed(2)})`);
+    halo.addColorStop(1, 'rgba(255, 218, 122, 0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(px - 22, py - 22, pSize + 44, pSize + 44);
+  }
+
+  ctx.fillStyle = '#121629';
+  drawRoundRectPath(ctx, px - 4, py - 4, pSize + 8, pSize + 8, 7);
+  ctx.fill();
+  drawPortrait(
+    ctx,
+    GAME_MASTER_LEO.appearance,
+    GAME_MASTER_LEO.portrait,
+    px,
+    py,
+    pSize,
+    GAME_MASTER_LEO.customPortraitUrl
+  );
+  ctx.strokeStyle = '#f4ce76';
+  ctx.lineWidth = 1.8;
+  drawRoundRectPath(ctx, px - 3, py - 3, pSize + 6, pSize + 6, 6);
+  ctx.stroke();
+
+  // Nameplate Pill under Léo
+  ctx.fillStyle = '#241838';
+  drawRoundRectPath(ctx, px - 10, py + pSize + 7, pSize + 20, 18, 9);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(244, 206, 118, 0.72)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = '#ffe999';
+  drawFittedSingleLine(
+    ctx,
+    `${GAME_MASTER_LEO.name} • ${GAME_MASTER_LEO.roleLabel}`,
+    px + pSize / 2,
+    py + pSize + 16,
+    pSize + 12,
+    {
+      preferredSize: 7.4,
+      minSize: 5.4,
+      weight: 'bold',
+      align: 'center',
+      baseline: 'middle',
+    }
+  );
+
+  // Right: Warm parchment speech bubble pointing left at Léo
+  const bx = 130;
+  const by = 48;
+  const bw = 232;
+  const bh = 114;
+
+  ctx.fillStyle = 'rgba(4, 7, 18, 0.52)';
+  drawRoundRectPath(ctx, bx + 2, by + 3, bw, bh, 10);
+  ctx.fill();
+
+  ctx.fillStyle = '#fbf6ea';
+  drawRoundRectPath(ctx, bx, by, bw, bh, 10);
+  ctx.fill();
+  ctx.strokeStyle = '#d9ae54';
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+
+  // Speech tail triangle
+  ctx.beginPath();
+  ctx.moveTo(bx + 1, by + 38);
+  ctx.lineTo(bx - 12, by + 46);
+  ctx.lineTo(bx + 1, by + 54);
+  ctx.closePath();
+  ctx.fillStyle = '#fbf6ea';
+  ctx.fill();
+  ctx.strokeStyle = '#d9ae54';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(bx, by + 38);
+  ctx.lineTo(bx - 12, by + 46);
+  ctx.lineTo(bx, by + 54);
+  ctx.stroke();
+
+  // Inner delicate border
+  ctx.strokeStyle = 'rgba(40, 54, 94, 0.16)';
+  ctx.lineWidth = 0.8;
+  drawRoundRectPath(ctx, bx + 5, by + 5, bw - 10, bh - 10, 6);
+  ctx.stroke();
+
+  // Randomized Welcome Message
+  ctx.fillStyle = '#1b2238';
+  drawFittedWrappedText(ctx, `« ${welcomeMessage} »`, bx + 14, by + 13, bw - 28, bh - 26, {
+    preferredSize: 10.0,
+    minSize: 7.4,
+    weight: '600',
+    lineHeightRatio: 1.36,
+    verticalCenter: true,
+  });
+
+  // Glowing Gilded Continue Button
+  const btn = getWelcomeContinueButtonRect();
+  const btnPulse = 0.86 + 0.14 * Math.sin(timer * 4.5);
+  ctx.save();
+  ctx.fillStyle = `rgba(244, 206, 118, ${(0.18 * btnPulse).toFixed(2)})`;
+  drawRoundRectPath(ctx, btn.x - 3, btn.y - 3, btn.w + 6, btn.h + 6, 17);
+  ctx.fill();
+
+  const btnGrad = ctx.createLinearGradient(0, btn.y, 0, btn.y + btn.h);
+  btnGrad.addColorStop(0, '#f3ca6d');
+  btnGrad.addColorStop(1, '#c48d2d');
+  ctx.fillStyle = btnGrad;
+  drawRoundRectPath(ctx, btn.x, btn.y, btn.w, btn.h, 14);
+  ctx.fill();
+  ctx.strokeStyle = '#fff3c4';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#1a1206';
+  ctx.font = 'bold 9.5px system-ui, -apple-system, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('▶ Choisir notre équipe', btn.x + btn.w / 2, btn.y + btn.h / 2 + 0.5);
+  ctx.restore();
+
+  // Gentle foreground snow motes
+  for (let i = 0; i < 8; i++) {
+    const fx = (i * 51 + Math.sin(timer * 1.1 + i * 2) * 12 + timer * 6 + MG_W) % MG_W;
+    const fy = (i * 37 + timer * (13 + (i % 3) * 3)) % MG_H;
+    ctx.fillStyle = 'rgba(255, 250, 236, 0.42)';
+    ctx.beginPath();
+    ctx.arc(fx, fy, 1.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+export function renderModeSelectScreen(
+  ctx: CanvasRenderingContext2D,
+  save: GlobalSaveData,
+  selectedIndex: number,
+  timer = 0
+): void {
+  drawFestiveNightBackdrop(ctx, timer);
 
   // Header Title & Completion Pill
   const totalModes = MODE_ORDER.length;
@@ -298,7 +507,7 @@ export function renderModeSelectScreen(
   ctx.font = 'bold 10.5px system-ui, -apple-system, "Segoe UI", sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText('Choisissez votre binôme', 14, 20.5);
+  ctx.fillText('Choisissez votre équipe', 14, 20.5);
 
   const badgeText = allCleared
     ? `★ ${totalModes}/${totalModes} • JOYEUX NOËL !`
@@ -381,11 +590,17 @@ export function renderModeSelectScreen(
     drawRoundRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 8);
     ctx.stroke();
 
-    // Pair Name on ribbon + delicate golden gift bow (fitted cleanly inside 116px card)
+    // Pair Name on ribbon + delicate golden gift bow (fitted cleanly inside 116px card without overlap)
+    let labelMaxW = w - 26;
+    if (modeSave.bossDefeated) {
+      ctx.font = 'bold 7.4px system-ui, -apple-system, "Segoe UI", sans-serif';
+      const roiW = Math.ceil(ctx.measureText('★ ROI').width);
+      labelMaxW = Math.max(52, w - 14 - roiW);
+    }
     ctx.fillStyle = '#ffffff';
-    drawFittedSingleLine(ctx, pair.label, x + 6, y + 8.3, w - (modeSave.bossDefeated ? 26 : 22), {
-      preferredSize: 8.2,
-      minSize: 6.2,
+    drawFittedSingleLine(ctx, pair.label, x + 6, y + 8.3, labelMaxW, {
+      preferredSize: pair.members.length > 2 ? 7.4 : 8.2,
+      minSize: 5.4,
       weight: 'bold',
       align: 'left',
       baseline: 'middle',
@@ -401,14 +616,16 @@ export function renderModeSelectScreen(
       drawGiftBow(ctx, x + w - 11, y + 8.2);
     }
 
-    // Two Polaroid-framed HD Family Portraits
-    const [mA, mB] = pair.members;
-    const pSize = 42;
-    const frameW = pSize + 4;
-    const frameH = pSize + 7;
-    const pAy = y + 20.5;
-    const pAx = x + Math.floor(w / 2) - frameW - 3;
-    const pBx = x + Math.floor(w / 2) + 3;
+    // Two or three Polaroid-framed HD Family Portraits
+    const members = pair.members;
+    const isTrio = members.length >= 3;
+    const pSize = isTrio ? 31 : 42;
+    const frameW = pSize + (isTrio ? 3.5 : 4);
+    const frameH = pSize + (isTrio ? 6 : 7);
+    const gap = isTrio ? 2 : 6;
+    const totalW = members.length * frameW + (members.length - 1) * gap;
+    const startPx = x + (w - totalW) / 2;
+    const pAy = isTrio ? y + 25 : y + 20.5;
 
     const drawPolaroid = (
       fx: number,
@@ -433,18 +650,22 @@ export function renderModeSelectScreen(
         member.appearance,
         member.portrait,
         -pSize / 2,
-        -frameH / 2 + 2,
+        -frameH / 2 + 1.8,
         pSize,
         member.customPortraitUrl
       );
       ctx.strokeStyle = selected ? 'rgba(218, 172, 74, 0.65)' : 'rgba(40, 48, 72, 0.35)';
       ctx.lineWidth = 0.7;
-      ctx.strokeRect(-pSize / 2, -frameH / 2 + 2, pSize, pSize);
+      ctx.strokeRect(-pSize / 2, -frameH / 2 + 1.8, pSize, pSize);
       ctx.restore();
     };
 
-    drawPolaroid(pAx, pAy, mA, -0.025);
-    drawPolaroid(pBx, pAy, mB, 0.025);
+    const tilts = isTrio ? [-0.032, 0, 0.032] : [-0.025, 0.025];
+    members.forEach((mem, idx) => {
+      const fx = startPx + idx * (frameW + gap);
+      const fy = isTrio && idx === 1 ? pAy - 1.5 : pAy;
+      drawPolaroid(fx, fy, mem, tilts[idx] ?? 0);
+    });
 
     // 12 Mini Golden Badge Stars + Discrete Counter at Bottom of Card
     const count = modeSave.badges.length;
@@ -496,8 +717,68 @@ export const PAUSE_OPTIONS = [
   'Carnet de Rencontres',
   'Carte du Monde',
   'Sauvegarde & Code',
-  'Changer de binôme',
+  'Changer d’équipe',
 ] as const;
+
+export function getPauseMenuPanelRect() {
+  return { x: 188, y: 18, w: 184, h: 160 };
+}
+
+export function getPauseOptionRects() {
+  return PAUSE_OPTIONS.map((_, i) => ({
+    x: 196,
+    y: 46 + i * 20,
+    w: 168,
+    h: 16,
+  }));
+}
+
+export function getPauseBackButtonRect() {
+  return { x: MG_W - 72, y: 18, w: 52, h: 15 };
+}
+
+export function getBadgeSlotRects(count = 13) {
+  const cols = 7;
+  return Array.from({ length: count }, (_, idx) => {
+    const col = idx % cols;
+    const row = Math.floor(idx / cols);
+    const bx = 32 + col * 48;
+    const by = 46 + row * 48;
+    return { x: bx - 4, y: by - 4, w: 40, h: 40 };
+  });
+}
+
+export function getNotebookRowRects(total: number, subCursor: number) {
+  const start = Math.max(0, Math.min(Math.max(0, total - 8), subCursor - 3));
+  const rows: { index: number; x: number; y: number; w: number; h: number }[] = [];
+  for (let i = 0; i < 8 && start + i < total; i++) {
+    rows.push({
+      index: start + i,
+      x: 20,
+      y: 38 + i * 21,
+      w: 148,
+      h: 18,
+    });
+  }
+  return rows;
+}
+
+function drawBackPill(ctx: CanvasRenderingContext2D, light = false): void {
+  const r = getPauseBackButtonRect();
+  ctx.save();
+  ctx.fillStyle = light ? 'rgba(40, 54, 94, 0.14)' : 'rgba(244, 206, 118, 0.14)';
+  drawRoundRectPath(ctx, r.x, r.y, r.w, r.h, 7.5);
+  ctx.fill();
+  ctx.strokeStyle = light ? 'rgba(40, 54, 94, 0.45)' : 'rgba(244, 206, 118, 0.6)';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.fillStyle = light ? '#28365e' : '#ffe69a';
+  ctx.font = 'bold 7.2px system-ui, -apple-system, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✕ Retour', r.x + r.w / 2, r.y + r.h / 2 + 0.3);
+  ctx.restore();
+}
 
 export function renderPauseMenu(
   ctx: CanvasRenderingContext2D,
@@ -512,34 +793,48 @@ export function renderPauseMenu(
   ctx.fillRect(0, 0, MG_W, MG_H);
 
   if (subView === 'menu') {
-    drawPanelBox(ctx, 188, 18, 184, 160, '#f8f5ec', '#28365e');
+    const panel = getPauseMenuPanelRect();
+    drawPanelBox(ctx, panel.x, panel.y, panel.w, panel.h, '#f8f5ec', '#28365e');
     ctx.fillStyle = '#1b2033';
     ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText('MENU DU VOYAGE', 202, 28);
 
+    const optRects = getPauseOptionRects();
     PAUSE_OPTIONS.forEach((opt, i) => {
-      const y = 48 + i * 20;
+      const rect = optRects[i];
       const sel = i === cursor;
       if (sel) {
         ctx.fillStyle = '#28365e';
-        ctx.fillRect(196, y - 2, 168, 16);
+        ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
       }
       ctx.fillStyle = sel ? '#ffe680' : '#262d42';
       ctx.font = 'bold 9px sans-serif';
-      ctx.fillText(`${sel ? '▶ ' : '  '}${opt}`, 200, y + 1);
+      ctx.fillText(`${sel ? '▶ ' : '  '}${opt}`, 200, rect.y + 3);
     });
 
     // Quick pair summary card on left
     const pair = FAMILY_PAIRS[world.modeId];
-    drawPanelBox(ctx, 12, 18, 166, 98, '#1b2238', '#f4c542');
+    drawPanelBox(ctx, 12, 18, 166, 104, '#1b2238', '#f4c542');
     ctx.fillStyle = '#ffe27a';
-    ctx.font = 'bold 9px sans-serif';
-    ctx.fillText(pair.label, 22, 28);
+    drawFittedSingleLine(ctx, pair.label, 22, 28, 146, {
+      preferredSize: 9,
+      minSize: 7.2,
+      weight: 'bold',
+      align: 'left',
+      baseline: 'top',
+    });
     ctx.fillStyle = '#cbd5f5';
+    drawFittedSingleLine(ctx, world.worldName, 22, 42, 146, {
+      preferredSize: 8,
+      minSize: 6.5,
+      align: 'left',
+      baseline: 'top',
+    });
     ctx.font = '8px sans-serif';
-    ctx.fillText(world.worldName, 22, 42);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
     ctx.fillText(`Badges : ${save.badges.length} / 12`, 22, 58);
     ctx.fillText(
       `Boss Final : ${save.bossDefeated ? 'Vaincu ★' : 'À défier'}`,
@@ -550,6 +845,73 @@ export function renderPauseMenu(
     const mins = Math.floor(save.playTimeSeconds / 60);
     const secs = save.playTimeSeconds % 60;
     ctx.fillText(`Temps : ${mins}m ${String(secs).padStart(2, '0')}s`, 22, 100);
+
+    // Léo (Maître du Jeu) with "Besoin d'aide ?" speech bubble on bottom-left
+    const lx = 16;
+    const ly = 140;
+    const lSize = 58;
+    ctx.fillStyle = '#121629';
+    drawRoundRectPath(ctx, lx - 3, ly - 3, lSize + 6, lSize + 6, 5);
+    ctx.fill();
+    drawPortrait(
+      ctx,
+      GAME_MASTER_LEO.appearance,
+      GAME_MASTER_LEO.portrait,
+      lx,
+      ly,
+      lSize,
+      GAME_MASTER_LEO.customPortraitUrl
+    );
+    ctx.strokeStyle = '#f4ce76';
+    ctx.lineWidth = 1.4;
+    drawRoundRectPath(ctx, lx - 2.5, ly - 2.5, lSize + 5, lSize + 5, 4.5);
+    ctx.stroke();
+
+    // Small gold nameplate under Léo
+    ctx.fillStyle = '#241838';
+    drawRoundRectPath(ctx, lx + 4, ly + lSize + 4, lSize - 8, 13, 6.5);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(244, 206, 118, 0.7)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.fillStyle = '#ffe999';
+    ctx.font = 'bold 7.2px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(GAME_MASTER_LEO.name, lx + lSize / 2, ly + lSize + 10.6);
+
+    // Speech bubble pointing left at Léo
+    const sbx = 85;
+    const sby = 150;
+    const sbw = 92;
+    const sbh = 38;
+    ctx.fillStyle = '#fbf6ea';
+    drawRoundRectPath(ctx, sbx, sby, sbw, sbh, 7);
+    ctx.fill();
+    ctx.strokeStyle = '#d9ae54';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(sbx + 1, sby + 13);
+    ctx.lineTo(sbx - 8, sby + 19);
+    ctx.lineTo(sbx + 1, sby + 25);
+    ctx.closePath();
+    ctx.fillStyle = '#fbf6ea';
+    ctx.fill();
+    ctx.strokeStyle = '#d9ae54';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(sbx, sby + 13);
+    ctx.lineTo(sbx - 8, sby + 19);
+    ctx.lineTo(sbx, sby + 25);
+    ctx.stroke();
+
+    ctx.fillStyle = '#1b2238';
+    ctx.font = 'bold 8.6px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Besoin d’aide ?', sbx + sbw / 2, sby + sbh / 2 + 0.5);
     return;
   }
 
@@ -558,18 +920,21 @@ export function renderPauseMenu(
     drawPanelBox(ctx, 12, 12, MG_W - 24, MG_H - 24, '#182038', '#f4c542');
 
     ctx.fillStyle = '#ffe27a';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`Boîte à Badges — ${world.worldName}`, 24, 22);
+    drawFittedSingleLine(ctx, `Boîte à Badges — ${world.worldName}`, 24, 21, MG_W - 104, {
+      preferredSize: 11,
+      minSize: 8,
+      weight: 'bold',
+      align: 'left',
+      baseline: 'top',
+    });
+    drawBackPill(ctx, false);
 
-    // Grid of 13 badges (6 + 7 or 5 + 5 + 3)
-    const cols = 7;
+    // Grid of 13 badges
+    const slots = getBadgeSlotRects(allBadges.length);
     allBadges.forEach((badge, idx) => {
-      const col = idx % cols;
-      const row = Math.floor(idx / cols);
-      const bx = 32 + col * 48;
-      const by = 46 + row * 48;
+      const slot = slots[idx];
+      const bx = slot.x + 4;
+      const by = slot.y + 4;
       const unlocked =
         badge.district === 4
           ? save.bossDefeated
@@ -577,9 +942,9 @@ export function renderPauseMenu(
 
       if (idx === subCursor) {
         ctx.fillStyle = '#33467a';
-        ctx.fillRect(bx - 4, by - 4, 40, 40);
+        ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
         ctx.strokeStyle = '#f4c542';
-        ctx.strokeRect(bx - 4.5, by - 4.5, 41, 41);
+        ctx.strokeRect(slot.x - 0.5, slot.y - 0.5, slot.w + 1, slot.h + 1);
       }
       drawBadgeIcon(ctx, badge, unlocked, bx, by, 1.6);
     });
@@ -592,16 +957,26 @@ export function renderPauseMenu(
         : save.badges.includes(chosen.id);
     drawPanelBox(ctx, 22, 152, MG_W - 44, 64, '#101526', '#4a5a8a');
     ctx.fillStyle = unlocked ? '#ffe27a' : '#8a94b8';
-    ctx.font = 'bold 9px sans-serif';
-    ctx.fillText(
+    drawFittedSingleLine(
+      ctx,
       unlocked
         ? `${chosen.name} (${chosen.characterName} • ${chosen.category})`
         : `??? — Quartier ${chosen.district} (${chosen.category})`,
       32,
-      160
+      160,
+      MG_W - 64,
+      {
+        preferredSize: 9,
+        minSize: 6.5,
+        weight: 'bold',
+        align: 'left',
+        baseline: 'top',
+      }
     );
     ctx.fillStyle = '#d4ddf7';
     ctx.font = '8px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
     drawWrappedText(
       ctx,
       unlocked
@@ -623,34 +998,58 @@ export function renderPauseMenu(
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText('Carnet de Rencontres', 22, 20);
+    drawBackPill(ctx, true);
 
     const chosen = entries[subCursor % entries.length];
     const met = save.metNpcs.includes(chosen.id);
-    const won = chosen.badgeId ? save.badges.includes(chosen.badgeId) : save.bossDefeated;
+    const won =
+      chosen.role === 'boss'
+        ? save.bossDefeated
+        : chosen.badgeId
+          ? save.badges.includes(chosen.badgeId)
+          : false;
 
     // Left scrollable list
-    const start = Math.max(0, Math.min(entries.length - 8, subCursor - 3));
-    for (let i = 0; i < 8 && start + i < entries.length; i++) {
-      const idx = start + i;
-      const e = entries[idx];
-      const y = 40 + i * 21;
-      const sel = idx === subCursor;
+    const rows = getNotebookRowRects(entries.length, subCursor);
+    for (const row of rows) {
+      const e = entries[row.index];
+      const sel = row.index === subCursor;
       if (sel) {
         ctx.fillStyle = '#28365e';
-        ctx.fillRect(20, y - 2, 148, 18);
+        ctx.fillRect(row.x, row.y, row.w, row.h);
       }
       const isMet = save.metNpcs.includes(e.id);
       ctx.fillStyle = sel ? '#ffe680' : '#242b40';
-      ctx.font = 'bold 8px sans-serif';
-      ctx.fillText(
+      drawFittedSingleLine(
+        ctx,
         `${sel ? '▶ ' : ''}${isMet ? e.name : '??? (À rencontrer)'}`,
-        24,
-        y + 3
+        row.x + 4,
+        row.y + row.h / 2,
+        row.w - 8,
+        {
+          preferredSize: 8,
+          minSize: 6.2,
+          weight: 'bold',
+          align: 'left',
+          baseline: 'middle',
+        }
       );
     }
 
+    // Subtle scroll hints for left list
+    const firstIdx = rows[0]?.index ?? 0;
+    const lastIdx = rows[rows.length - 1]?.index ?? 0;
+    ctx.fillStyle = '#5a668a';
+    ctx.font = 'bold 7px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    if (firstIdx > 0) ctx.fillText('▲', 166, 28);
+    if (lastIdx < entries.length - 1) ctx.fillText('▼', 166, 208);
+
     // Right detail card
     drawPanelBox(ctx, 178, 38, 182, 178, '#1b2238', '#d6ae53');
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
     if (met) {
       drawPortrait(
         ctx,
@@ -687,10 +1086,14 @@ export function renderPauseMenu(
   if (subView === 'map') {
     drawPanelBox(ctx, 18, 14, MG_W - 36, MG_H - 28, '#141a2b', '#f4c542');
     ctx.fillStyle = '#ffe27a';
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`Carte — ${world.worldName}`, 30, 22);
+    drawFittedSingleLine(ctx, `Carte — ${world.worldName}`, 30, 22, MG_W - 110, {
+      preferredSize: 10,
+      minSize: 8,
+      weight: 'bold',
+      align: 'left',
+      baseline: 'top',
+    });
+    drawBackPill(ctx, false);
 
     // Minimap scaled 3x (60*3 = 180 x 44*3 = 132)
     const mx = 34;
@@ -702,11 +1105,16 @@ export function renderPauseMenu(
         const t = ow.tiles[y][x];
         let c = '#3b7a47';
         if (t === 'water') c = '#3474b5';
+        else if (t === 'sand') c = '#e5ca87';
+        else if (t === 'bridge') c = '#a67a4e';
         else if (t === 'path' || t === 'plaza' || t === 'star_tile') c = '#c7b898';
         else if (t === 'carpet') c = '#b83242';
         else if (t === 'tree') c = '#1f4729';
         else if (t === 'wall_a' || t === 'wall_b' || t === 'roof_a' || t === 'roof_b') c = '#6e768f';
-        else if (t === 'gate_closed') c = '#f4c542';
+        else if (t === 'gate_closed') {
+          const gate = world.gates.find((g) => g.tiles.some((gt) => gt.x === x && gt.y === y));
+          c = gate && save.badges.length >= gate.requiredBadges ? '#57d978' : '#f4c542';
+        }
         ctx.fillStyle = c;
         ctx.fillRect(mx + x * scale, my + y * scale, scale, scale);
       }
@@ -726,9 +1134,11 @@ export function renderPauseMenu(
     ctx.fillRect(mx + playerPos.x * scale - 1, my + playerPos.y * scale - 1, 4, 4);
 
     // Legend on right
-    const lx = 228;
+    const lx = 224;
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
     ctx.fillText('Légende :', lx, 44);
     const items: [string, string][] = [
       ['■ Vous êtes ici', '#3fb8ff'],
@@ -747,8 +1157,12 @@ export function renderPauseMenu(
     ctx.fillText('Quartiers :', lx, 134);
     world.districts.forEach((d, i) => {
       ctx.fillStyle = '#cbd5f5';
-      ctx.font = '8px sans-serif';
-      ctx.fillText(`${d.id}. ${d.name}`, lx, 148 + i * 14);
+      drawFittedSingleLine(ctx, `${d.id}. ${d.name}`, lx, 148 + i * 14, 134, {
+        preferredSize: 8,
+        minSize: 5.8,
+        align: 'left',
+        baseline: 'top',
+      });
     });
   }
 }
@@ -761,7 +1175,7 @@ export function renderEndingCeremony(
   timer: number
 ): void {
   const pair = FAMILY_PAIRS[modeId];
-  const [mA, mB] = pair.members;
+  const members = pair.members;
 
   // Festive gradient sky
   const grad = ctx.createLinearGradient(0, 0, 0, MG_H);
@@ -796,11 +1210,21 @@ export function renderEndingCeremony(
   }
 
   // Panthéon header + Big "JOYEUX NOËL" banner!
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
   ctx.fillStyle = '#9ff5b6';
-  ctx.font = 'bold 9px sans-serif';
-  ctx.fillText(`PANTHÉON DES CHAMPIONS — ${world.worldName.toUpperCase()}`, MG_W / 2, 10);
+  drawFittedSingleLine(
+    ctx,
+    `PANTHÉON DES CHAMPIONS — ${world.worldName.toUpperCase()}`,
+    MG_W / 2,
+    10,
+    MG_W - 24,
+    {
+      preferredSize: 9,
+      minSize: 7,
+      weight: 'bold',
+      align: 'center',
+      baseline: 'top',
+    }
+  );
 
   ctx.fillStyle = '#c92a42';
   ctx.fillRect(24, 24, MG_W - 48, 28);
@@ -809,24 +1233,55 @@ export function renderEndingCeremony(
   ctx.strokeRect(24, 24, MG_W - 48, 28);
 
   ctx.fillStyle = '#ffe97d';
-  ctx.font = 'bold 14px sans-serif';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(`★ JOYEUX NOËL, ${mA.name.toUpperCase()} & ${mB.name.toUpperCase()} ! ★`, MG_W / 2, 38);
+  drawFittedSingleLine(
+    ctx,
+    `★ JOYEUX NOËL, ${pair.label.toUpperCase()} ! ★`,
+    MG_W / 2,
+    38,
+    MG_W - 60,
+    {
+      preferredSize: 13.5,
+      minSize: 8.2,
+      weight: 'bold',
+      align: 'center',
+      baseline: 'middle',
+    }
+  );
 
-  // Duo Portraits & Hopping Sprites
-  drawPortrait(ctx, mA.appearance, mA.portrait, 34, 62, 48, mA.customPortraitUrl);
-  drawPortrait(ctx, mB.appearance, mB.portrait, MG_W - 82, 62, 48, mB.customPortraitUrl);
+  // Team Portraits & Hopping Sprites
+  if (members.length >= 3) {
+    const [mA, mB, mC] = members;
+    drawPortrait(ctx, mA.appearance, mA.portrait, 16, 62, 38, mA.customPortraitUrl);
+    drawPortrait(ctx, mB.appearance, mB.portrait, 58, 62, 38, mB.customPortraitUrl);
+    drawPortrait(ctx, mC.appearance, mC.portrait, MG_W - 54, 62, 38, mC.customPortraitUrl);
 
-  const hopA = Math.abs(Math.round(Math.sin(timer * 5) * 4));
-  const hopB = Math.abs(Math.round(Math.cos(timer * 5) * 4));
-  drawOverworldSprite(ctx, mA.appearance, 'down', Math.floor(timer * 4) % 3, 92, 84 - hopA, mA.customSpriteSheetUrl);
-  drawOverworldSprite(ctx, mB.appearance, 'down', Math.floor(timer * 4 + 1) % 3, MG_W - 108, 84 - hopB, mB.customSpriteSheetUrl);
+    const hopA = Math.abs(Math.round(Math.sin(timer * 5) * 4));
+    const hopB = Math.abs(Math.round(Math.cos(timer * 5) * 4));
+    const hopC = Math.abs(Math.round(Math.sin(timer * 5 + 1.8) * 4));
+    drawOverworldSprite(ctx, mA.appearance, 'down', Math.floor(timer * 4) % 3, 102, 84 - hopA, mA.customSpriteSheetUrl);
+    drawOverworldSprite(ctx, mB.appearance, 'down', Math.floor(timer * 4 + 1) % 3, MG_W - 102, 84 - hopB, mB.customSpriteSheetUrl);
+    drawOverworldSprite(ctx, mC.appearance, 'down', Math.floor(timer * 4 + 2) % 3, MG_W - 80, 84 - hopC, mC.customSpriteSheetUrl);
+  } else {
+    const [mA, mB] = members;
+    drawPortrait(ctx, mA.appearance, mA.portrait, 34, 62, 48, mA.customPortraitUrl);
+    drawPortrait(ctx, mB.appearance, mB.portrait, MG_W - 82, 62, 48, mB.customPortraitUrl);
+
+    const hopA = Math.abs(Math.round(Math.sin(timer * 5) * 4));
+    const hopB = Math.abs(Math.round(Math.cos(timer * 5) * 4));
+    drawOverworldSprite(ctx, mA.appearance, 'down', Math.floor(timer * 4) % 3, 92, 84 - hopA, mA.customSpriteSheetUrl);
+    drawOverworldSprite(ctx, mB.appearance, 'down', Math.floor(timer * 4 + 1) % 3, MG_W - 108, 84 - hopB, mB.customSpriteSheetUrl);
+  }
 
   // Supreme Boss Badge in center
   drawBadgeIcon(ctx, world.bossBadge, true, MG_W / 2 - 16, 62, 1.6);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 8px sans-serif';
-  ctx.fillText(world.bossBadge.name, MG_W / 2, 100);
+  drawFittedSingleLine(ctx, world.bossBadge.name, MG_W / 2, 102, 156, {
+    preferredSize: 8,
+    minSize: 6.2,
+    weight: 'bold',
+    align: 'center',
+    baseline: 'middle',
+  });
 
   // All 12 Badges row
   const startX = Math.floor((MG_W - 12 * 26) / 2);
@@ -837,20 +1292,28 @@ export function renderEndingCeremony(
   // Gift Dedication Box
   drawPanelBox(ctx, 26, 150, MG_W - 52, 58, '#161b30', '#ffd452');
   ctx.fillStyle = '#fff5d6';
-  ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillText(
-    `Félicitations ! Vous avez triomphé de ${world.bossBadge.characterName} !`,
+  drawFittedSingleLine(
+    ctx,
+    `Félicitations ! Vous avez triomphé ${formatFrenchDeName(world.bossBadge.characterName)} !`,
     MG_W / 2,
-    158
+    158,
+    MG_W - 68,
+    {
+      preferredSize: 9,
+      minSize: 7,
+      weight: 'bold',
+      align: 'center',
+      baseline: 'top',
+    }
   );
   ctx.fillStyle = '#cbd8ff';
   ctx.font = '8px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
   const mins = Math.floor(save.playTimeSeconds / 60);
   const secs = save.playTimeSeconds % 60;
   ctx.fillText(
-    `Badges : 12/12 + Boss  •  Rencontres : ${save.metNpcs.length}  •  Temps : ${mins}m ${secs}s`,
+    `Badges : 12/12 + Boss  •  Rencontres : ${save.metNpcs.length}  •  Temps : ${mins}m ${String(secs).padStart(2, '0')}s`,
     MG_W / 2,
     174
   );

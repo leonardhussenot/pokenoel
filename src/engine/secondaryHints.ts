@@ -52,25 +52,44 @@ export function resolveSecondaryPrimaryBuilding(
   return best;
 }
 
+const MUTE_H_NAMES = /^(?:henri|hélène|honoré|hippolyte|hector|horace)/i;
+
+/**
+ * Formats French preposition "de" / "d’" before a proper name (eliding before vowels and French mute H).
+ */
+export function formatFrenchDeName(name: string): string {
+  const trimmed = name.trim();
+  if (/^[AEIOUYÀÂÄÉÈÊËÎÏÔÖŒÙÛÜ]/i.test(trimmed) || MUTE_H_NAMES.test(trimmed)) {
+    return `d’${trimmed}`;
+  }
+  return `de ${trimmed}`;
+}
+
 /**
  * Formats a concrete, mistake-specific French hint fixing an exact error
  * the player made during their failed attempt.
  */
-export function formatMistakeHint(mistake: ChallengeMistake, targetName: string): string {
+export function formatMistakeHint(
+  mistake: ChallengeMistake,
+  targetName: string,
+  speakerId?: string
+): string {
+  const certain = speakerId && FEMININE_SECONDARY_IDS.has(speakerId) ? 'certaine' : 'certain';
+  const deTarget = formatFrenchDeName(targetName);
   switch (mistake.kind) {
     case 'order_puzzle':
       return mistake.chronological
-        ? `Petit coup de pouce pour chez ${targetName} : entre les deux, je suis certain que « ${mistake.earlierItem} » vient avant « ${mistake.laterItem} » !`
+        ? `Petit coup de pouce pour chez ${targetName} : entre les deux, je suis ${certain} que « ${mistake.earlierItem} » vient avant « ${mistake.laterItem} » !`
         : `Petit coup de pouce pour chez ${targetName} : dans l’ordre attendu, « ${mistake.earlierItem} » doit se placer avant « ${mistake.laterItem} » !`;
 
     case 'pair_match':
-      return `Pour le défi de ${targetName}, « ${mistake.leftText} » ne va pas avec « ${mistake.wrongRightText} »… essayez plutôt de l’associer avec « ${mistake.correctRightText} » !`;
+      return `Pour le défi ${deTarget}, « ${mistake.leftText} » ne va pas avec « ${mistake.wrongRightText} »… essayez plutôt de l’associer avec « ${mistake.correctRightText} » !`;
 
     case 'intruder_hunt':
       return `Chez ${targetName}, « ${mistake.pickedItem} » n’était pas l’intrus ! Méfiez-vous plutôt de « ${mistake.intruderItem} », c’est lui qui ne colle pas !`;
 
     case 'category_sort':
-      return `Petite astuce pour le tri de ${targetName} : « ${mistake.itemLabel} » ne va pas dans « ${mistake.wrongCategory} », mais bien dans « ${mistake.correctCategory} » !`;
+      return `Petite astuce pour le tri ${deTarget} : « ${mistake.itemLabel} » ne va pas dans « ${mistake.wrongCategory} », mais bien dans « ${mistake.correctCategory} » !`;
 
     case 'quiz': {
       const shortQ = clipClause(mistake.question, 54);
@@ -152,7 +171,7 @@ export function buildSecondaryDialogue(
   const mistakes = save.failedMistakes?.[targetBuilding.badgeId];
   if (mistakes && mistakes.length > 0) {
     const idx = ((hintCycleIndex % mistakes.length) + mistakes.length) % mistakes.length;
-    const hintText = formatMistakeHint(mistakes[idx], targetName);
+    const hintText = formatMistakeHint(mistakes[idx], targetName, npc.id);
     return {
       messages: [hintText],
       text: hintText,

@@ -11,6 +11,7 @@ import {
 } from '../src/engine/saveSystem';
 import {
   buildSecondaryDialogue,
+  formatFrenchDeName,
   formatLoseHelperLine,
   formatMistakeHint,
   resolveClosestSecondaryForChallenger,
@@ -485,10 +486,47 @@ describe('Secondary NPC mistake-specific hints', () => {
     }
     expect(totalMain).toBe(60);
 
-    // Spot-check masculine & feminine French pronouns
-    const harold = WORLDS.df.npcs.find((n) => n.id === 'df_sec_3')!;
-    const emily = WORLDS.pm.npcs.find((n) => n.id === 'pm_sec_6')!;
-    expect(formatLoseHelperLine(harold)).toContain('il aura peut-être un indice');
-    expect(formatLoseHelperLine(emily)).toContain('elle aura peut-être un indice');
+    // Verify exact feminine & masculine French pronouns and agreement across all 60 secondary NPCs
+    const expectedFeminine = new Set([
+      'pm_sec_6', // Emily Brontë
+      'pm_sec_9', // Mary Shelley
+      'df_sec_6', // Gal Costa
+      'jp_sec_4', // Dorothea Lange
+      'jp_sec_5', // Hélène Darroze
+      'jp_sec_7', // Annie Leibovitz
+      'sd_sec_3', // Fred Vargas
+      'sd_sec_5', // Yōko Kanno
+      'sd_sec_6', // Hailee Steinfeld
+    ]);
+    for (const modeId of MODE_ORDER) {
+      for (const sec of WORLDS[modeId].npcs.filter((n) => n.role === 'secondary')) {
+        const line = formatLoseHelperLine(sec);
+        const orderHint = formatMistakeHint(
+          { kind: 'order_puzzle', earlierItem: 'A', laterItem: 'B', chronological: true },
+          'Victor Hugo',
+          sec.id
+        );
+        if (expectedFeminine.has(sec.id)) {
+          expect(line, `${sec.id} (${sec.name})`).toContain('elle aura peut-être un indice');
+          expect(orderHint, `${sec.id} (${sec.name})`).toContain('je suis certaine');
+        } else {
+          expect(line, `${sec.id} (${sec.name})`).toContain('il aura peut-être un indice');
+          expect(orderHint, `${sec.id} (${sec.name})`).toContain('je suis certain que');
+        }
+      }
+    }
+
+    // Verify French de / d’ elision in mistake hints
+    expect(formatFrenchDeName('Alfred Hitchcock')).toBe('d’Alfred Hitchcock');
+    expect(formatFrenchDeName('Anne-Sophie Pic')).toBe('d’Anne-Sophie Pic');
+    expect(formatFrenchDeName('Henri-Georges Clouzot')).toBe('d’Henri-Georges Clouzot');
+    expect(formatFrenchDeName('Hayao Miyazaki')).toBe('de Hayao Miyazaki');
+    expect(formatFrenchDeName('Victor Hugo')).toBe('de Victor Hugo');
+    expect(
+      formatMistakeHint(
+        { kind: 'pair_match', leftText: 'A', wrongRightText: 'B', correctRightText: 'C' },
+        'Anne-Sophie Pic'
+      )
+    ).toContain('le défi d’Anne-Sophie Pic');
   });
 });

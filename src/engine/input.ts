@@ -9,7 +9,6 @@ export type GameButton =
   | 'a'
   | 'b'
   | 'run'
-  | 'swap'
   | 'menu'
   | 'mute';
 
@@ -32,8 +31,6 @@ const KEY_TO_BUTTON: Record<string, GameButton> = {
   KeyX: 'b',
   ShiftLeft: 'run',
   ShiftRight: 'run',
-  KeyC: 'swap',
-  Tab: 'swap',
   KeyM: 'mute',
 };
 
@@ -51,12 +48,28 @@ export class InputManager {
   private canvasPointer: CanvasTap | null = null;
   private canvasHover: CanvasTap | null = null;
   private onAnyGesture: (() => void) | null = null;
+  private touchButtons: HTMLElement[] = [];
+  private buttonActivePointers = new Map<HTMLElement, Set<number>>();
+
+  clearHeld(): void {
+    this.held.clear();
+    this.pressed.clear();
+    this.dirOrder = [];
+    this.canvasHeld = false;
+    this.canvasTap = null;
+    this.canvasHover = null;
+    for (const el of this.touchButtons) {
+      el.classList.remove('active');
+      this.buttonActivePointers.get(el)?.clear();
+    }
+  }
 
   attach(canvas: HTMLCanvasElement, onAnyGesture?: () => void): void {
     this.onAnyGesture = onAnyGesture ?? null;
     if (typeof window === 'undefined') return;
 
     window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       this.onAnyGesture?.();
       // Do not hijack typing or modal dialog navigation (info/settings/save)
       if (
@@ -71,9 +84,7 @@ export class InputManager {
       const btn = this.resolveButton(e);
       if (!btn) return;
 
-      if (
-        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)
-      ) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
       }
       this.pressButton(btn);
@@ -86,9 +97,13 @@ export class InputManager {
     });
 
     window.addEventListener('blur', () => {
-      this.held.clear();
-      this.dirOrder = [];
-      this.canvasHeld = false;
+      this.clearHeld();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.clearHeld();
+      }
     });
 
     // Touch / Mouse buttons in the GBA shell (prevent iOS text-selection & callout on hold)
@@ -101,24 +116,28 @@ export class InputManager {
     canvas.addEventListener('selectstart', (e) => e.preventDefault());
 
     const buttons = document.querySelectorAll<HTMLElement>('[data-btn]');
+    this.touchButtons = Array.from(buttons);
     buttons.forEach((el) => {
       const btnName = el.dataset.btn as GameButton | undefined;
       if (!btnName) return;
+      const activePointers = new Set<number>();
+      this.buttonActivePointers.set(el, activePointers);
 
-      const start = (ev: Event) => {
+      const start = (ev: PointerEvent) => {
         ev.preventDefault();
         this.onAnyGesture?.();
+        activePointers.add(ev.pointerId);
         el.classList.add('active');
-        if (btnName === 'menu') {
-          this.pressButton('menu');
-        } else {
-          this.pressButton(btnName);
-        }
+        this.pressButton(btnName);
       };
-      const end = (ev: Event) => {
+      const end = (ev: PointerEvent) => {
+        if (!activePointers.has(ev.pointerId)) return;
         ev.preventDefault();
-        el.classList.remove('active');
-        this.releaseButton(btnName);
+        activePointers.delete(ev.pointerId);
+        if (activePointers.size === 0) {
+          el.classList.remove('active');
+          this.releaseButton(btnName);
+        }
       };
 
       // Block iOS Safari long-press text selection & magnifying glass
@@ -136,9 +155,11 @@ export class InputManager {
     const mapCanvasCoords = (e: PointerEvent): CanvasTap | null => {
       const rect = canvas.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return null;
+      const rawX = Math.floor(((e.clientX - rect.left) / rect.width) * SCREEN_W);
+      const rawY = Math.floor(((e.clientY - rect.top) / rect.height) * SCREEN_H);
       return {
-        x: Math.floor(((e.clientX - rect.left) / rect.width) * SCREEN_W),
-        y: Math.floor(((e.clientY - rect.top) / rect.height) * SCREEN_H),
+        x: Math.max(0, Math.min(SCREEN_W - 1, rawX)),
+        y: Math.max(0, Math.min(SCREEN_H - 1, rawY)),
       };
     };
 
@@ -149,18 +170,26 @@ export class InputManager {
       this.canvasTap = pt;
       this.canvasHeld = true;
       this.canvasPointer = pt;
+      if (e.pointerType !== 'touch') {
+        this.canvasHover = pt;
+      }
     });
 
     canvas.addEventListener('pointermove', (e) => {
       const pt = mapCanvasCoords(e);
       if (pt) {
-        this.canvasHover = pt;
+        if (e.pointerType !== 'touch') {
+          this.canvasHover = pt;
+        }
         if (this.canvasHeld) this.canvasPointer = pt;
       }
     });
 
-    const endCanvasHold = () => {
+    const endCanvasHold = (e: PointerEvent) => {
       this.canvasHeld = false;
+      if (e.pointerType === 'touch') {
+        this.canvasHover = null;
+      }
     };
     canvas.addEventListener('pointerup', endCanvasHold);
     canvas.addEventListener('pointercancel', endCanvasHold);
@@ -178,7 +207,6 @@ export class InputManager {
     if (key === 's') return 'down';
     if (key === 'd') return 'right';
     if (key === 'm') return 'mute';
-    if (key === 'c') return 'swap';
     if (key === 'x') return 'b';
     if (key === 'e') return 'a';
     return KEY_TO_BUTTON[e.code] ?? null;

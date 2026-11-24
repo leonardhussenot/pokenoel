@@ -443,24 +443,6 @@ export class WorldAtmosphere {
     }
   }
 
-  emitSwapBurst(worldX: number, worldY: number, accentColor = '#ffe066'): void {
-    for (let i = 0; i < 12; i++) {
-      const ang = (i / 12) * Math.PI * 2 + this.rand() * 0.3;
-      const spd = 22 + this.rand() * 24;
-      this.fx.push({
-        x: worldX,
-        y: worldY - 6,
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd - 8,
-        life: 0,
-        maxLife: 0.42 + this.rand() * 0.16,
-        size: 2.4 + this.rand() * 1.2,
-        color: i % 2 === 0 ? accentColor : '#ffffff',
-        kind: 'sparkle',
-      });
-    }
-  }
-
   update(dt: number, map: MapData): void {
     if (this.currentTheme !== map.theme) {
       this.resetForMap(map);
@@ -555,13 +537,20 @@ export class WorldAtmosphere {
 
         if (tile === 'lamp') {
           const isAj = map.theme === 'aj';
+          const isSd = map.theme === 'sd';
           const r = isAj ? 26 * pulse : 21 * pulse;
           safeRadialGlow(
             ctx,
             sx,
             sy + 3,
             r,
-            isAj ? 'rgba(210, 235, 255, 0.24)' : 'rgba(255, 224, 130, 0.26)',
+            isAj
+              ? 'rgba(210, 235, 255, 0.24)'
+              : isSd
+                ? (tx + ty) % 2 === 0
+                  ? 'rgba(76, 224, 240, 0.24)'
+                  : 'rgba(245, 194, 108, 0.24)'
+                : 'rgba(255, 224, 130, 0.26)',
             'rgba(255, 224, 130, 0)'
           );
         } else if (tile === 'spotlight') {

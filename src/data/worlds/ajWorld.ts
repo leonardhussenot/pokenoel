@@ -344,37 +344,37 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             question: 'Qui délivra le centre décisif à Benjamin Pavard pour sa célèbre demi-volée contre l’Argentine au Mondial 2018 ?',
-            options: ['Antoine Griezmann', 'Lucas Hernandez', 'Paul Pogba', 'Blaise Matuidi'],
-            correctIndex: 1,
+            options: ['Lucas Hernandez', 'Antoine Griezmann', 'Paul Pogba', 'Blaise Matuidi'],
+            correctIndex: 0,
             explanation: 'C’est l’autre latéral des Bleus, Lucas Hernandez, qui centre depuis la gauche pour la frappe de Pavard (2-2).',
           },
           {
             question: 'Lors du quart France–Angleterre du Mondial 2022 (2-1), quels deux Bleus marquèrent sur deux passes décisives de Griezmann ?',
             options: [
               'Mbappé et Giroud',
-              'Tchouaméni et Giroud',
               'Dembélé et Mbappé',
               'Rabiot et Giroud',
+              'Tchouaméni et Giroud',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Griezmann sert Tchouaméni pour sa frappe lointaine puis dépose un centre parfait sur la tête d’Olivier Giroud.',
           },
           {
             question: 'En finale de la Ligue des Nations 2021 à San Siro (France–Espagne 2-1), quels deux Bleus renversèrent le score ?',
             options: [
-              'Griezmann et Mbappé',
               'Benzema et Mbappé',
+              'Griezmann et Mbappé',
               'Giroud et Benzema',
               'Pogba et Mbappé',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
             explanation: 'Après l’ouverture d’Oyarzabal, Benzema égalise d’une lucarne enroulée puis Mbappé scelle la victoire.',
           },
           {
             question: 'Lors du sacre historique de Leicester City en Premier League 2015-2016, quel joueur fut élu joueur PFA de l’année ?',
             options: ['Jamie Vardy', 'N’Golo Kanté', 'Riyad Mahrez', 'Kasper Schmeichel'],
             correctIndex: 2,
-            explanation: 'Riyad Mahrez remporte le prestigieux trophée PFA 2015-2016 devant Jamie Vardy et N’Golo Kanté !',
+            explanation: 'Riyad Mahrez remporte le prestigieux trophée PFA 2015-2016 devant Jamie Vardy (2e) et Harry Kane (3e) !',
           },
         ],
       },
@@ -446,8 +446,8 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             prompt: 'Parmi ces 4 stars NBA, qui n’a PAS été drafté en 1re position ?',
-            items: ['Victor Wembanyama', 'LeBron James', 'Luka Dončić', 'Anthony Davis'],
-            intruderIndex: 2,
+            items: ['Luka Dončić', 'Victor Wembanyama', 'LeBron James', 'Anthony Davis'],
+            intruderIndex: 0,
             explanation: 'Luka Dončić a été drafté 3e en 2018 (par Atlanta, puis envoyé à Dallas) — les 3 autres étaient n° 1 !',
           },
           {
@@ -458,8 +458,8 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             prompt: 'Laquelle de ces 4 franchises ne joue PAS en Southwest Division ?',
-            items: ['San Antonio Spurs', 'Dallas Mavericks', 'Houston Rockets', 'Oklahoma City Thunder'],
-            intruderIndex: 3,
+            items: ['San Antonio Spurs', 'Oklahoma City Thunder', 'Dallas Mavericks', 'Houston Rockets'],
+            intruderIndex: 1,
             explanation: 'Le Thunder d’Oklahoma City joue en Northwest Division (tandis que Spurs, Mavs et Rockets sont en Southwest).',
           },
         ],
@@ -801,14 +801,14 @@ export function createAjWorld(): WorldDefinition {
         lives: 4,
         rounds: [
           {
-            prompt: 'Classer 6 franchises championnes NBA dans l’ordre',
+            prompt: 'Classer ces 6 titres NBA récents du plus ancien au plus récent',
             orderedItems: [
-              'Dallas Mavericks',
-              'San Antonio Spurs',
-              'Cleveland Cavaliers',
-              'Toronto Raptors',
-              'Milwaukee Bucks',
-              'Denver Nuggets',
+              'Mavericks (Nowitzki)',
+              'Spurs (Kawhi Leonard)',
+              'Cavaliers (LeBron)',
+              'Raptors (Kawhi)',
+              'Bucks (Giannis)',
+              'Nuggets (Jokić)',
             ],
             revealTags: ['2011', '2014', '2016', '2019', '2021', '2023'],
             explanation: 'Dallas 2011, Spurs 2014, Cavs 2016, Raptors 2019, Bucks 2021 puis Nuggets 2023 !',
@@ -907,8 +907,8 @@ export function createAjWorld(): WorldDefinition {
               'Hakeem Olajuwon l’a réussi 6 fois en carrière et Andrei Kirilenko 3 fois.',
               'En février 2024 contre les Lakers, Victor Wembanyama devient le plus jeune joueur à le réaliser.',
             ],
-            options: ['Un Quadruple-Double', 'Un « 5×5 »', 'Un « 50-40-90 »', 'Un Triple-Double parfait'],
-            correctIndex: 1,
+            options: ['Un Quadruple-Double', 'Un « 50-40-90 »', 'Un Triple-Double parfait', 'Un « 5×5 »'],
+            correctIndex: 3,
             explanation: 'Avec 27 pts, 10 reb, 8 pds, 5 int et 5 ctr contre les Lakers, Wemby réussit le plus jeune 5×5 de l’histoire !',
           },
           {
@@ -933,12 +933,12 @@ export function createAjWorld(): WorldDefinition {
               'En 2015-2016, Stephen Curry y entre tout en remportant le titre de meilleur marqueur (30,1 pts/m).',
             ],
             options: [
-              'Le club « 50-40-90 »',
               'Le club des 30-10-10',
               'Le club « 20-20-20 »',
+              'Le club « 50-40-90 »',
               'Le club des 400 trois points',
             ],
-            correctIndex: 0,
+            correctIndex: 2,
             explanation: 'Larry Bird, Steve Nash (4×), Dirk Nowitzki, Kevin Durant et Stephen Curry figurent dans ce cercle fermé.',
           },
           {
@@ -947,8 +947,8 @@ export function createAjWorld(): WorldDefinition {
               'Champion olympique à Athènes en 2004 après avoir éliminé Team USA en demi-finale.',
               'Élu Meilleur Sixième Homme NBA en 2008 et artisan majeur des 4 bagues des Spurs.',
             ],
-            options: ['Luis Scola', 'Manu Ginóbili', 'Toni Kukoč', 'Pau Gasol'],
-            correctIndex: 1,
+            options: ['Luis Scola', 'Toni Kukoč', 'Pau Gasol', 'Manu Ginóbili'],
+            correctIndex: 3,
             explanation: 'Choisi 57e en 1999, Manu Ginóbili reste l’un des plus grands « steals » de l’histoire de la Draft NBA !',
           },
           {
@@ -959,11 +959,11 @@ export function createAjWorld(): WorldDefinition {
             ],
             options: [
               'Patrick Ewing',
-              'David Robinson',
               'Hakeem Olajuwon',
+              'David Robinson',
               'Dikembe Mutombo',
             ],
-            correctIndex: 2,
+            correctIndex: 1,
             explanation: 'En 1993-1994, Hakeem « The Dream » Olajuwon réalise un triplé de récompenses toujours unique en NBA !',
           },
         ],
@@ -1064,12 +1064,12 @@ export function createAjWorld(): WorldDefinition {
               'Sans son but in extremis en finale de l’Euro, David Trezeguet n’aurait jamais pu marquer le but en or.',
             ],
             options: [
-              'Sylvain Wiltord',
               'Robert Pirès',
               'Christophe Dugarry',
               'Nicolas Anelka',
+              'Sylvain Wiltord',
             ],
-            correctIndex: 0,
+            correctIndex: 3,
             explanation: 'Sylvain Wiltord sauve les Bleus à la 94e minute à Rotterdam avant le but en or de David Trezeguet !',
           },
           {
@@ -1088,9 +1088,9 @@ export function createAjWorld(): WorldDefinition {
               'Vendu par le Real Madrid à Chelsea en 2003 pour faire place aux Galactiques.',
               'Zidane lâcha à son départ : « Pourquoi repeindre une Bentley en or si on lui retire son moteur ? »',
             ],
-            options: ['Patrick Vieira', 'Claude Makélélé', 'Emmanuel Petit', 'Didier Deschamps'],
-            correctIndex: 1,
-            explanation: 'Le « Makélélé role » désigne encore aujourd’hui le sentinelle incontournable devant la défense en Angleterre !',
+            options: ['Patrick Vieira', 'Emmanuel Petit', 'Didier Deschamps', 'Claude Makélélé'],
+            correctIndex: 3,
+            explanation: 'Le « Makélélé role » désigne encore aujourd’hui la sentinelle incontournable devant la défense en Angleterre !',
           },
           {
             clues: [
@@ -1098,9 +1098,9 @@ export function createAjWorld(): WorldDefinition {
               'En juin 2023 à Istanbul, il devient le 1er coach du football masculin à réussir deux triplés européens.',
               'Son football de position et son pressing coordonné ont redéfini la tactique moderne.',
             ],
-            options: ['José Mourinho', 'Carlo Ancelotti', 'Pep Guardiola', 'Luis Enrique'],
-            correctIndex: 2,
-            explanation: 'Triplé Championnat-Coupe-C1 avec le Barça en 2009 puis avec Manchester City en 2023 : exploit unique !',
+            options: ['Pep Guardiola', 'José Mourinho', 'Carlo Ancelotti', 'Luis Enrique'],
+            correctIndex: 0,
+            explanation: 'Triplé Championnat-Coupe-C1 avec le Barça en 2009 puis avec Man City en 2023 : premier coach à réussir cet exploit (rejoint par Luis Enrique en 2025) !',
           },
         ],
       },
@@ -1144,7 +1144,7 @@ export function createAjWorld(): WorldDefinition {
         prop: 'soccer',
       },
       introLines: [
-        'Tout le monde connaît mes 8 Ballons d’Or et Lusail… mais les vrais connaisseurs se souviennent aussi d’Albacete, de Rome et de mes anciens numéros au Barça !',
+        'Tout le monde connaît mes 8 Ballons d’Or et la finale de Lusail… mais les vrais connaisseurs maîtrisent aussi mes débuts au Barça, mes records européens et l’Albiceleste !',
         'Prouvez que votre mémoire du football moderne est digne d’un numéro 10 dans le Quiz d’Expert de La Pulga !',
       ],
       alreadyWonLines: [
@@ -1175,14 +1175,14 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             question: 'Avant d’hériter du légendaire n° 10 en 2008, quels deux numéros Messi a-t-il portés en équipe première du FC Barcelone ?',
-            options: ['28 puis 19', '30 puis 19', '30 puis 11', '19 puis 7'],
-            correctIndex: 1,
+            options: ['30 puis 19', '28 puis 19', '30 puis 11', '19 puis 7'],
+            correctIndex: 0,
             explanation: 'Messi débute avec le 30, passe au 19 de 2006 à 2008, puis récupère le 10 après le départ de Ronaldinho.',
           },
           {
             question: 'Contre quel adversaire Lionel Messi a-t-il signé le premier quintuplé de l’histoire de la Ligue des Champions (7-1 en mars 2012) ?',
-            options: ['Arsenal', 'Bayer Leverkusen', 'AC Milan', 'Olympique Lyonnais'],
-            correctIndex: 1,
+            options: ['Arsenal', 'AC Milan', 'Olympique Lyonnais', 'Bayer Leverkusen'],
+            correctIndex: 3,
             explanation: 'Le 7 mars 2012 au Camp Nou, Messi inscrit 5 buts face au Bayer Leverkusen en 8e de finale retour !',
           },
           {
@@ -1199,8 +1199,8 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             question: 'Contre quel gardien Lionel Messi marqua-t-il son célèbre but de la tête en finale de C1 2009 à Rome (2-0) ?',
-            options: ['Petr Čech', 'Edwin van der Sar', 'Gianluigi Buffon', 'Manuel Neuer'],
-            correctIndex: 1,
+            options: ['Petr Čech', 'Gianluigi Buffon', 'Manuel Neuer', 'Edwin van der Sar'],
+            correctIndex: 3,
             explanation: 'Sur un centre de Xavi, Messi décroise une tête imparable au-dessus d’Edwin van der Sar contre Man United !',
           },
           {
@@ -1276,8 +1276,8 @@ export function createAjWorld(): WorldDefinition {
         questions: [
           {
             question: 'Par quelle franchise NBA Kobe Bryant fut-il drafté en 13e position en 1996 avant d’être échangé aux Lakers contre Vlade Divac ?',
-            options: ['Charlotte Hornets', 'New Jersey Nets', 'Philadelphia 76ers', 'Orlando Magic'],
-            correctIndex: 0,
+            options: ['New Jersey Nets', 'Philadelphia 76ers', 'Orlando Magic', 'Charlotte Hornets'],
+            correctIndex: 3,
             explanation: 'Sélectionné 13e par les Charlotte Hornets, Kobe est immédiatement cédé aux Lakers contre le pivot Vlade Divac.',
           },
           {
@@ -1288,8 +1288,8 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             question: 'Contre quelle équipe les Lakers de Kobe remportèrent-ils les Finales NBA 2009 (4-1), son premier titre sans Shaquille O’Neal ?',
-            options: ['Boston Celtics', 'Orlando Magic', 'Cleveland Cavaliers', 'Detroit Pistons'],
-            correctIndex: 1,
+            options: ['Orlando Magic', 'Boston Celtics', 'Cleveland Cavaliers', 'Detroit Pistons'],
+            correctIndex: 0,
             explanation: 'En 2009, Kobe et les Lakers dominent le Magic de Dwight Howard 4-1 avant de prendre leur revanche sur Boston en 2010.',
           },
           {
@@ -1300,8 +1300,8 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             question: 'Quel trophée prestigieux hors basket Kobe Bryant remporta-t-il en mars 2018 pour son court-métrage « Dear Basketball » ?',
-            options: ['Un Oscar', 'Un Grammy Award', 'Un Prix Pulitzer', 'Une Palme d’or'],
-            correctIndex: 0,
+            options: ['Un Grammy Award', 'Un Prix Pulitzer', 'Une Palme d’or', 'Un Oscar'],
+            correctIndex: 3,
             explanation: 'Adapté de son poème d’adieu, « Dear Basketball » remporte l’Oscar du meilleur court-métrage d’animation en 2018.',
           },
           {
@@ -1313,12 +1313,12 @@ export function createAjWorld(): WorldDefinition {
           {
             question: 'Avec quels deux pivots légendaires Rudy Gobert partage-t-il le record absolu de 4 titres de Défenseur de l’année (DPOY) ?',
             options: [
-              'Dikembe Mutombo et Ben Wallace',
               'Hakeem Olajuwon et Dwight Howard',
               'Tim Duncan et Kevin Garnett',
+              'Dikembe Mutombo et Ben Wallace',
               'Kawhi Leonard et Dennis Rodman',
             ],
-            correctIndex: 0,
+            correctIndex: 2,
             explanation: 'En décrochant son 4e DPOY en 2024, Rudy Gobert égale le record mythique de Dikembe Mutombo et Ben Wallace !',
           },
         ],
@@ -1365,18 +1365,18 @@ export function createAjWorld(): WorldDefinition {
       },
       introLines: [
         '« OHH ! BLOCKED BY JAMES ! » En plus de vingt saisons NBA, j’ai croisé les plus grands adversaires, tirs mythiques et cuvées de Draft de l’histoire !',
-        'Avant d’affronter Zizou au Palais des Légendes, prouvez que vous avez le QI basket du King sur mes 7 énigmes d’experts pour arracher le 12e badge !',
+        'Prouvez que vous avez le QI basket du King sur mes énigmes d’experts pour décrocher le Badge King’s Ring !',
       ],
       alreadyWonLines: [
-        '12 badges en poche ! Couronne ajustée : Zinédine Zidane vous attend au Palais des Légendes !',
+        'Couronne ajustée et QI basket validé ! Une fois les douze badges réunis, Zinédine Zidane vous attendra au Palais des Légendes !',
       ],
       winLines: [
-        'QI basket de niveau Hall of Fame ! Voici le Badge King’s Ring ! Montez défier Zizou au sommet !',
+        'QI basket de niveau Hall of Fame ! Voici le Badge King’s Ring — un pas de géant vers le Palais des Légendes !',
       ],
       loseLines: [
         'Tir manqué au buzzer ! Étudiez la vidéo des playoffs, relisez bien les indices et revenez défier le King.',
       ],
-      duoWinReaction: 'Alexis & Joseph : « 12 badges sur 12 ! De Ray Allen 2013 à Detroit 2007, direction Zizou ! »',
+      duoWinReaction: 'Joseph : « De Ray Allen 2013 à Detroit 2007 : le trône du King est conquis ! »',
       notebookBio: 'Meilleur marqueur de l’histoire de la NBA, 4× Champion et 4× MVP des Finales avec trois franchises différentes.',
       challenge: {
         kind: 'riddle_word',
@@ -1403,8 +1403,8 @@ export function createAjWorld(): WorldDefinition {
               'Un an plus tard, à 1 min 50 du terme du Match 7 des Finales 2016 (89-89), il file seul vers un lay-up.',
               'Il est la victime du contre supersonique sur la planche (« OHH ! Blocked by James ! »).',
             ],
-            options: ['Harrison Barnes', 'Andre Iguodala', 'Shaun Livingston', 'Draymond Green'],
-            correctIndex: 1,
+            options: ['Harrison Barnes', 'Shaun Livingston', 'Draymond Green', 'Andre Iguodala'],
+            correctIndex: 3,
             explanation: '« The Block » de LeBron sur Andre Iguodala garde les Cavs en vie avant le 3 points décisif de Kyrie Irving.',
           },
           {
@@ -1428,8 +1428,8 @@ export function createAjWorld(): WorldDefinition {
               'Célèbre pour son fadeaway sur une jambe, il renverse le Big Three de Miami 4-2 en Finales NBA 2011.',
               'Premier Européen élu MVP de saison régulière (2007), il est aussi sacré MVP des Finales 2011.',
             ],
-            options: ['Peja Stojaković', 'Dirk Nowitzki', 'Pau Gasol', 'Toni Kukoč'],
-            correctIndex: 1,
+            options: ['Peja Stojaković', 'Pau Gasol', 'Dirk Nowitzki', 'Toni Kukoč'],
+            correctIndex: 2,
             explanation: 'Dirk Nowitzki offre en 2011 le premier titre de Dallas en dominant le Heat de LeBron, Wade et Bosh !',
           },
           {
@@ -1438,8 +1438,8 @@ export function createAjWorld(): WorldDefinition {
               'Son record de 38 387 points en saison régulière a résisté de 1984 jusqu’au 7 février 2023.',
               'Ce soir-là contre le Thunder, LeBron James le détrône sous ses yeux au bord du parquet.',
             ],
-            options: ['Karl Malone', 'Wilt Chamberlain', 'Kareem Abdul-Jabbar', 'Julius Erving'],
-            correctIndex: 2,
+            options: ['Karl Malone', 'Wilt Chamberlain', 'Julius Erving', 'Kareem Abdul-Jabbar'],
+            correctIndex: 3,
             explanation: 'Kareem Abdul-Jabbar remet symboliquement le ballon du record à LeBron en février 2023 à Los Angeles.',
           },
           {
@@ -1449,12 +1449,12 @@ export function createAjWorld(): WorldDefinition {
               'Cette rugueuse franchise de Chauncey Billups et Rasheed Wallace s’incline en double prolongation.',
             ],
             options: [
-              'Les Detroit Pistons',
               'Les Boston Celtics',
+              'Les Detroit Pistons',
               'Les Indiana Pacers',
               'Les Chicago Bulls',
             ],
-            correctIndex: 0,
+            correctIndex: 1,
             explanation: 'Les 48 points (dont 25 d’affilée) de LeBron contre Detroit en 2007 envoient Cleveland en 1res Finales NBA !',
           },
           {
@@ -1510,7 +1510,7 @@ export function createAjWorld(): WorldDefinition {
         prop: 'soccer',
       },
       introLines: [
-        'Félicitations Alexis et Joseph ! Douze badges conquis… mais entre Cannes, Bordeaux, Turin, Madrid et les Bleus, il reste une finale niveau Grand Maître à jouer !',
+        'Félicitations Alexis et Joseph ! Douze badges conquis… mais de mes tout premiers pas en Division 1 jusqu’aux plus grandes finales d’Europe et du monde, il reste une finale niveau Grand Maître à jouer !',
         'Pour soulever le Badge Maestro Zizou, surmontez mes TROIS MI-TEMPS D’EXPERT : quiz pointu, énigmes d’archives et double classement chronologique !',
       ],
       alreadyWonLines: [
@@ -1534,7 +1534,7 @@ export function createAjWorld(): WorldDefinition {
             challenge: {
               kind: 'quiz',
               title: '1re Mi-Temps : Quiz Grand Maître',
-              instructions: 'Répondez sans trembler aux 6 questions d’expert du Maestro !',
+              instructions: 'Répondez sans trembler aux questions d’expert du Maestro !',
               themeStyle: 'football',
               timePerQuestionSec: 15,
               playerHp: 2,
@@ -1544,22 +1544,22 @@ export function createAjWorld(): WorldDefinition {
                   question: 'Contre quel club allemand les Girondins de Bordeaux de Zidane s’inclinèrent-ils en finale de Coupe UEFA 1996 ?',
                   options: [
                     'Borussia Dortmund',
-                    'Bayern Munich',
                     'Werder Brême',
                     'Bayer Leverkusen',
+                    'Bayern Munich',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 3,
                   explanation: 'Après avoir renversé l’AC Milan en quart, Bordeaux s’incline en finale aller-retour contre le Bayern (0-2, 1-3).',
                 },
                 {
                   question: 'Contre quels deux clubs la Juventus de Zidane a-t-elle perdu deux finales de C1 consécutives en 1997 et 1998 ?',
                   options: [
-                    'Ajax Amsterdam et Real Madrid',
                     'Borussia Dortmund et Real Madrid',
+                    'Ajax Amsterdam et Real Madrid',
                     'Bayern Munich et Manchester United',
                     'AC Milan et FC Barcelone',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 0,
                   explanation: 'La Juve s’incline 3-1 contre Dortmund à Munich en 1997, puis 1-0 face au Real Madrid à Amsterdam en 1998.',
                 },
                 {
@@ -1576,34 +1576,34 @@ export function createAjWorld(): WorldDefinition {
                 {
                   question: 'Malgré son expulsion en finale, quelle récompense officielle de la FIFA Zidane reçut-il à l’issue du Mondial 2006 ?',
                   options: [
-                    'Le Ballon d’Or du tournoi',
                     'Le Prix du Fair-Play',
+                    'Le Ballon d’Or du tournoi',
                     'Le Soulier d’Argent',
                     'L’Homme de la Finale',
                   ],
-                  correctIndex: 0,
+                  correctIndex: 1,
                   explanation: 'Élu meilleur joueur de la Coupe du monde 2006, Zidane devance Fabio Cannavaro et Andrea Pirlo au vote.',
                 },
                 {
                   question: 'Quels trois clubs le Real Madrid de Zidane entraîneur battit-il en finale lors de son triplé de C1 (2016–2018) ?',
                   options: [
                     'Atlético, Bayern et Liverpool',
-                    'Atlético, Juventus et Liverpool',
                     'Juventus, Chelsea et Liverpool',
                     'Atlético, PSG et Bayern',
+                    'Atlético, Juventus et Liverpool',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 3,
                   explanation: 'Milan 2016 vs Atlético, Cardiff 2017 vs Juventus (4-1) et Kiev 2018 vs Liverpool (3-1) !',
                 },
                 {
                   question: 'Contre quelle sélection Zidane inscrivit-il un doublé en entrant en jeu lors de sa 1re sélection en août 1994 ?',
                   options: [
-                    'La Slovaquie',
                     'La République tchèque',
+                    'La Slovaquie',
                     'La Roumanie',
                     'La Pologne',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 0,
                   explanation: 'Le 17 août 1994 à Bordeaux, menés 0-2 par la République tchèque, les Bleus arrachent le 2-2 grâce au doublé de Zizou !',
                 },
               ],
@@ -1611,7 +1611,7 @@ export function createAjWorld(): WorldDefinition {
           },
           {
             phaseTitle: '2e Mi-Temps — Les Archives du Maestro',
-            taunt: 'Superbe première mi-temps ! Maintenant, déchiffrez mes 5 énigmes d’archives sans tomber dans le moindre piège !',
+            taunt: 'Superbe première mi-temps ! Maintenant, déchiffrez mes énigmes d’archives sans tomber dans le moindre piège !',
             challenge: {
               kind: 'riddle_word',
               title: '2e Mi-Temps : Archives de Zizou',
@@ -1644,11 +1644,11 @@ export function createAjWorld(): WorldDefinition {
                   ],
                   options: [
                     'Bordeaux – Bayern Munich',
-                    'Bordeaux – AC Milan',
                     'Bordeaux – Juventus',
+                    'Bordeaux – AC Milan',
                     'Bordeaux – Inter Milan',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 2,
                   explanation: 'Bordeaux 3-0 AC Milan (doublé de Dugarry, but de Tholot) reste l’un des plus grands exploits des clubs français.',
                 },
                 {
@@ -1674,11 +1674,11 @@ export function createAjWorld(): WorldDefinition {
                   ],
                   options: [
                     'France – Espagne (2006)',
-                    'France – Brésil (2006)',
                     'France – Portugal (2006)',
                     'France – Brésil (1998)',
+                    'France – Brésil (2006)',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 3,
                   explanation: 'Le 1er juillet 2006 à Francfort, Zidane livre une partition inoubliable pour éliminer la Seleção 1-0 !',
                 },
                 {
@@ -1689,11 +1689,11 @@ export function createAjWorld(): WorldDefinition {
                   ],
                   options: [
                     'La Panenka de Berlin',
-                    'La Volée de Glasgow',
                     'Le Coup Franc de 2004',
+                    'La Volée de Glasgow',
                     'La Roulette de Marseille',
                   ],
-                  correctIndex: 1,
+                  correctIndex: 2,
                   explanation: 'Élue l’un des plus beaux buts de l’histoire des finales de Ligue des Champions !',
                 },
               ],

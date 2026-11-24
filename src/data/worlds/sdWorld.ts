@@ -228,7 +228,7 @@ export function createSdWorld(): WorldDefinition {
       challenge: {
         kind: 'order_puzzle',
         title: 'La Frise du Manga & de l’Anime',
-        instructions: 'Classez 6 séries cultes du Weekly Shōnen Jump puis 6 jalons de l’animation par année de début !',
+        instructions: 'Classez 6 séries cultes du Weekly Shōnen Jump puis 6 jalons de l’animation par ordre chronologique !',
         themeStyle: 'manga',
         lives: 4,
         rounds: [
@@ -334,11 +334,11 @@ export function createSdWorld(): WorldDefinition {
             question: 'Quel est le rêve absolu de Lucy (Lucyna Kushinada) tout au long de « Cyberpunk: Edgerunners » ?',
             options: [
               'Prendre le contrôle d’Arasaka',
-              'Partir vivre sur la Lune',
               'Reconstruire la tour de Night City',
               'Devenir charcudoc à Dogtown',
+              'Partir vivre sur la Lune',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Lucy rêve de quitter Night City pour la Lune — un horizon au cœur de la relation bouleversante entre David et elle.',
           },
           {
@@ -354,15 +354,15 @@ export function createSdWorld(): WorldDefinition {
             explanation: 'La fracture sociale, politique et familiale entre Piltover (la ville haute) et Zaun (la ville basse) structure toute la série.',
           },
           {
-            question: 'Quel cyborg légendaire d’Arasaka affronte David Martinez dans le combat final au sommet d’Arasaka Tower ?',
-            options: ['Adam Smasher', 'Johnny Silverhand', 'Faraday', 'Maine'],
-            correctIndex: 0,
+            question: 'Quel cyborg légendaire d’Arasaka affronte David Martinez dans le combat final à Arasaka Tower ?',
+            options: ['Johnny Silverhand', 'Faraday', 'Maine', 'Adam Smasher'],
+            correctIndex: 3,
             explanation: 'Adam Smasher, légende terrifiante de Night City, incarne la brutalité implacable d’Arasaka face à l’équipage de David.',
           },
           {
             question: 'Quel duo de scientifiques de Piltover met au point la technologie révolutionnaire Hextech dans « Arcane » ?',
-            options: ['Silco & Singed', 'Jayce & Viktor', 'Heimerdinger & Ekko', 'Vander & Marcus'],
-            correctIndex: 1,
+            options: ['Silco & Singed', 'Heimerdinger & Ekko', 'Jayce & Viktor', 'Vander & Marcus'],
+            correctIndex: 2,
             explanation: 'Jayce Talis et Viktor allient magie arcanique et ingénierie pour créer l’Hextech au cœur de Piltover.',
           },
         ],
@@ -407,7 +407,7 @@ export function createSdWorld(): WorldDefinition {
       },
       introLines: [
         'Entrez, Sam et Denis, il pleut sur le Quai des Orfèvres… Maigret bourre sa pipe et observe les gens avant de poser la moindre question.',
-        'J’ai glissé six dossiers d’enquête sur mon bureau : saurez-vous reconnaître chaque classique du roman policier grâce à mes trois indices ?',
+        'J’ai glissé mes dossiers d’enquête sur mon bureau : saurez-vous reconnaître chaque classique du roman policier grâce à mes trois indices ?',
       ],
       alreadyWonLines: [
         'Vous avez le flair psychologique du commissaire Maigret ! Le Quai des Orfèvres vous salue.',
@@ -432,16 +432,16 @@ export function createSdWorld(): WorldDefinition {
           {
             clues: [
               'Tout premier Maigret écrit par Georges Simenon, publié en volume chez Fayard en mai 1931.',
-              'Un télégramme d’Interpol annonce l’arrivée à la gare du Nord d’un escroc international aux multiples visages.',
+              'Un télégramme de la police internationale annonce l’arrivée à la gare du Nord d’un escroc aux multiples visages.',
               'Un cadavre est découvert dans les toilettes de l’Étoile du Nord, lançant la carrière littéraire du commissaire Maigret.',
             ],
             options: [
               'Le Chien jaune',
-              'Pietr-le-Letton',
               'La Nuit du carrefour',
+              'Pietr-le-Letton',
               'L’Affaire Saint-Fiacre',
             ],
-            correctIndex: 1,
+            correctIndex: 2,
             explanation: 'Pietr-le-Letton (1931) inaugure officiellement la grande série des Maigret sous le nom de Georges Simenon.',
           },
           {
@@ -451,12 +451,12 @@ export function createSdWorld(): WorldDefinition {
               'Le jeune reporter Joseph Rouletabille résout l’énigme en usant du « bon bout de la raison ».',
             ],
             options: [
-              'Le Fantôme de l’Opéra',
               'Le Mystère de la chambre jaune',
+              'Le Fantôme de l’Opéra',
               'L’Aiguille creuse',
               'Le Parfum de la dame en noir',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
             explanation: 'Le Mystère de la chambre jaune (1907) de Gaston Leroux reste la référence absolue de l’énigme en chambre close.',
           },
           {
@@ -467,27 +467,27 @@ export function createSdWorld(): WorldDefinition {
             ],
             options: [
               'Celle qui n’était plus',
-              'D’entre les morts',
               'Les Visages de l’ombre',
               'Les Louves',
+              'D’entre les morts',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'D’entre les morts (1954) de Boileau-Narcejac a directement inspiré Vertigo d’Alfred Hitchcock (1958).',
           },
           {
             clues: [
               'Publié en 1952 par Boileau-Narcejac, ce huis clos machiavélique repose sur une disparition impossible.',
-              'Un mari volage est assassiné dans une baignoire… avant que son cadavre ne disparaisse de la piscine.',
-              'Henri-Georges Clouzot l’adapta au cinéma en 1955 sous le titre « Les Diaboliques ».',
+              'Une épouse est noyée dans une baignoire par son mari et sa maîtresse… avant que son cadavre ne disparaisse du lavoir.',
+              'Henri-Georges Clouzot l’adapta librement au cinéma en 1955 sous le titre « Les Diaboliques ».',
             ],
             options: [
-              'Celle qui n’était plus',
               'Le Salaire de la peur',
+              'Celle qui n’était plus',
               'Quai des Orfèvres',
               'Les Inconnus dans la maison',
             ],
-            correctIndex: 0,
-            explanation: 'Celle qui n’était plus (1952) fut transposé par Clouzot dans un pensionnat pour devenir Les Diaboliques (1955).',
+            correctIndex: 1,
+            explanation: 'Celle qui n’était plus (1952) fut librement transposé par Clouzot (en inversant les rôles dans un pensionnat) pour devenir Les Diaboliques (1955).',
           },
           {
             clues: [
@@ -497,11 +497,11 @@ export function createSdWorld(): WorldDefinition {
             ],
             options: [
               'L’Homme aux cercles bleus',
-              'Pars vite et reviens tard',
               'Sous les vents de Neptune',
               'Debout les morts',
+              'Pars vite et reviens tard',
             ],
-            correctIndex: 1,
+            correctIndex: 3,
             explanation: 'Pars vite et reviens tard (2001) est l’une des enquêtes les plus célèbres du commissaire Adamsberg créé par Fred Vargas.',
           },
           {
@@ -512,11 +512,11 @@ export function createSdWorld(): WorldDefinition {
             ],
             options: [
               'Maigret tend un piège',
-              'L’Affaire Saint-Fiacre',
               'La Tête d’un homme',
+              'L’Affaire Saint-Fiacre',
               'Le Port des brumes',
             ],
-            correctIndex: 1,
+            correctIndex: 2,
             explanation: 'Dans L’Affaire Saint-Fiacre (1932), Maigret revient sur les terres de son enfance pour démasquer le coupable.',
           },
         ],
@@ -775,7 +775,7 @@ export function createSdWorld(): WorldDefinition {
         blush: true,
       },
       introLines: [
-        'Salut Sam et Denis ! Prêter ma voix à Powder puis Jinx dans Arcane a été une aventure folle entre Piltover et Zaun !',
+        'Salut Sam et Denis ! Prêter ma voix dans l’univers d’Arcane a été une aventure folle entre Piltover et Zaun !',
         'Pour décrocher le Badge Hextech, reliez cinq figures clés d’Arcane puis cinq figures de Cyberpunk: Edgerunners à leur attribut exact !',
       ],
       alreadyWonLines: [
@@ -801,11 +801,11 @@ export function createSdWorld(): WorldDefinition {
             pairs: [
               { left: 'Jinx', right: 'Anciennement Powder, sœur de Vi' },
               { left: 'Vi', right: 'Gantelets Hextech de combat' },
-              { left: 'Ekko', right: 'Chef des Feulolies de Zaun' },
+              { left: 'Ekko', right: 'Chef des Feux volants (Firelights)' },
               { left: 'Caitlyn Kiramman', right: 'Tireuse d’élite de Piltover' },
               { left: 'Silco', right: 'Parrain de Zaun et du Shimmer' },
             ],
-            explanation: 'Jinx (Powder), Vi (gantelets Hextech), Ekko (Feulolies), Caitlyn (Piltover) et Silco (Shimmer) : les piliers d’Arcane !',
+            explanation: 'Jinx (Powder), Vi (gantelets Hextech), Ekko (Feux volants), Caitlyn (Piltover) et Silco (Shimmer) : les piliers d’Arcane !',
           },
           {
             prompt: 'Reliez ces 5 figures de Cyberpunk: Edgerunners à leur rôle :',
@@ -964,7 +964,7 @@ export function createSdWorld(): WorldDefinition {
         'Trop de nervosité sur le plateau ! Recommencez la prise et reliez chaque film à son maître.',
       ],
       duoWinReaction: 'Denis : « Clouzot, Becker, Dassin, Malle, Verneuil… l’âge d’or du polar français ! »',
-      notebookBio: 'Cinéaste français (1907–1977), Palme d’or pour Le Salaire de la peur et auteur des Diaboliques et de Quai des Orfèvres.',
+      notebookBio: 'Cinéaste français (1907–1977), Grand Prix à Cannes (Palme d’or) pour Le Salaire de la peur et auteur des Diaboliques et de Quai des Orfèvres.',
       challenge: {
         kind: 'pair_match',
         title: 'Les Maîtres du Polar Français',
@@ -978,7 +978,7 @@ export function createSdWorld(): WorldDefinition {
               { left: 'Le Corbeau (1943)', right: 'Lettres anonymes empoisonnées' },
               { left: 'Quai des Orfèvres (1947)', right: 'Louis Jouvet en inspecteur Antoine' },
               { left: 'Le Salaire de la peur (1953)', right: 'Camions de nitroglycérine' },
-              { left: 'Les Diaboliques (1955)', right: 'Simone Signoret & Vera Clouzot' },
+              { left: 'Les Diaboliques (1955)', right: 'Simone Signoret & Véra Clouzot' },
               { left: 'La Vérité (1960)', right: 'Procès dramatique avec Brigitte Bardot' },
             ],
             explanation: 'Cinq sommets de la filmographie implacable d’Henri-Georges Clouzot !',
@@ -1037,7 +1037,7 @@ export function createSdWorld(): WorldDefinition {
       },
       introLines: [
         'Les motos rouges filent sous les néons de Néo-Tokyo… Bienvenue, Sam et Denis !',
-        'Saurez-vous reconnaître six œuvres majeures du manga et de l’animation cyberpunk grâce à mes trois indices cryptés ?',
+        'Saurez-vous reconnaître des œuvres majeures du manga et de l’animation cyberpunk grâce à mes trois indices cryptés ?',
       ],
       alreadyWonLines: [
         'Néo-Tokyo s’incline devant votre culture manga et cyberpunk !',
@@ -1065,8 +1065,8 @@ export function createSdWorld(): WorldDefinition {
               'Dans la mégapole de Néo-Tokyo en 2019, le motard Kaneda tente de sauver son ami Tetsuo.',
               'Tetsuo développe des pouvoirs télékinétiques incontrôlables liés au mystérieux sujet n°28.',
             ],
-            options: ['Ghost in the Shell', 'Akira', 'Gunnm', 'Blame!'],
-            correctIndex: 1,
+            options: ['Ghost in the Shell', 'Gunnm', 'Blame!', 'Akira'],
+            correctIndex: 3,
             explanation: 'Chef-d’œuvre fondateur de Katsuhiro Ōtomo, Akira a redéfini le manga et l’animation cyberpunk dans le monde entier.',
           },
           {
@@ -1095,8 +1095,8 @@ export function createSdWorld(): WorldDefinition {
               'Le docteur Daisuke Ido découvre dans une décharge la tête intacte d’une cyborg amnésique.',
               'Sous la cité flottante de Zalem, l’héroïne redécouvre le Panzer Kunst, un art martial redoutable.',
             ],
-            options: ['Gunnm (Battle Angel Alita)', 'Trigun', 'Cyberpunk: Edgerunners', 'Blame!'],
-            correctIndex: 0,
+            options: ['Trigun', 'Gunnm (Battle Angel Alita)', 'Cyberpunk: Edgerunners', 'Blame!'],
+            correctIndex: 1,
             explanation: 'Gunnm (Alita) de Yukito Kishiro est l’un des piliers du manga cyberpunk des années 1990.',
           },
           {
@@ -1105,8 +1105,8 @@ export function createSdWorld(): WorldDefinition {
               'Elle transpose l’univers de Night City avec la mise en scène frénétique de Studio Trigger.',
               'La chanson « I Really Want to Stay at Your House » y est devenue indissociable de David et Lucy.',
             ],
-            options: ['Arcane', 'Cyberpunk: Edgerunners', 'Akudama Drive', 'Pluto'],
-            correctIndex: 1,
+            options: ['Arcane', 'Akudama Drive', 'Pluto', 'Cyberpunk: Edgerunners'],
+            correctIndex: 3,
             explanation: 'Cyberpunk: Edgerunners (2022) d’Hiroyuki Imaishi a remporté le prix d’Anime de l’année aux Crunchyroll Anime Awards.',
           },
           {
@@ -1115,8 +1115,8 @@ export function createSdWorld(): WorldDefinition {
               'Son titre fait référence à la magie brute maîtrisée par la technologie dans la cité de Piltover.',
               'Le destin tragique de deux sœurs séparées, Vi et Powder, en forme le fil rouge bouleversant.',
             ],
-            options: ['Blue Eye Samurai', 'Arcane', 'Castlevania', 'Pantheon'],
-            correctIndex: 1,
+            options: ['Blue Eye Samurai', 'Castlevania', 'Arcane', 'Pantheon'],
+            correctIndex: 2,
             explanation: 'Saluée pour sa direction artistique peinte à la main, Arcane a marqué l’histoire de l’animation mondiale.',
           },
         ],
@@ -1338,18 +1338,18 @@ export function createSdWorld(): WorldDefinition {
       },
       introLines: [
         '« Il n’y a pas de plus profonde solitude que celle du samouraï… » Stetson vissé sur la tête, je vous attends dans mes Studios Jenner, Sam et Denis.',
-        'Douzième badge en jeu : affrontez mon interrogatoire d’érudit sur le polar et le grand cinéma français !',
+        'Mon Badge Samouraï est en jeu : affrontez mon interrogatoire d’érudit sur le polar et le grand cinéma français !',
       ],
       alreadyWonLines: [
-        'Douze badges en poche ! Un silence de cathédrale et un sang-froid de samouraï — filez affronter Hayao Miyazaki tout là-haut !',
+        'Un silence de cathédrale et un sang-froid de samouraï ! Avec mes compliments pour la suite vers Hayao Miyazaki.',
       ],
       winLines: [
-        'Sobre, implacable, magistral. Prenez le Badge Samouraï et ouvrez les portes du Sanctuaire !',
+        'Sobre, implacable, magistral. Prenez le Badge Samouraï — le Sanctuaire au nord s’ouvrira dès vos 12 badges réunis !',
       ],
       loseLines: [
         'Un faux pas dans la rue Jenner ! Gardez votre imperméable et votre sang-froid, puis retentez.',
       ],
-      duoWinReaction: 'Sam & Denis : « Les 12 badges réunis ! Cap sur le Sanctuaire de Hayao Miyazaki ! »',
+      duoWinReaction: 'Denis : « Jef Costello, Le Cercle rouge, L’Armée des ombres… Melville nous a décerné le Badge Samouraï ! »',
       notebookBio: 'Cinéaste français (1917–1973), auteur du Samouraï, du Cercle rouge, du Doulos et de L’Armée des ombres.',
       challenge: {
         kind: 'quiz',
@@ -1362,14 +1362,14 @@ export function createSdWorld(): WorldDefinition {
         questions: [
           {
             question: 'Quel est le nom du tueur à gages solitaire incarné par Alain Delon dans « Le Samouraï » (1967) de Jean-Pierre Melville ?',
-            options: ['Corey', 'Jef Costello', 'Roger Sartet', 'Silien'],
-            correctIndex: 1,
+            options: ['Corey', 'Roger Sartet', 'Jef Costello', 'Silien'],
+            correctIndex: 2,
             explanation: 'En imperméable beige et feutre gris, Jef Costello (Alain Delon) est devenu l’icône absolue du polar français.',
           },
           {
             question: 'Quel jazzman américain a improvisé en une nuit la légendaire bande originale d’« Ascenseur pour l’échafaud » (1958) de Louis Malle ?',
-            options: ['Chet Baker', 'Miles Davis', 'John Coltrane', 'Thelonious Monk'],
-            correctIndex: 1,
+            options: ['Chet Baker', 'John Coltrane', 'Thelonious Monk', 'Miles Davis'],
+            correctIndex: 3,
             explanation: 'Miles Davis improvisa sa partition à Paris directement face aux images projetées de Jeanne Moreau errant sur les Champs-Élysées.',
           },
           {
@@ -1391,14 +1391,14 @@ export function createSdWorld(): WorldDefinition {
           },
           {
             question: 'Quel romancier a signé « L’Armée des ombres » (1943), adapté au cinéma par Jean-Pierre Melville en 1969 avec Lino Ventura et Simone Signoret ?',
-            options: ['Joseph Kessel', 'Georges Simenon', 'Albert Simonin', 'José Giovanni'],
-            correctIndex: 0,
+            options: ['Georges Simenon', 'Albert Simonin', 'José Giovanni', 'Joseph Kessel'],
+            correctIndex: 3,
             explanation: 'Joseph Kessel publia L’Armée des ombres à Alger en 1943 ; Melville en fit un monument bouleversant sur la Résistance.',
           },
           {
             question: 'Dans « Les Quatre Cents Coups » (1959), comment s’appelle le jeune héros interprété par Jean-Pierre Léaud, alter ego de François Truffaut ?',
-            options: ['Antoine Doinel', 'Michel Poiccard', 'Charlie Kohler', 'Julien Tavernier'],
-            correctIndex: 0,
+            options: ['Michel Poiccard', 'Charlie Kohler', 'Antoine Doinel', 'Julien Tavernier'],
+            correctIndex: 2,
             explanation: 'Truffaut suivit Antoine Doinel sur cinq films, des Quatre Cents Coups (1959) à L’Amour en fuite (1979).',
           },
         ],
@@ -1469,7 +1469,7 @@ export function createSdWorld(): WorldDefinition {
             challenge: {
               kind: 'quiz',
               title: 'Épreuve I : Ghibli, Manga & Néon',
-              instructions: 'Répondez aux 6 questions d’expert de Hayao Miyazaki sur l’animation et le manga !',
+              instructions: 'Répondez aux questions d’expert de Hayao Miyazaki sur l’animation et le manga !',
               themeStyle: 'manga',
               timePerQuestionSec: 15,
               playerHp: 3,
@@ -1477,8 +1477,8 @@ export function createSdWorld(): WorldDefinition {
               questions: [
                 {
                   question: 'Quel compositeur japonais fidèle a signé les musiques de Totoro, Princesse Mononoké, Le Voyage de Chihiro et Le Garçon et le Héron ?',
-                  options: ['Yōko Kanno', 'Joe Hisaishi', 'Ryūichi Sakamoto', 'Hiroyuki Sawano'],
-                  correctIndex: 1,
+                  options: ['Yōko Kanno', 'Ryūichi Sakamoto', 'Hiroyuki Sawano', 'Joe Hisaishi'],
+                  correctIndex: 3,
                   explanation: 'Joe Hisaishi accompagne Hayao Miyazaki depuis Nausicaä de la Vallée du Vent (1984) : une collaboration mythique.',
                 },
                 {
@@ -1500,12 +1500,12 @@ export function createSdWorld(): WorldDefinition {
                 },
                 {
                   question: 'Dans « Arcane », quel ancien protecteur des rues de Zaun et père adoptif de Vi et Powder dirigeait le bar « La Dernière Goutte » ?',
-                  options: ['Silco', 'Vander', 'Benzo', 'Sevika'],
-                  correctIndex: 1,
+                  options: ['Silco', 'Benzo', 'Sevika', 'Vander'],
+                  correctIndex: 3,
                   explanation: 'Vander tenait La Dernière Goutte et tentait de maintenir une paix fragile entre Zaun et Piltover.',
                 },
                 {
-                  question: 'Dans « Cyberpunk: Edgerunners », quel fixer sans scrupules manipule David Martinez et la bande de Maine pour le compte de Militech ?',
+                  question: 'Dans « Cyberpunk: Edgerunners », quel fixer sans scrupules manipule David Martinez et la bande de Maine entre Militech et Arasaka ?',
                   options: ['Faraday', 'Falco', 'Pilar', 'Dorio'],
                   correctIndex: 0,
                   explanation: 'Faraday, reconnaissable à ses quatre yeux cybernétiques, piège David et son équipe dans un complot entre Militech et Arasaka.',
@@ -1513,12 +1513,12 @@ export function createSdWorld(): WorldDefinition {
                 {
                   question: 'Quel chef-d’œuvre d’animation français de Paul Grimault (scénario de Jacques Prévert) a profondément inspiré Hayao Miyazaki dès ses débuts ?',
                   options: [
-                    'Le Roi et l’Oiseau',
                     'La Planète sauvage',
                     'Les Triplettes de Belleville',
+                    'Le Roi et l’Oiseau',
                     'Kirikou et la Sorcière',
                   ],
-                  correctIndex: 0,
+                  correctIndex: 2,
                   explanation: 'Hayao Miyazaki et Isao Takahata ont toujours cité Le Roi et l’Oiseau de Paul Grimault comme une influence fondatrice de leur cinéma.',
                 },
               ],
@@ -1962,7 +1962,7 @@ export function createSdWorld(): WorldDefinition {
       },
       portrait: { bgTop: '#1f283d', bgBottom: '#0e1320', eyeColor: '#4c7ea8', collar: 'tie' },
       hintTargetBadgeIds: ['sd_melville', 'sd_truffaut'],
-      hintLines: ['Jef Costello ne parle jamais pour rien dire : franchissez vite la porte de'],
+      hintLines: ['Un imperméable, un feutre gris et pas un mot de trop : franchissez vite la porte de'],
     },
   ];
 

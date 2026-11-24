@@ -134,6 +134,10 @@ export class PairMatchGame implements MiniGameInstance {
 
   private loadRound(idx: number): void {
     const round = this.rounds[idx];
+    if (!round) {
+      this.result = 'won';
+      return;
+    }
     this.leftItems = round.pairs.map((p, i) => ({
       text: p.left,
       pairId: i,
@@ -274,20 +278,15 @@ export class PairMatchGame implements MiniGameInstance {
       const round = this.rounds[this.roundIndex];
       const correctRightText = round.pairs[left.pairId]?.right ?? '';
       if (correctRightText) {
-        const already = this.mistakes.some(
-          (m) =>
-            m.kind === 'pair_match' &&
-            m.leftText === left.text &&
-            m.wrongRightText === right.text
+        this.mistakes = this.mistakes.filter(
+          (m) => !(m.kind === 'pair_match' && m.leftText === left.text)
         );
-        if (!already) {
-          this.mistakes.unshift({
-            kind: 'pair_match',
-            leftText: left.text,
-            wrongRightText: right.text,
-            correctRightText,
-          });
-        }
+        this.mistakes.unshift({
+          kind: 'pair_match',
+          leftText: left.text,
+          wrongRightText: right.text,
+          correctRightText,
+        });
       }
 
       this.lives = Math.max(0, this.lives - 1);
@@ -356,10 +355,16 @@ export class PairMatchGame implements MiniGameInstance {
           tap.y <= lr.y + lr.h
         ) {
           this.leftCursor = i;
-          this.selectedLeft = i;
-          this.phase = 'pick_right';
-          this.rightCursor = this.firstUnmatched(this.rightItems);
-          soundEngine.playSelect();
+          if (this.selectedLeft === i) {
+            this.selectedLeft = null;
+            this.phase = 'pick_left';
+            soundEngine.playCancel();
+          } else {
+            this.selectedLeft = i;
+            this.phase = 'pick_right';
+            this.rightCursor = this.firstUnmatched(this.rightItems);
+            soundEngine.playSelect();
+          }
           return;
         }
       }
