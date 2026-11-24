@@ -899,8 +899,8 @@ body[data-theme='sd'] {
     border-radius: 11px;
   }
   .dpad-cluster {
-    grid-template-columns: repeat(3, 40px);
-    grid-template-rows: repeat(3, 40px);
+    grid-template-columns: repeat(3, 46px);
+    grid-template-rows: repeat(3, 46px);
   }
   .action-btn {
     width: 52px;
@@ -1068,14 +1068,15 @@ body[data-theme='sd'] {
     left: max(8px, env(safe-area-inset-left, 0px));
     top: 50%;
     transform: translateY(-54%);
-    grid-template-columns: repeat(3, 38px);
-    grid-template-rows: repeat(3, 38px);
-    gap: 2px;
+    grid-template-columns: repeat(3, 46px);
+    grid-template-rows: repeat(3, 46px);
+    gap: 3px;
     pointer-events: none;
   }
 
   .dpad-cluster .dpad-btn {
     pointer-events: auto;
+    font-size: 1.15rem;
     opacity: 0.84;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
