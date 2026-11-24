@@ -707,6 +707,10 @@ export function getPauseBackButtonRect() {
   return { x: MG_W - 72, y: 18, w: 52, h: 15 };
 }
 
+export function getPauseLeoHelpRect() {
+  return { x: 12, y: 136, w: 168, h: 82 };
+}
+
 export function getBadgeSlotRects(count = 13) {
   const cols = 7;
   return Array.from({ length: count }, (_, idx) => {
@@ -757,7 +761,8 @@ export function renderPauseMenu(
   cursor: number,
   subView: PauseSubView,
   subCursor: number,
-  playerPos: { x: number; y: number }
+  playerPos: { x: number; y: number },
+  leoHighlighted = false
 ): void {
   ctx.fillStyle = 'rgba(10, 14, 26, 0.72)';
   ctx.fillRect(0, 0, MG_W, MG_H);
@@ -816,10 +821,15 @@ export function renderPauseMenu(
     const secs = save.playTimeSeconds % 60;
     ctx.fillText(`Temps : ${mins}m ${String(secs).padStart(2, '0')}s`, 22, 100);
 
-    // Léo (Maître du Jeu) with "Besoin d'aide ?" speech bubble on bottom-left
+    // Léo (Maître du Jeu) with interactive "Besoin d'aide ?" speech bubble on bottom-left
     const lx = 16;
     const ly = 140;
     const lSize = 58;
+    if (leoHighlighted) {
+      ctx.fillStyle = 'rgba(244, 206, 118, 0.14)';
+      drawRoundRectPath(ctx, 11, 135, 170, 84, 8);
+      ctx.fill();
+    }
     ctx.fillStyle = '#121629';
     drawRoundRectPath(ctx, lx - 3, ly - 3, lSize + 6, lSize + 6, 5);
     ctx.fill();
@@ -832,8 +842,8 @@ export function renderPauseMenu(
       lSize,
       GAME_MASTER_LEO.customPortraitUrl
     );
-    ctx.strokeStyle = '#f4ce76';
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = leoHighlighted ? '#fff0a8' : '#f4ce76';
+    ctx.lineWidth = leoHighlighted ? 1.9 : 1.4;
     drawRoundRectPath(ctx, lx - 2.5, ly - 2.5, lSize + 5, lSize + 5, 4.5);
     ctx.stroke();
 
@@ -841,7 +851,7 @@ export function renderPauseMenu(
     ctx.fillStyle = '#241838';
     drawRoundRectPath(ctx, lx + 4, ly + lSize + 4, lSize - 8, 13, 6.5);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(244, 206, 118, 0.7)';
+    ctx.strokeStyle = leoHighlighted ? '#fff0a8' : 'rgba(244, 206, 118, 0.7)';
     ctx.lineWidth = 0.8;
     ctx.stroke();
     ctx.fillStyle = '#ffe999';
@@ -852,36 +862,40 @@ export function renderPauseMenu(
 
     // Speech bubble pointing left at Léo
     const sbx = 85;
-    const sby = 150;
+    const sby = 148;
     const sbw = 92;
-    const sbh = 38;
-    ctx.fillStyle = '#fbf6ea';
+    const sbh = 42;
+    ctx.fillStyle = leoHighlighted ? '#fffdf5' : '#fbf6ea';
     drawRoundRectPath(ctx, sbx, sby, sbw, sbh, 7);
     ctx.fill();
-    ctx.strokeStyle = '#d9ae54';
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = leoHighlighted ? '#f4c542' : '#d9ae54';
+    ctx.lineWidth = leoHighlighted ? 1.8 : 1.4;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(sbx + 1, sby + 13);
-    ctx.lineTo(sbx - 8, sby + 19);
-    ctx.lineTo(sbx + 1, sby + 25);
+    ctx.moveTo(sbx + 1, sby + 15);
+    ctx.lineTo(sbx - 8, sby + 21);
+    ctx.lineTo(sbx + 1, sby + 27);
     ctx.closePath();
-    ctx.fillStyle = '#fbf6ea';
+    ctx.fillStyle = leoHighlighted ? '#fffdf5' : '#fbf6ea';
     ctx.fill();
-    ctx.strokeStyle = '#d9ae54';
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = leoHighlighted ? '#f4c542' : '#d9ae54';
+    ctx.lineWidth = leoHighlighted ? 1.8 : 1.4;
     ctx.beginPath();
-    ctx.moveTo(sbx, sby + 13);
-    ctx.lineTo(sbx - 8, sby + 19);
-    ctx.lineTo(sbx, sby + 25);
+    ctx.moveTo(sbx, sby + 15);
+    ctx.lineTo(sbx - 8, sby + 21);
+    ctx.lineTo(sbx, sby + 27);
     ctx.stroke();
 
     ctx.fillStyle = '#1b2238';
-    ctx.font = 'bold 8.6px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.font = 'bold 8.5px system-ui, -apple-system, "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Besoin d’aide ?', sbx + sbw / 2, sby + sbh / 2 + 0.5);
+    ctx.fillText('Besoin d’aide ?', sbx + sbw / 2, sby + 15.5);
+
+    ctx.fillStyle = '#9c6414';
+    ctx.font = 'bold 6.6px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.fillText('▶ Parler à Léo', sbx + sbw / 2, sby + 30.5);
     return;
   }
 

@@ -168,6 +168,10 @@ export class OverworldEngine {
   private toastMessage = '';
   private toastTimer = 0;
   private atmosphere = new WorldAtmosphere();
+  private autoPath: Direction[] = [];
+  private autoTargetTile: { x: number; y: number } | null = null;
+  private autoInteractTarget: { x: number; y: number } | null = null;
+  private tapRipple: { x: number; y: number; timer: number } | null = null;
 
   constructor(
     private world: WorldDefinition,
@@ -269,6 +273,168 @@ export class OverworldEngine {
     return true;
   }
 
+  private cancelAutoWalk(): void {
+    this.autoPath = [];
+    this.autoTargetTile = null;
+    this.autoInteractTarget = null;
+  }
+
+  private computeCamera(map: MapData, lerpX: number, lerpY: number): { camX: number; camY: number } {
+    const mapPxW = map.width * TILE_SIZE;
+    const mapPxH = map.height * TILE_SIZE;
+    let camX = Math.round(lerpX * TILE_SIZE + TILE_SIZE / 2 - SCREEN_W / 2);
+    let camY = Math.round(lerpY * TILE_SIZE + TILE_SIZE / 2 - SCREEN_H / 2);
+
+    if (mapPxW <= SCREEN_W) {
+      camX = -Math.floor((SCREEN_W - mapPxW) / 2);
+    } else {
+      camX = Math.max(0, Math.min(mapPxW - SCREEN_W, camX));
+    }
+    if (mapPxH <= SCREEN_H) {
+      camY = -Math.floor((SCREEN_H - mapPxH) / 2);
+    } else {
+      camY = Math.max(0, Math.min(mapPxH - SCREEN_H, camY));
+    }
+    return { camX, camY };
+  }
+
+  private findPathToGoals(
+    map: MapData,
+    startX: number,
+    startY: number,
+    goals: { x: number; y: number }[],
+    maxNodes = 420
+  ): { path: Direction[]; target: { x: number; y: number } } | null {
+    const goalSet = new Set(goals.map((g) => `${g.x},${g.y}`));
+    if (goalSet.size === 0) return null;
+    if (goalSet.has(`${startX},${startY}`)) {
+      return { path: [], target: { x: startX, y: startY } };
+    }
+
+    const dirs: { dir: Direction; dx: number; dy: number }[] = [
+      { dir: 'up', dx: 0, dy: -1 },
+      { dir: 'down', dx: 0, dy: 1 },
+      { dir: 'left', dx: -1, dy: 0 },
+      { dir: 'right', dx: 1, dy: 0 },
+    ];
+
+    const queue: { x: number; y: number }[] = [{ x: startX, y: startY }];
+    const visited = new Set<string>([`${startX},${startY}`]);
+    const parent = new Map<string, { prevKey: string; dir: Direction }>();
+    let head = 0;
+
+    while (head < queue.length && visited.size < maxNodes) {
+      const curr = queue[head++];
+      const currKey = `${curr.x},${curr.y}`;
+      for (const { dir, dx, dy } of dirs) {
+        const nx = curr.x + dx;
+        const ny = curr.y + dy;
+        const nKey = `${nx},${ny}`;
+        if (visited.has(nKey)) continue;
+        if (!this.canStandOnTile(map, nx, ny)) continue;
+        visited.add(nKey);
+        parent.set(nKey, { prevKey: currKey, dir });
+        if (goalSet.has(nKey)) {
+          const path: Direction[] = [];
+          let trace = nKey;
+          while (trace !== `${startX},${startY}`) {
+            const step = parent.get(trace);
+            if (!step) break;
+            path.push(step.dir);
+            trace = step.prevKey;
+          }
+          path.reverse();
+          return { path, target: { x: nx, y: ny } };
+        }
+        queue.push({ x: nx, y: ny });
+      }
+    }
+    return null;
+  }
+
+  private handleOverworldTap(tapX: number, tapY: number): void {
+    // Ignore taps inside the top HUD bar
+    if (tapY <= 21) return;
+
+    const map = this.getCurrentMap();
+    const lerpX = this.moving
+      ? this.moveStartX + (this.leaderX - this.moveStartX) * this.moveProgress
+      : this.leaderX;
+    const lerpY = this.moving
+      ? this.moveStartY + (this.leaderY - this.moveStartY) * this.moveProgress
+      : this.leaderY;
+    const { camX, camY } = this.computeCamera(map, lerpX, lerpY);
+
+    const tx = Math.floor((tapX + camX) / TILE_SIZE);
+    const ty = Math.floor((tapY + camY) / TILE_SIZE);
+    if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return;
+
+    // 1. Check if player tapped an NPC (including their upper sprite head tile), sign, or locked gate
+    const tappedNpc = this.getNpcAt(map.id, tx, ty) ?? this.getNpcAt(map.id, tx, ty + 1);
+    const tappedSign = map.signs.find((s) => s.x === tx && s.y === ty);
+    const tappedGate = this.getGateAt(tx, ty);
+    const isLockedGate = Boolean(tappedGate && !this.isGateUnlocked(tappedGate));
+
+    if (tappedNpc || tappedSign || isLockedGate) {
+      const ix = tappedNpc ? (tappedNpc.role === 'cameo' && tx === tappedNpc.x + 1 ? tappedNpc.x + 1 : tappedNpc.x) : tx;
+      const iy = tappedNpc ? tappedNpc.y : ty;
+      const adjGoals = [
+        { x: ix, y: iy + 1 },
+        { x: ix, y: iy - 1 },
+        { x: ix - 1, y: iy },
+        { x: ix + 1, y: iy },
+      ].filter((g) => this.canStandOnTile(map, g.x, g.y));
+
+      const res = this.findPathToGoals(map, this.leaderX, this.leaderY, adjGoals);
+      if (res) {
+        this.autoPath = res.path;
+        this.autoTargetTile = res.target;
+        this.autoInteractTarget = { x: ix, y: iy };
+        this.tapRipple = { x: ix, y: iy, timer: 0.55 };
+        if (this.autoPath.length === 0 && !this.moving) {
+          this.faceTile(ix, iy);
+          this.autoInteractTarget = null;
+          this.autoTargetTile = null;
+          this.tryInteract();
+        }
+      }
+      return;
+    }
+
+    // 2. If player tapped a building roof/wall/nameplate on overworld, walk straight into its door!
+    let destX = tx;
+    let destY = ty;
+    if (!this.canStandOnTile(map, destX, destY) && !map.isInterior) {
+      const bld = this.world.buildings.find(
+        (b) => Math.abs(tx - b.doorX) <= 1 && ty >= b.doorY - 3 && ty <= b.doorY
+      );
+      if (bld && this.canStandOnTile(map, bld.doorX, bld.doorY)) {
+        destX = bld.doorX;
+        destY = bld.doorY;
+      }
+    }
+
+    if (!this.canStandOnTile(map, destX, destY)) return;
+
+    const res = this.findPathToGoals(map, this.leaderX, this.leaderY, [{ x: destX, y: destY }]);
+    if (res && res.path.length > 0) {
+      this.autoPath = res.path;
+      this.autoTargetTile = res.target;
+      this.autoInteractTarget = null;
+      this.tapRipple = { x: destX, y: destY, timer: 0.55 };
+    }
+  }
+
+  private faceTile(tx: number, ty: number): void {
+    const dx = tx - this.leaderX;
+    const dy = ty - this.leaderY;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      this.leaderDir = dx >= 0 ? 'right' : 'left';
+    } else {
+      this.leaderDir = dy >= 0 ? 'down' : 'up';
+    }
+  }
+
   update(dt: number, input: InputManager): void {
     this.animTimer += dt;
     this.atmosphere.update(dt, this.getCurrentMap());
@@ -277,11 +443,22 @@ export class OverworldEngine {
     if (this.warpCooldown > 0) this.warpCooldown -= dt;
     if (this.fadeAlpha > 0) this.fadeAlpha = Math.max(0, this.fadeAlpha - dt * 3.8);
     if (this.toastTimer > 0) this.toastTimer = Math.max(0, this.toastTimer - dt);
+    if (this.tapRipple) {
+      this.tapRipple.timer -= dt;
+      if (this.tapRipple.timer <= 0) this.tapRipple = null;
+    }
 
     if (input.justPressed('menu') || input.justPressed('b')) {
+      this.cancelAutoWalk();
       soundEngine.playConfirm();
       this.callbacks.onOpenPauseMenu();
       return;
+    }
+
+    // Consume tap-to-walk / tap-to-interact anytime on the overworld
+    const tap = input.consumeTap();
+    if (tap) {
+      this.handleOverworldTap(tap.x, tap.y);
     }
 
     if (this.moving) {
@@ -293,21 +470,46 @@ export class OverworldEngine {
         this.save.lastMapId = this.mapId;
         this.save.lastX = this.leaderX;
         this.save.lastY = this.leaderY;
-        this.checkWarp();
+        const warped = this.checkWarp();
+        if (warped) return;
+      } else {
+        return;
       }
-      return;
     }
 
     // Interact with A button
     if (input.justPressed('a')) {
+      this.cancelAutoWalk();
       this.tryInteract();
       return;
     }
 
-    // Movement
+    // Manual movement cancels any tap-to-walk path
     const dir = input.getDirectionHeld();
     if (dir) {
+      this.cancelAutoWalk();
       this.tryStartMove(dir, input.isDown('run'));
+      return;
+    }
+
+    // Follow active tap-to-walk path
+    if (this.autoPath.length > 0) {
+      const nextDir = this.autoPath.shift()!;
+      this.tryStartMove(nextDir, input.isDown('run'));
+      if (!this.moving) {
+        this.cancelAutoWalk();
+      }
+      return;
+    }
+
+    // Arrived at tap-to-interact target!
+    if (this.autoInteractTarget) {
+      const target = this.autoInteractTarget;
+      this.cancelAutoWalk();
+      this.faceTile(target.x, target.y);
+      this.tryInteract();
+    } else if (this.autoTargetTile) {
+      this.autoTargetTile = null;
     }
   }
 
@@ -399,15 +601,16 @@ export class OverworldEngine {
     soundEngine.playStep();
   }
 
-  private checkWarp(): void {
-    if (this.warpCooldown > 0) return;
+  private checkWarp(): boolean {
+    if (this.warpCooldown > 0) return false;
     const map = this.getCurrentMap();
     const warp = map.warps.find((w) => w.x === this.leaderX && w.y === this.leaderY);
-    if (!warp) return;
+    if (!warp) return false;
 
     const targetMap = this.world.maps[warp.targetMapId];
-    if (!targetMap) return;
+    if (!targetMap) return false;
 
+    this.cancelAutoWalk();
     soundEngine.playDoor();
     this.mapId = targetMap.id;
     this.leaderX = warp.targetX;
@@ -442,6 +645,7 @@ export class OverworldEngine {
     this.warpCooldown = 0.22;
     this.fadeAlpha = 1;
     this.atmosphere.resetForMap(targetMap);
+    return true;
   }
 
   private tryInteract(): void {
@@ -516,21 +720,7 @@ export class OverworldEngine {
       : this.follower2Y;
 
     // Camera calculation
-    const mapPxW = map.width * TILE_SIZE;
-    const mapPxH = map.height * TILE_SIZE;
-    let camX = Math.round(lerpX * TILE_SIZE + TILE_SIZE / 2 - SCREEN_W / 2);
-    let camY = Math.round(lerpY * TILE_SIZE + TILE_SIZE / 2 - SCREEN_H / 2);
-
-    if (mapPxW <= SCREEN_W) {
-      camX = -Math.floor((SCREEN_W - mapPxW) / 2);
-    } else {
-      camX = Math.max(0, Math.min(mapPxW - SCREEN_W, camX));
-    }
-    if (mapPxH <= SCREEN_H) {
-      camY = -Math.floor((SCREEN_H - mapPxH) / 2);
-    } else {
-      camY = Math.max(0, Math.min(mapPxH - SCREEN_H, camY));
-    }
+    const { camX, camY } = this.computeCamera(map, lerpX, lerpY);
 
     // Background fill
     ctx.fillStyle = map.isInterior
@@ -561,6 +751,32 @@ export class OverworldEngine {
 
     // 2. Ground-layer atmosphere (lamp pools, water glints, cloud shadows, dust puffs)
     this.atmosphere.renderGroundEffects(ctx, map, camX, camY, this.animTimer);
+
+    // 2b. Tap-to-walk destination marker & ripple
+    if (this.autoTargetTile || this.tapRipple) {
+      ctx.save();
+      if (this.autoTargetTile) {
+        const tx = this.autoTargetTile.x * TILE_SIZE - camX + 8;
+        const ty = this.autoTargetTile.y * TILE_SIZE - camY + 8;
+        const pulse = 0.65 + 0.35 * Math.sin(this.animTimer * 6.5);
+        ctx.strokeStyle = `rgba(255, 224, 118, ${(0.82 * pulse).toFixed(2)})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.ellipse(tx, ty + 2, 5.2, 3.2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (this.tapRipple) {
+        const rx = this.tapRipple.x * TILE_SIZE - camX + 8;
+        const ry = this.tapRipple.y * TILE_SIZE - camY + 8;
+        const progress = 1 - this.tapRipple.timer / 0.55;
+        ctx.strokeStyle = `rgba(255, 240, 170, ${(0.75 * (1 - progress)).toFixed(2)})`;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.ellipse(rx, ry + 2, 3.5 + progress * 7, 2.2 + progress * 4.2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     // 3. Collect drawable entities for Y-sorting
     interface DrawActor {
@@ -684,13 +900,19 @@ export class OverworldEngine {
       actor.draw();
     }
 
-    // 4. Elegant subtle landmark building nameplates & completion indicators on overworld
+    // 4. Elegant subtle landmark building nameplates & unbeaten door crests on overworld
     if (!map.isInterior) {
+      this.renderUnbeatenDoorCrests(ctx, camX, camY);
       this.renderLandmarkNameplates(ctx, camX, camY);
     }
 
     // 5. Air-layer atmosphere (searchlights, autumn leaves, carnival confetti, steam, curtains, safelight)
     this.atmosphere.renderAirEffects(ctx, map, camX, camY, this.animTimer);
+
+    // 5b. Progressive Christmas Eve sky & gentle snowfall on overworld (0 -> 4 -> 8 -> 12 badges)
+    if (!map.isInterior) {
+      this.renderChristmasEveAmbiance(ctx, camX, camY, lerpX, lerpY);
+    }
 
     // 6. Sleek Top HUD
     this.renderHud(ctx);
@@ -721,6 +943,162 @@ export class OverworldEngine {
       ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fadeAlpha).toFixed(2)})`;
       ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
     }
+  }
+
+  private renderUnbeatenDoorCrests(
+    ctx: CanvasRenderingContext2D,
+    camX: number,
+    camY: number
+  ): void {
+    const badgesCount = this.save.badges.length;
+    ctx.save();
+    for (const b of this.world.buildings) {
+      const won = b.isBoss
+        ? this.save.bossDefeated
+        : this.save.badges.includes(b.badgeId);
+      if (won) continue;
+      if (b.isBoss && badgesCount < 12) continue;
+
+      const cx = b.doorX * TILE_SIZE - camX + 8;
+      const doorTopY = b.doorY * TILE_SIZE - camY;
+      if (cx < -24 || cx > SCREEN_W + 24 || doorTopY < -20 || doorTopY > SCREEN_H + 24) {
+        continue;
+      }
+
+      const pulse = 0.7 + 0.3 * Math.sin(this.animTimer * 4.2 + b.doorX * 0.7);
+      const bob = Math.sin(this.animTimer * 3.4 + b.doorX) * 1.4;
+
+      // Soft warm doorway threshold glow
+      if (typeof ctx.createRadialGradient === 'function') {
+        const doorGlow = ctx.createRadialGradient(cx, doorTopY + 9, 1, cx, doorTopY + 9, 14);
+        doorGlow.addColorStop(0, `rgba(255, 224, 120, ${(0.28 * pulse).toFixed(2)})`);
+        doorGlow.addColorStop(1, 'rgba(255, 210, 90, 0)');
+        ctx.fillStyle = doorGlow;
+        ctx.beginPath();
+        ctx.arc(cx, doorTopY + 9, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Subtle floating golden crest diamond right above the doorway
+      const crestY = doorTopY - 4 + bob;
+      const r = b.isBoss ? 4.4 : 3.4;
+      ctx.fillStyle = b.isBoss
+        ? `rgba(255, 216, 74, ${(0.88 * pulse).toFixed(2)})`
+        : `rgba(255, 210, 96, ${(0.82 * pulse).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.moveTo(cx, crestY - r);
+      ctx.lineTo(cx + r * 0.85, crestY);
+      ctx.lineTo(cx, crestY + r);
+      ctx.lineTo(cx - r * 0.85, crestY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 250, 224, 0.9)';
+      ctx.lineWidth = 0.65;
+      ctx.stroke();
+
+      // Tiny inner sparkle dot
+      ctx.fillStyle = '#fffdf0';
+      ctx.fillRect(cx - 0.6, crestY - 0.6, 1.2, 1.2);
+    }
+    ctx.restore();
+  }
+
+  private renderChristmasEveAmbiance(
+    ctx: CanvasRenderingContext2D,
+    camX: number,
+    camY: number,
+    lerpX: number,
+    lerpY: number
+  ): void {
+    const badges = this.save.badges.length;
+    if (badges < 4) return; // 0-3 badges: crisp bright winter afternoon
+
+    ctx.save();
+
+    if (badges < 8) {
+      // 4-7 badges: warm golden sunset glow
+      const sunset = ctx.createLinearGradient(0, 21, 0, SCREEN_H);
+      sunset.addColorStop(0, 'rgba(255, 152, 68, 0.14)');
+      sunset.addColorStop(0.55, 'rgba(232, 98, 108, 0.06)');
+      sunset.addColorStop(1, 'rgba(42, 24, 68, 0.05)');
+      ctx.fillStyle = sunset;
+      ctx.fillRect(0, 21, SCREEN_W, SCREEN_H - 21);
+    } else if (badges < 12) {
+      // 8-11 badges: cozy blue-hour twilight + warm glowing doorways + gentle snow
+      const twilight = ctx.createLinearGradient(0, 21, 0, SCREEN_H);
+      twilight.addColorStop(0, 'rgba(22, 32, 78, 0.20)');
+      twilight.addColorStop(1, 'rgba(16, 22, 54, 0.11)');
+      ctx.fillStyle = twilight;
+      ctx.fillRect(0, 21, SCREEN_W, SCREEN_H - 21);
+    } else {
+      // 12 badges: magical Christmas Eve starry night!
+      const night = ctx.createLinearGradient(0, 21, 0, SCREEN_H);
+      night.addColorStop(0, 'rgba(10, 16, 48, 0.28)');
+      night.addColorStop(1, 'rgba(8, 12, 38, 0.17)');
+      ctx.fillStyle = night;
+      ctx.fillRect(0, 21, SCREEN_W, SCREEN_H - 21);
+
+      // Subtle twinkling stars along the upper band
+      for (let i = 0; i < 16; i++) {
+        const sx = (i * 47 + 19) % SCREEN_W;
+        const sy = 25 + ((i * 13) % 34);
+        const tw = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(this.animTimer * 2.8 + i * 1.4));
+        ctx.fillStyle = `rgba(255, 244, 196, ${tw.toFixed(2)})`;
+        ctx.fillRect(sx, sy, i % 4 === 0 ? 1.4 : 1, i % 4 === 0 ? 1.4 : 1);
+      }
+    }
+
+    // Warm festive lantern pools at building doors & gentle lantern around player (8+ badges)
+    if (badges >= 8 && typeof ctx.createRadialGradient === 'function') {
+      const prevComp = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'lighter';
+      for (const b of this.world.buildings) {
+        const lx = b.doorX * TILE_SIZE - camX + 8;
+        const ly = b.doorY * TILE_SIZE - camY + 6;
+        if (lx < -32 || lx > SCREEN_W + 32 || ly < -20 || ly > SCREEN_H + 32) continue;
+        const rad = b.isBoss ? 30 : 22;
+        const glow = ctx.createRadialGradient(lx, ly, 2, lx, ly, rad);
+        glow.addColorStop(0, badges >= 12 ? 'rgba(255, 214, 124, 0.22)' : 'rgba(255, 214, 124, 0.14)');
+        glow.addColorStop(1, 'rgba(255, 196, 92, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(lx, ly, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Cozy warm lantern halo around the player at 12 badges
+      if (badges >= 12) {
+        const px = lerpX * TILE_SIZE - camX + 8;
+        const py = lerpY * TILE_SIZE - camY + 6;
+        const pGlow = ctx.createRadialGradient(px, py, 3, px, py, 34);
+        pGlow.addColorStop(0, 'rgba(255, 232, 164, 0.16)');
+        pGlow.addColorStop(1, 'rgba(255, 216, 120, 0)');
+        ctx.fillStyle = pGlow;
+        ctx.beginPath();
+        ctx.arc(px, py, 34, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = prevComp;
+    }
+
+    // Gentle Christmas Eve snowfall (8-11: light flurries, 12+: festive snow)
+    if (badges >= 8) {
+      const flakeCount = badges >= 12 ? 22 : 12;
+      for (let i = 0; i < flakeCount; i++) {
+        const speed = 10 + (i % 4) * 3.5;
+        const fx =
+          (i * 41 + Math.sin(this.animTimer * 1.1 + i * 1.7) * 10 + this.animTimer * 5 + SCREEN_W) %
+          SCREEN_W;
+        const fy = 22 + ((i * 29 + this.animTimer * speed) % (SCREEN_H - 22));
+        const r = i % 3 === 0 ? 1.25 : 0.85;
+        ctx.fillStyle = `rgba(255, 252, 245, ${badges >= 12 ? 0.55 : 0.36})`;
+        ctx.beginPath();
+        ctx.arc(fx, fy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
   }
 
   private renderLandmarkNameplates(

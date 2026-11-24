@@ -29,6 +29,7 @@ import {
   getModeCardRects,
   getNotebookRowRects,
   getPauseBackButtonRect,
+  getPauseLeoHelpRect,
   getPauseMenuPanelRect,
   getPauseOptionRects,
   PAUSE_OPTIONS,
@@ -70,6 +71,8 @@ export class PokeNoelGame {
   private pauseCursor = 0;
   private pauseSubView: PauseSubView = 'menu';
   private pauseSubCursor = 0;
+  private leoHelpHovered = false;
+  private leoHelpCycle = 0;
   private endingTimer = 0;
   private hintCycleByBadge = new Map<string, number>();
 
@@ -822,19 +825,135 @@ export class PokeNoelGame {
     return { x: pos.x, y: pos.y };
   }
 
+  private triggerLeoHelp(): void {
+    soundEngine.playConfirm();
+    const modeSave = this.getActiveModeSave();
+    const pair = FAMILY_PAIRS[this.activeModeId];
+    const world = this.activeWorld;
+    const leoMsg = (text: string): DialogueMessage => ({
+      speaker: `${GAME_MASTER_LEO.name} • Maître du Jeu`,
+      text,
+      appearance: GAME_MASTER_LEO.appearance,
+      portrait: GAME_MASTER_LEO.portrait,
+      customPortraitUrl: GAME_MASTER_LEO.customPortraitUrl,
+      voicePitch: 390,
+    });
+
+    const msgs: DialogueMessage[] = [];
+
+    if (modeSave.bossDefeated) {
+      msgs.push(
+        leoMsg(
+          `Chapeau ${pair.label} ! Vous avez déjà conquis tout ${world.worldName} et décroché la couronne finale !`
+        ),
+        leoMsg(
+          'Vous pouvez rejouer n’importe quel défi pour le plaisir, ou changer d’équipe dans le menu pour aider le reste de la famille !'
+        )
+      );
+    } else if (modeSave.badges.length >= 12) {
+      const bossNpc = world.npcs.find((n) => n.role === 'boss');
+      const bossBuilding = world.buildings.find((b) => b.isBoss);
+      msgs.push(
+        leoMsg(
+          `Incroyable ${pair.label}, vous avez réuni les 12 badges ! Le sanctuaire tout au nord — « ${bossBuilding?.name ?? 'Le Sanctuaire Final'} » — vous est grand ouvert !`
+        ),
+        leoMsg(
+          `Allez défier ${bossNpc?.name ?? 'le Boss Final'} ensemble : prenez votre temps, il n’y a aucun chrono, que de la réflexion !`
+        )
+      );
+    } else {
+      // Check if there is a recent failed challenge that is still unbeaten
+      const failedEntry = Object.entries(modeSave.failedMistakes ?? {}).find(
+        ([badgeId, list]) => !modeSave.badges.includes(badgeId) && list && list.length > 0
+      );
+      if (failedEntry) {
+        const [badgeId] = failedEntry;
+        const npc = world.npcs.find((n) => n.role === 'main' && n.badgeId === badgeId);
+        const building = world.buildings.find((b) => b.badgeId === badgeId);
+        const helper = npc ? resolveClosestSecondaryForChallenger(npc, world) : undefined;
+        msgs.push(
+          leoMsg(
+            `Coup de pouce du Maître du Jeu ! Je vois que ${npc?.name ?? 'ce défi'} (dans « ${building?.name ?? 'son bâtiment'} ») vous a résisté au dernier essai.`
+          )
+        );
+        if (helper) {
+          msgs.push(
+            leoMsg(
+              `Astuce secrète : allez parler à ${helper.name} dans la rue juste à côté — je lui ai glissé un indice précis sur votre dernière erreur !`
+            )
+          );
+        } else {
+          msgs.push(
+            leoMsg(
+              'N’hésitez pas à discuter avec les personnages « ? » dans la rue : ils ont toujours un bon tuyau pour vous débloquer !'
+            )
+          );
+        }
+      } else {
+        // Find unbeaten challengers in the lowest unlocked district
+        const maxUnlockedDistrict =
+          modeSave.badges.length >= 8 ? 3 : modeSave.badges.length >= 4 ? 2 : 1;
+        const unbeaten = world.npcs.filter(
+          (n) =>
+            n.role === 'main' &&
+            n.district <= maxUnlockedDistrict &&
+            n.badgeId &&
+            !modeSave.badges.includes(n.badgeId)
+        );
+        if (unbeaten.length > 0) {
+          const target = unbeaten[this.leoHelpCycle % unbeaten.length];
+          this.leoHelpCycle++;
+          const building = world.buildings.find((b) => b.badgeId === target.badgeId);
+          const district = world.districts.find((d) => d.id === target.district);
+          const nextThreshold = modeSave.badges.length < 4 ? 4 : modeSave.badges.length < 8 ? 8 : 12;
+          const remaining = Math.max(1, nextThreshold - modeSave.badges.length);
+          const pepTalks = [
+            `Plus que ${remaining} badge${remaining > 1 ? 's' : ''} pour ouvrir la prochaine porte ! Et souvenez-vous : les habitants avec un « ? » donnent de vrais coups de main.`,
+            `Regardez les blasons dorés au-dessus des portes pour repérer les bâtiments qu’il vous reste à explorer ! Encore ${remaining} badge${remaining > 1 ? 's' : ''} avant la suite.`,
+            `Ne vous pressez pas : ici pas de chrono, le secret c’est de réfléchir ensemble ! Plus que ${remaining} badge${remaining > 1 ? 's' : ''} pour débloquer la suite.`,
+          ];
+          msgs.push(
+            leoMsg(
+              `Besoin d’un cap, ${pair.label} ? Dans « ${district?.name ?? world.worldName} », allez frapper chez ${target.name} à « ${building?.name ?? 'son bâtiment'} » !`
+            ),
+            leoMsg(pepTalks[this.leoHelpCycle % pepTalks.length])
+          );
+        } else {
+          msgs.push(
+            leoMsg(
+              `Vous avancez super bien, ${pair.label} ! Continuez vers le nord pour découvrir la suite de ${world.worldName} !`
+            )
+          );
+        }
+      }
+    }
+
+    this.leoHelpHovered = false;
+    this.dialogue.start(msgs);
+    this.scene = 'DIALOGUE';
+  }
+
   private updatePauseMenu(): void {
     const hitRect = (pt: { x: number; y: number }, r: { x: number; y: number; w: number; h: number }) =>
       pt.x >= r.x && pt.x <= r.x + r.w && pt.y >= r.y && pt.y <= r.y + r.h;
 
     if (this.pauseSubView === 'menu') {
       const optRects = getPauseOptionRects();
+      const leoRect = getPauseLeoHelpRect();
       const hover = this.input.getCanvasHover();
       if (hover) {
+        const overLeo = hitRect(hover, leoRect);
+        if (overLeo !== this.leoHelpHovered) {
+          this.leoHelpHovered = overLeo;
+          if (overLeo) soundEngine.playSelect();
+        }
         const hIdx = optRects.findIndex((r) => hitRect(hover, r));
         if (hIdx !== -1 && hIdx !== this.pauseCursor) {
           this.pauseCursor = hIdx;
           soundEngine.playSelect();
         }
+      } else {
+        this.leoHelpHovered = false;
       }
 
       if (this.input.justPressed('up')) {
@@ -843,20 +962,28 @@ export class PokeNoelGame {
       } else if (this.input.justPressed('down')) {
         this.pauseCursor = (this.pauseCursor + 1) % PAUSE_OPTIONS.length;
         soundEngine.playSelect();
+      } else if (this.input.justPressed('left')) {
+        this.triggerLeoHelp();
       } else if (this.input.justPressed('b') || this.input.justPressed('menu')) {
         soundEngine.playCancel();
+        this.leoHelpHovered = false;
         this.scene = 'OVERWORLD';
       } else if (this.input.justPressed('a')) {
         this.activatePauseOption(this.pauseCursor);
       } else {
         const tap = this.input.consumeTap();
         if (tap) {
+          if (hitRect(tap, leoRect)) {
+            this.triggerLeoHelp();
+            return;
+          }
           const hitIdx = optRects.findIndex((r) => hitRect(tap, r));
           if (hitIdx !== -1) {
             this.pauseCursor = hitIdx;
             this.activatePauseOption(hitIdx);
           } else if (!hitRect(tap, getPauseMenuPanelRect())) {
             soundEngine.playCancel();
+            this.leoHelpHovered = false;
             this.scene = 'OVERWORLD';
           }
         }
@@ -969,7 +1096,8 @@ export class PokeNoelGame {
           this.pauseCursor,
           this.pauseSubView,
           this.pauseSubCursor,
-          this.getWorldMapPlayerPos()
+          this.getWorldMapPlayerPos(),
+          this.leoHelpHovered
         );
         break;
       case 'CHALLENGE':
