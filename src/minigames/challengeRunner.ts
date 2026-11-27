@@ -5,6 +5,7 @@ import {
   BadgeDef,
   ChallengeConfig,
   ChallengeMistake,
+  ChallengeProgress,
   FamilyMember,
   FamilyTeamMembers,
   NpcEntity,
@@ -82,11 +83,15 @@ export class ChallengeRunner {
   private phase: RunnerPhase = 'vs_splash';
   private timer = 0;
   private bossPhaseIdx = 0;
+  private savedStepIndex = 0;
   private currentMini: MiniGameInstance | null = null;
   private loseCursor = 0; // 0 = Réessayer, 1 = Quitter
   private done: 'active' | 'won' | 'aborted' = 'active';
   private isBoss: boolean;
   private confetti: ConfettiBit[] = [];
+  private jokerUsed = false;
+  private jokerToast = '';
+  private jokerToastTimer = 0;
 
   constructor(
     private challenger: NpcEntity,
@@ -96,9 +101,20 @@ export class ChallengeRunner {
     private config: ChallengeConfig,
     private onAttemptIncrement: () => void,
     private onChallengeLost?: (mistakes: ChallengeMistake[]) => void,
-    private loseHelperTip?: { helperName: string; speechLine: string }
+    private loseHelperTip?: { helperName: string; speechLine: string },
+    initialProgress?: ChallengeProgress,
+    private onProgressUpdate?: (progress: ChallengeProgress) => void
   ) {
     this.isBoss = config.kind === 'boss_gauntlet';
+    if (initialProgress) {
+      if (config.kind === 'boss_gauntlet') {
+        this.bossPhaseIdx = Math.max(
+          0,
+          Math.min(Math.floor(initialProgress.bossPhaseIdx), config.phases.length - 1)
+        );
+      }
+      this.savedStepIndex = Math.max(0, Math.floor(initialProgress.stepIndex));
+    }
     soundEngine.playBgm(this.isBoss ? 'boss' : 'battle');
     soundEngine.playBossHit();
     this.onAttemptIncrement();
@@ -129,24 +145,56 @@ export class ChallengeRunner {
     return this.config;
   }
 
-  private instantiateMiniGame(cfg: SingleChallengeConfig): MiniGameInstance {
+  private instantiateMiniGame(cfg: SingleChallengeConfig, startStep = 0): MiniGameInstance {
     switch (cfg.kind) {
       case 'quiz':
       case 'riddle_word':
-        return new QuizRiddleGame(cfg, this.getLeader(), this.challenger);
+        return new QuizRiddleGame(cfg, this.getLeader(), this.challenger, startStep);
       case 'order_puzzle':
-        return new OrderPuzzleGame(cfg);
+        return new OrderPuzzleGame(cfg, startStep);
       case 'pair_match':
-        return new PairMatchGame(cfg);
+        return new PairMatchGame(cfg, startStep);
       case 'intruder_hunt':
-        return new IntruderHuntGame(cfg);
+        return new IntruderHuntGame(cfg, startStep);
       case 'category_sort':
-        return new CategorySortGame(cfg);
+        return new CategorySortGame(cfg, startStep);
     }
+  }
+
+  private hasSavedCheckpoint(): boolean {
+    return this.bossPhaseIdx > 0 || this.savedStepIndex > 0;
+  }
+
+  private formatCheckpointLabel(): string {
+    if (this.config.kind === 'boss_gauntlet') {
+      if (this.savedStepIndex > 0) {
+        return `✓ Reprise : Acte ${this.bossPhaseIdx + 1}/3 • Étape ${this.savedStepIndex + 1}`;
+      }
+      return `✓ Reprise : Acte ${this.bossPhaseIdx + 1}/3`;
+    }
+    return `✓ Reprise : Étape ${this.savedStepIndex + 1}`;
+  }
+
+  private getJokerButtonRect() {
+    return { x: 252, y: 2.5, w: 60, h: 13 };
+  }
+
+  private tryTriggerJoker(): boolean {
+    if (this.jokerUsed || !this.currentMini?.useJoker) return false;
+    const msg = this.currentMini.useJoker();
+    if (!msg) return false;
+    this.jokerUsed = true;
+    this.jokerToast = msg;
+    this.jokerToastTimer = 2.8;
+    soundEngine.playConfirm();
+    return true;
   }
 
   update(dt: number, input: InputManager): void {
     this.timer += dt;
+    if (this.jokerToastTimer > 0) {
+      this.jokerToastTimer = Math.max(0, this.jokerToastTimer - dt);
+    }
 
     if (this.phase === 'vs_splash') {
       const tap = input.consumeTap();
@@ -161,7 +209,10 @@ export class ChallengeRunner {
       const tap = input.consumeTap();
       if (input.justPressed('a') || tap) {
         soundEngine.playConfirm();
-        this.currentMini = this.instantiateMiniGame(this.getActiveSingleConfig());
+        this.currentMini = this.instantiateMiniGame(
+          this.getActiveSingleConfig(),
+          this.savedStepIndex
+        );
         this.phase = 'playing';
         this.timer = 0;
       } else if (input.justPressed('b')) {
@@ -172,6 +223,15 @@ export class ChallengeRunner {
     }
 
     if (this.phase === 'playing' && this.currentMini) {
+      // Allow clicking/tapping the HUD "★ Joker" pill (generous touch hitbox y <= 24)
+      if (!this.jokerUsed) {
+        const peek = input.peekTap();
+        if (peek && peek.x >= 246 && peek.x <= 318 && peek.y >= 0 && peek.y <= 24) {
+          input.consumeTap();
+          this.tryTriggerJoker();
+          return;
+        }
+      }
       this.currentMini.update(dt, input);
       const res = this.currentMini.getResult();
       if (res === 'won') {
@@ -181,6 +241,8 @@ export class ChallengeRunner {
         ) {
           soundEngine.playBossHit();
           this.bossPhaseIdx++;
+          this.savedStepIndex = 0;
+          this.onProgressUpdate?.({ bossPhaseIdx: this.bossPhaseIdx, stepIndex: 0 });
           this.phase = 'boss_intermission';
           this.timer = 0;
         } else {
@@ -190,6 +252,16 @@ export class ChallengeRunner {
         }
       } else if (res === 'lost') {
         soundEngine.playDefeat();
+        const completed = this.currentMini.getCompletedSteps?.() ?? 0;
+        if (completed > this.savedStepIndex) {
+          this.savedStepIndex = completed;
+        }
+        if (this.hasSavedCheckpoint()) {
+          this.onProgressUpdate?.({
+            bossPhaseIdx: this.bossPhaseIdx,
+            stepIndex: this.savedStepIndex,
+          });
+        }
         const recordedMistakes = this.currentMini.getMistakes?.() ?? [];
         this.onChallengeLost?.(recordedMistakes);
         this.phase = 'lost';
@@ -203,7 +275,10 @@ export class ChallengeRunner {
       const tap = input.consumeTap();
       if (input.justPressed('a') || tap) {
         soundEngine.playConfirm();
-        this.currentMini = this.instantiateMiniGame(this.getActiveSingleConfig());
+        this.currentMini = this.instantiateMiniGame(
+          this.getActiveSingleConfig(),
+          this.savedStepIndex
+        );
         this.phase = 'playing';
         this.timer = 0;
       }
@@ -264,8 +339,13 @@ export class ChallengeRunner {
   private retry(): void {
     soundEngine.playConfirm();
     this.onAttemptIncrement();
-    this.bossPhaseIdx = 0;
-    this.currentMini = this.instantiateMiniGame(this.getActiveSingleConfig());
+    this.jokerUsed = false;
+    this.jokerToast = '';
+    this.jokerToastTimer = 0;
+    this.currentMini = this.instantiateMiniGame(
+      this.getActiveSingleConfig(),
+      this.savedStepIndex
+    );
     this.phase = 'playing';
     this.timer = 0;
   }
@@ -306,6 +386,60 @@ export class ChallengeRunner {
   render(ctx: CanvasRenderingContext2D): void {
     if (this.phase === 'playing' && this.currentMini) {
       this.currentMini.render(ctx);
+
+      // Sleek "★ Joker Léo" pill in top HUD (1 per challenge)
+      const jr = this.getJokerButtonRect();
+      ctx.save();
+      if (!this.jokerUsed) {
+        const pulse = 0.78 + 0.22 * Math.sin(this.timer * 4.2);
+        ctx.fillStyle = `rgba(244, 197, 66, ${(0.24 * pulse).toFixed(2)})`;
+        drawRoundRectPath(ctx, jr.x - 1, jr.y - 1, jr.w + 2, jr.h + 2, 7.5);
+        ctx.fill();
+        ctx.fillStyle = '#2a2240';
+        drawRoundRectPath(ctx, jr.x, jr.y, jr.w, jr.h, 6.5);
+        ctx.fill();
+        ctx.strokeStyle = '#ffe066';
+        ctx.lineWidth = 0.95;
+        ctx.stroke();
+        ctx.fillStyle = '#fff0a8';
+        ctx.font = 'bold 6.8px system-ui, -apple-system, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★ Joker Léo', jr.x + jr.w / 2, jr.y + jr.h / 2 + 0.3);
+      } else {
+        ctx.fillStyle = 'rgba(20, 26, 44, 0.72)';
+        drawRoundRectPath(ctx, jr.x, jr.y, jr.w, jr.h, 6.5);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(130, 148, 188, 0.38)';
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+        ctx.fillStyle = '#8b99bd';
+        ctx.font = 'bold 6.5px system-ui, -apple-system, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✓ Joker utilisé', jr.x + jr.w / 2, jr.y + jr.h / 2 + 0.3);
+      }
+
+      // Brief golden banner when Léo's Joker activates
+      if (this.jokerToastTimer > 0 && this.jokerToast) {
+        const alpha = Math.min(1, this.jokerToastTimer * 2.2);
+        ctx.globalAlpha = alpha;
+        const text = `★ Léo : ${this.jokerToast}`;
+        ctx.font = 'bold 7.6px system-ui, -apple-system, "Segoe UI", sans-serif';
+        const tw = Math.min(MG_W - 24, Math.ceil(ctx.measureText(text).width) + 20);
+        const tx = Math.floor((MG_W - tw) / 2);
+        ctx.fillStyle = 'rgba(20, 18, 36, 0.94)';
+        drawRoundRectPath(ctx, tx, 27, tw, 15, 7.5);
+        ctx.fill();
+        ctx.strokeStyle = '#ffe066';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = '#fff2b2';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, MG_W / 2, 34.8);
+      }
+      ctx.restore();
       return;
     }
 
@@ -584,7 +718,21 @@ export class ChallengeRunner {
 
       if (this.config.kind === 'boss_gauntlet') {
         this.drawBossGems(ctx, 76, 43);
-        if (isCalmReflectionKind(cfg.kind)) {
+        const showResume = this.phase === 'brief' && this.hasSavedCheckpoint();
+        if (showResume) {
+          ctx.fillStyle = 'rgba(72, 214, 128, 0.22)';
+          drawRoundRectPath(ctx, 156, 42, 160, 15, 4);
+          ctx.fill();
+          ctx.fillStyle = '#9dffbd';
+          drawFittedSingleLine(ctx, this.formatCheckpointLabel(), 236, 49.5, 152, {
+            preferredSize: 7,
+            minSize: 5.6,
+            weight: 'bold',
+            family: 'sans-serif',
+            align: 'center',
+            baseline: 'middle',
+          });
+        } else if (isCalmReflectionKind(cfg.kind)) {
           ctx.fillStyle = 'rgba(255, 226, 122, 0.16)';
           drawRoundRectPath(ctx, 156, 42, 114, 15, 4);
           ctx.fill();
@@ -609,7 +757,20 @@ export class ChallengeRunner {
         ctx.textBaseline = 'middle';
         ctx.fillText(kindTag.label, 124, 49.5);
 
-        if (isCalmReflectionKind(cfg.kind)) {
+        if (this.phase === 'brief' && this.hasSavedCheckpoint()) {
+          ctx.fillStyle = 'rgba(72, 214, 128, 0.22)';
+          drawRoundRectPath(ctx, 178, 42, 136, 15, 4);
+          ctx.fill();
+          ctx.fillStyle = '#9dffbd';
+          drawFittedSingleLine(ctx, this.formatCheckpointLabel(), 246, 49.5, 128, {
+            preferredSize: 7,
+            minSize: 5.6,
+            weight: 'bold',
+            family: 'sans-serif',
+            align: 'center',
+            baseline: 'middle',
+          });
+        } else if (isCalmReflectionKind(cfg.kind)) {
           ctx.fillStyle = 'rgba(255, 226, 122, 0.16)';
           drawRoundRectPath(ctx, 178, 42, 92, 15, 4);
           ctx.fill();
@@ -992,7 +1153,8 @@ export class ChallengeRunner {
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(this.loseCursor === 0 ? '▶ Réessayer' : 'Réessayer', 115, btnY + 15);
+      const retryWord = this.hasSavedCheckpoint() ? 'Reprendre' : 'Réessayer';
+      ctx.fillText(this.loseCursor === 0 ? `▶ ${retryWord}` : retryWord, 115, btnY + 15);
       ctx.fillText(this.loseCursor === 1 ? '▶ Quitter' : 'Quitter', 269, btnY + 15);
     }
   }

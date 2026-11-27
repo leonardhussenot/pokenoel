@@ -80,6 +80,21 @@ export class CategorySortGame implements MiniGameInstance {
   getMistakes(): ChallengeMistake[] {
     return [...this.mistakes];
   }
+
+  getCompletedSteps(): number {
+    return this.itemOutcomes.filter((o) => o === 'correct').length;
+  }
+
+  useJoker(): string | null {
+    if (this.result !== 'playing' || this.revealTimer > 0) return null;
+    const item = this.items[this.itemIndex];
+    if (!item) return null;
+    const correctBucket = Math.min(this.cfg.categories.length - 1, Math.max(0, item.categoryIndex));
+    this.jokerHintBucket = correctBucket;
+    this.cursor = correctBucket;
+    return 'Léo vous montre la bonne catégorie !';
+  }
+  private jokerHintBucket: number | null = null;
   lastPickedBucket: number | null = null;
   result: 'playing' | 'won' | 'lost' = 'playing';
 
@@ -94,7 +109,7 @@ export class CategorySortGame implements MiniGameInstance {
   private particles: MgParticle[] = [];
   private digitTarget: DigitTarget;
 
-  constructor(private cfg: CategorySortChallengeConfig) {
+  constructor(private cfg: CategorySortChallengeConfig, startStep = 0) {
     this.lives = Math.max(1, cfg.lives);
     this.bucketCounts = cfg.categories.map(() => 0);
     this.bucketPopTimers = cfg.categories.map(() => 0);
@@ -117,6 +132,16 @@ export class CategorySortGame implements MiniGameInstance {
     }
     this.items = copy;
     this.itemOutcomes = copy.map(() => 'pending');
+
+    if (copy.length > 0 && startStep > 0) {
+      const clampedStart = Math.max(0, Math.min(Math.floor(startStep), copy.length - 1));
+      this.itemIndex = clampedStart;
+      for (let i = 0; i < clampedStart; i++) {
+        this.itemOutcomes[i] = 'correct';
+        const bIdx = Math.min(cfg.categories.length - 1, Math.max(0, copy[i].categoryIndex));
+        this.bucketCounts[bIdx]++;
+      }
+    }
 
     if (this.items.length === 0) {
       this.result = 'won';
@@ -248,6 +273,7 @@ export class CategorySortGame implements MiniGameInstance {
     this.revealTimer = 0;
     this.revealElapsed = 0;
     this.lastPickedBucket = null;
+    this.jokerHintBucket = null;
     this.flyAnim = null;
 
     if (this.lives <= 0) {
@@ -566,6 +592,15 @@ export class CategorySortGame implements MiniGameInstance {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('✗ PAS ICI', rx + r.w / 2, ry + r.h - 9.3);
+      } else if (!inReveal && this.jokerHintBucket === i) {
+        ctx.fillStyle = '#ffe066';
+        drawRoundRectPath(ctx, rx + 10, ry + r.h - 15, r.w - 20, 11, 3);
+        ctx.fill();
+        ctx.fillStyle = '#1a1406';
+        ctx.font = 'bold 6.5px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★ JOKER LÉO', rx + r.w / 2, ry + r.h - 9.3);
       } else if (isCursor) {
         ctx.fillStyle = '#ffe066';
         drawRoundRectPath(ctx, rx + 16, ry + r.h - 15, r.w - 32, 11, 3);

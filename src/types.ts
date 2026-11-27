@@ -557,6 +557,13 @@ export type ChallengeMistake =
       correctAnswer: string;
     };
 
+export interface ChallengeProgress {
+  /** Pour un boss_gauntlet : phase (Acte) atteinte (0, 1 ou 2). Toujours 0 pour un défi simple. */
+  bossPhaseIdx: number;
+  /** Nombre de manches / questions / cartes déjà réussies dans le mini-jeu en cours. */
+  stepIndex: number;
+}
+
 export interface ModeSaveData {
   badges: string[];
   bossDefeated: boolean;
@@ -568,6 +575,7 @@ export interface ModeSaveData {
   lastX: number;
   lastY: number;
   failedMistakes?: Record<string, ChallengeMistake[]>;
+  challengeProgress?: Record<string, ChallengeProgress>;
 }
 
 export interface GlobalSaveData {

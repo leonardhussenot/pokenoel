@@ -35,16 +35,47 @@ export class IntruderHuntGame implements MiniGameInstance {
   private shakeTimer = 0;
   private particles: MgParticle[] = [];
   private mistakes: ChallengeMistake[] = [];
+  private completedSteps = 0;
+  private eliminatedCards = new Set<number>();
 
   getMistakes(): ChallengeMistake[] {
     return [...this.mistakes];
   }
 
-  constructor(private cfg: IntruderHuntChallengeConfig) {
+  getCompletedSteps(): number {
+    return this.completedSteps;
+  }
+
+  useJoker(): string | null {
+    if (this.result !== 'playing' || this.revealTimer > 0) return null;
+    const round = this.rounds[this.roundIndex];
+    if (!round) return null;
+    const innocents = [0, 1, 2, 3].filter(
+      (i) => i !== round.intruderIndex && !this.eliminatedCards.has(i)
+    );
+    if (innocents.length < 2) return null;
+    for (let i = innocents.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [innocents[i], innocents[j]] = [innocents[j], innocents[i]];
+    }
+    this.eliminatedCards.add(innocents[0]);
+    this.eliminatedCards.add(innocents[1]);
+    if (this.eliminatedCards.has(this.cursor)) {
+      const nextValid = [0, 1, 2, 3].find((i) => !this.eliminatedCards.has(i));
+      if (nextValid !== undefined) this.cursor = nextValid;
+    }
+    return 'Léo a écarté 2 fausses pistes !';
+  }
+
+  constructor(private cfg: IntruderHuntChallengeConfig, startStep = 0) {
     this.rounds = cfg.rounds;
     this.lives = Math.max(1, cfg.lives);
     if (this.rounds.length === 0) {
       this.result = 'won';
+    } else {
+      const clampedStart = Math.max(0, Math.min(Math.floor(startStep), this.rounds.length - 1));
+      this.roundIndex = clampedStart;
+      this.completedSteps = clampedStart;
     }
   }
 
@@ -88,6 +119,7 @@ export class IntruderHuntGame implements MiniGameInstance {
   }
 
   private selectCard(idx: number): void {
+    if (this.eliminatedCards.has(idx)) return;
     const round = this.rounds[this.roundIndex];
     if (!round) return;
     this.selectedIdx = idx;
@@ -100,6 +132,7 @@ export class IntruderHuntGame implements MiniGameInstance {
     const cy = burstRect.y + burstRect.h / 2;
 
     if (this.wasCorrect) {
+      this.completedSteps++;
       soundEngine.playHitPerfect();
       this.spawnRevealBurst(cx, cy, '#66f28d');
     } else {
@@ -140,6 +173,7 @@ export class IntruderHuntGame implements MiniGameInstance {
       return;
     }
     this.roundIndex++;
+    this.eliminatedCards.clear();
     this.cursor = 0;
   }
 
@@ -240,13 +274,14 @@ export class IntruderHuntGame implements MiniGameInstance {
     for (let i = 0; i < 4; i++) {
       const r = rects[i];
       const rx = r.x + shakeX;
-      const isCursor = !inReveal && this.cursor === i;
+      const isEliminated = this.eliminatedCards.has(i);
+      const isCursor = !inReveal && !isEliminated && this.cursor === i;
       const isIntruder = inReveal && this.wasCorrect && i === round.intruderIndex;
       const isWrongPick = inReveal && i === this.selectedIdx && !this.wasCorrect;
-      const dimmed = inReveal && !isIntruder && !isWrongPick;
+      const dimmed = isEliminated || (inReveal && !isIntruder && !isWrongPick);
 
       ctx.save();
-      if (dimmed) ctx.globalAlpha = 0.45;
+      if (dimmed) ctx.globalAlpha = isEliminated ? 0.24 : 0.45;
 
       // Soft focus glow for active selection or revealed intruder (only when correctly identified)
       if (isCursor || isIntruder) {

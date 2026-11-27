@@ -71,10 +71,26 @@ export class PairMatchGame implements MiniGameInstance {
     return [...this.mistakes];
   }
 
-  constructor(private cfg: PairMatchChallengeConfig) {
+  getCompletedSteps(): number {
+    return this.roundIndex;
+  }
+
+  useJoker(): string | null {
+    if (this.result !== 'playing' || this.feedbackTimer > 0) return null;
+    const leftIdx = this.leftItems.findIndex((it) => !it.matched);
+    if (leftIdx === -1) return null;
+    const targetPairId = this.leftItems[leftIdx].pairId;
+    const rightIdx = this.rightItems.findIndex((it) => !it.matched && it.pairId === targetPairId);
+    if (rightIdx === -1) return null;
+    this.attemptMatch(leftIdx, rightIdx);
+    return 'Léo a relié une bonne paire !';
+  }
+
+  constructor(private cfg: PairMatchChallengeConfig, startStep = 0) {
     this.rounds = cfg.rounds;
     this.lives = Math.max(1, cfg.lives);
-    this.loadRound(0);
+    const startRound = Math.max(0, Math.min(Math.floor(startStep), Math.max(0, this.rounds.length - 1)));
+    this.loadRound(startRound);
   }
 
   private getLayout(): PairLayout {
@@ -133,6 +149,7 @@ export class PairMatchGame implements MiniGameInstance {
   }
 
   private loadRound(idx: number): void {
+    this.roundIndex = idx;
     const round = this.rounds[idx];
     if (!round) {
       this.result = 'won';

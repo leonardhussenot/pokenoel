@@ -267,6 +267,10 @@ export class InputManager {
     return this.canvasHover;
   }
 
+  peekTap(): CanvasTap | null {
+    return this.canvasTap;
+  }
+
   consumeTap(): CanvasTap | null {
     const t = this.canvasTap;
     this.canvasTap = null;

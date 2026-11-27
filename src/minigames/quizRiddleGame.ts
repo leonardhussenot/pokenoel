@@ -76,22 +76,56 @@ export class QuizRiddleGame implements MiniGameInstance {
   private result: 'playing' | 'won' | 'lost' = 'playing';
   private theme: ReflectionTheme;
   private mistakes: ChallengeMistake[] = [];
+  private eliminatedOptions = new Set<number>();
 
   getMistakes(): ChallengeMistake[] {
     return [...this.mistakes];
   }
 
+  getCompletedSteps(): number {
+    return Math.max(0, this.cfg.enemyHp - this.enemyHp);
+  }
+
+  useJoker(): string | null {
+    if (this.result !== 'playing' || this.pauseTimer > 0) return null;
+    const correctIdx =
+      this.cfg.kind === 'quiz'
+        ? this.cfg.questions[this.index]?.correctIndex
+        : this.cfg.riddles[this.index]?.correctIndex;
+    if (correctIdx === undefined) return null;
+    const wrongIndices = [0, 1, 2, 3].filter(
+      (i) => i !== correctIdx && !this.eliminatedOptions.has(i)
+    );
+    if (wrongIndices.length < 2) return null;
+    // Shuffle wrong indices and eliminate 2
+    for (let i = wrongIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [wrongIndices[i], wrongIndices[j]] = [wrongIndices[j], wrongIndices[i]];
+    }
+    this.eliminatedOptions.add(wrongIndices[0]);
+    this.eliminatedOptions.add(wrongIndices[1]);
+    if (this.eliminatedOptions.has(this.cursor)) {
+      const nextValid = [0, 1, 2, 3].find((i) => !this.eliminatedOptions.has(i));
+      if (nextValid !== undefined) this.cursor = nextValid;
+    }
+    return 'Léo a éliminé 2 mauvaises réponses !';
+  }
+
   constructor(
     private cfg: QuizChallengeConfig | RiddleChallengeConfig,
     private leader: FamilyMember,
-    private challenger: NpcEntity
+    private challenger: NpcEntity,
+    startStep = 0
   ) {
     this.playerHp = cfg.playerHp;
-    this.enemyHp = cfg.enemyHp;
-    this.displayPlayerHp = cfg.playerHp;
-    this.displayEnemyHp = cfg.enemyHp;
+    const total = this.getTotalItems();
+    const clampedStart = Math.max(0, Math.min(Math.floor(startStep), Math.max(0, cfg.enemyHp - 1)));
+    this.enemyHp = Math.max(1, cfg.enemyHp - clampedStart);
+    this.displayPlayerHp = this.playerHp;
+    this.displayEnemyHp = this.enemyHp;
+    this.index = total > 0 ? clampedStart % total : 0;
     this.theme = inferReflectionTheme(challenger, cfg.themeStyle);
-    if (this.getTotalItems() === 0) {
+    if (total === 0) {
       this.result = 'won';
     }
   }
@@ -151,6 +185,7 @@ export class QuizRiddleGame implements MiniGameInstance {
     if (total > 0) {
       this.index = (this.index + 1) % total;
     }
+    this.eliminatedOptions.clear();
     this.cursor = 0;
   }
 
@@ -253,6 +288,7 @@ export class QuizRiddleGame implements MiniGameInstance {
   }
 
   private resolveAnswer(choiceIdx: number): void {
+    if (this.eliminatedOptions.has(choiceIdx)) return;
     const item =
       this.cfg.kind === 'quiz'
         ? this.cfg.questions[this.index]
@@ -523,11 +559,15 @@ export class QuizRiddleGame implements MiniGameInstance {
     for (let i = 0; i < 4; i++) {
       const r = rects[i];
       const rx = r.x + shakeX;
-      const selected = i === this.cursor;
+      const isEliminated = this.eliminatedOptions.has(i);
+      const selected = i === this.cursor && !isEliminated;
       const inReveal = this.pauseTimer > 0 && this.lastChoiceIdx !== null;
       const isCorrectReveal =
         inReveal && this.lastChoiceIdx === this.lastCorrectIdx && i === this.lastCorrectIdx;
       const isWrongReveal = inReveal && i === this.lastChoiceIdx && i !== this.lastCorrectIdx;
+
+      ctx.save();
+      if (isEliminated) ctx.globalAlpha = 0.24;
 
       const cardBg = isCorrectReveal
         ? '#1f6e3f'
@@ -562,7 +602,7 @@ export class QuizRiddleGame implements MiniGameInstance {
       ctx.font = 'bold 8px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(OPTION_LETTERS[i], rx + 13, r.y + r.h / 2 + 0.5);
+      ctx.fillText(isEliminated ? '✗' : OPTION_LETTERS[i], rx + 13, r.y + r.h / 2 + 0.5);
 
       ctx.fillStyle = selected || isCorrectReveal ? '#fff7d6' : '#eef2fa';
       drawFittedWrappedText(ctx, opts[i], rx + 25, r.y + 3, r.w - 31, r.h - 6, {
@@ -572,6 +612,7 @@ export class QuizRiddleGame implements MiniGameInstance {
         lineHeightRatio: 1.2,
         verticalCenter: true,
       });
+      ctx.restore();
     }
 
     // Impact particles

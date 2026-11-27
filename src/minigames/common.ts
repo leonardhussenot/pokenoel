@@ -9,6 +9,8 @@ export interface MiniGameInstance {
   render(ctx: CanvasRenderingContext2D): void;
   getResult(): 'playing' | 'won' | 'lost';
   getMistakes?(): ChallengeMistake[];
+  getCompletedSteps?(): number;
+  useJoker?(): string | null;
 }
 
 export interface MgParticle {
@@ -361,7 +363,7 @@ export function drawMiniGameHud(
   ctx.fillStyle = lowTime ? '#ff6b7a' : '#ffe484';
   ctx.fillText(label, MG_W - 8, 9.5);
 
-  const maxTitleW = Math.max(80, MG_W - 28 - labelW);
+  const maxTitleW = Math.min(234, Math.max(80, MG_W - 28 - labelW));
   ctx.fillStyle = '#ffffff';
   drawFittedSingleLine(ctx, title, 14, 9.5, maxTitleW, {
     preferredSize: 9,

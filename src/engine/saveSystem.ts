@@ -1,4 +1,4 @@
-import { ChallengeMistake, GlobalSaveData, ModeId, ModeSaveData } from '../types';
+import { ChallengeMistake, ChallengeProgress, GlobalSaveData, ModeId, ModeSaveData } from '../types';
 
 export const SAVE_STORAGE_KEY = 'pokenoel_save_v1';
 
@@ -102,6 +102,32 @@ function sanitizeFailedMistakes(
   return hasAny ? out : undefined;
 }
 
+function sanitizeChallengeProgress(
+  raw: unknown,
+  badges: string[]
+): Record<string, ChallengeProgress> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const out: Record<string, ChallengeProgress> = {};
+  let hasAny = false;
+  for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
+    if (!isNonEmptyString(key) || badges.includes(key) || !val || typeof val !== 'object') continue;
+    const o = val as Partial<ChallengeProgress>;
+    const bossPhaseIdx =
+      typeof o.bossPhaseIdx === 'number' && Number.isFinite(o.bossPhaseIdx)
+        ? Math.max(0, Math.min(2, Math.floor(o.bossPhaseIdx)))
+        : 0;
+    const stepIndex =
+      typeof o.stepIndex === 'number' && Number.isFinite(o.stepIndex)
+        ? Math.max(0, Math.min(20, Math.floor(o.stepIndex)))
+        : 0;
+    if (bossPhaseIdx > 0 || stepIndex > 0) {
+      out[key] = { bossPhaseIdx, stepIndex };
+      hasAny = true;
+    }
+  }
+  return hasAny ? out : undefined;
+}
+
 function sanitizeModeSave(modeId: ModeId, raw: unknown): ModeSaveData {
   const def = createDefaultModeSave(modeId);
   if (!raw || typeof raw !== 'object') return def;
@@ -110,6 +136,7 @@ function sanitizeModeSave(modeId: ModeId, raw: unknown): ModeSaveData {
     ? [...new Set(obj.badges.filter((x) => typeof x === 'string'))]
     : [];
   const failedMistakes = sanitizeFailedMistakes(obj.failedMistakes, badges);
+  const challengeProgress = sanitizeChallengeProgress(obj.challengeProgress, badges);
   return {
     badges,
     bossDefeated: Boolean(obj.bossDefeated),
@@ -121,6 +148,7 @@ function sanitizeModeSave(modeId: ModeId, raw: unknown): ModeSaveData {
     lastX: typeof obj.lastX === 'number' && Number.isFinite(obj.lastX) ? Math.floor(obj.lastX) : def.lastX,
     lastY: typeof obj.lastY === 'number' && Number.isFinite(obj.lastY) ? Math.floor(obj.lastY) : def.lastY,
     ...(failedMistakes ? { failedMistakes } : {}),
+    ...(challengeProgress ? { challengeProgress } : {}),
   };
 }
 

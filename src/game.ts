@@ -42,6 +42,7 @@ import {
 import { ChallengeRunner } from './minigames/challengeRunner';
 import {
   ChallengeMistake,
+  ChallengeProgress,
   DistrictGate,
   GameScene,
   GlobalSaveData,
@@ -516,6 +517,14 @@ export class PokeNoelGame {
       ? { helperName: helperSec.name, speechLine: formatLoseHelperLine(helperSec) }
       : undefined;
 
+    const challengeKey =
+      npc.role === 'boss' ? this.activeWorld.bossBadge.id : (npc.badgeId ?? npc.id);
+    const alreadyCleared =
+      npc.role === 'boss'
+        ? modeSave.bossDefeated
+        : Boolean(npc.badgeId && modeSave.badges.includes(npc.badgeId));
+    const initialProgress = alreadyCleared ? undefined : modeSave.challengeProgress?.[challengeKey];
+
     this.challengeRunner = new ChallengeRunner(
       npc,
       badge,
@@ -536,7 +545,16 @@ export class PokeNoelGame {
           saveGlobalSave(this.save);
         }
       },
-      loseHelperTip
+      loseHelperTip,
+      initialProgress,
+      (progress: ChallengeProgress) => {
+        if (alreadyCleared) return;
+        if (!modeSave.challengeProgress) {
+          modeSave.challengeProgress = {};
+        }
+        modeSave.challengeProgress[challengeKey] = progress;
+        saveGlobalSave(this.save);
+      }
     );
     this.scene = 'CHALLENGE';
 
@@ -699,6 +717,15 @@ export class PokeNoelGame {
       soundEngine.playBgm(this.activeWorld.bgmId);
       this.scene = 'OVERWORLD';
       return;
+    }
+
+    const challengeKey =
+      npc.role === 'boss' ? this.activeWorld.bossBadge.id : (npc.badgeId ?? npc.id);
+    if (modeSave.challengeProgress?.[challengeKey]) {
+      delete modeSave.challengeProgress[challengeKey];
+      if (Object.keys(modeSave.challengeProgress).length === 0) {
+        delete modeSave.challengeProgress;
+      }
     }
 
     if (npc.role === 'boss') {

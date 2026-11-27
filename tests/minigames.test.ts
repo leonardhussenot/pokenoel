@@ -3,6 +3,7 @@ import { WORLDS } from '../src/data';
 import { FAMILY_MEMBERS, FAMILY_PAIRS, MODE_ORDER } from '../src/data/familyAvatars';
 import { GameButton, InputManager } from '../src/engine/input';
 import { drawBadgeIcon, drawOverworldSprite, drawPortrait } from '../src/engine/pixelRenderer';
+import { createDefaultGlobalSave, decodeSaveCode, encodeSaveCode } from '../src/engine/saveSystem';
 import { drawTile } from '../src/engine/tilesetRenderer';
 import { CategorySortGame } from '../src/minigames/categorySortGame';
 import { ChallengeRunner } from '../src/minigames/challengeRunner';
@@ -1675,13 +1676,13 @@ describe('Noël 2026 : Simulation bout-en-bout (Victoire + Défaite + Rendu) des
         expect(rb.phase).toBe('lost');
         retryBoss.render(ctx);
 
-        // Press A on Réessayer -> must reset to Phase 1 (bossPhaseIdx === 0)!
+        // Press A on Reprendre -> must resume in Phase 2 (bossPhaseIdx === 1)!
         input.tapButton('a');
         input.releaseButton('a');
         retryBoss.update(0.016, input);
         input.endFrame();
         expect(bossAttempts).toBe(2);
-        expect(rb.bossPhaseIdx).toBe(0);
+        expect(rb.bossPhaseIdx).toBe(1);
         expect(rb.phase).toBe('playing');
       });
     });
@@ -1754,5 +1755,149 @@ describe('Noël 2026 : Simulation bout-en-bout (Victoire + Défaite + Rendu) des
         }
       }
     }
+  });
+});
+
+describe('Checkpoints & reprise des défis (mini-jeux et boss)', () => {
+  it('reprend directement à la manche/étape suivante dans les 6 moteurs de mini-jeux', () => {
+    const leader = FAMILY_MEMBERS.pola;
+    const pmWorld = WORLDS.pm;
+    const npcByKind = (kind: SingleChallengeConfig['kind']) =>
+      pmWorld.npcs.find((n) => n.role === 'main' && n.challenge?.kind === kind)!;
+
+    // 1. OrderPuzzleGame : reprend directement à la manche 2 (index 1)
+    const orderNpc = npcByKind('order_puzzle');
+    const orderGame = new OrderPuzzleGame(orderNpc.challenge as OrderPuzzleChallengeConfig, 1);
+    expect(orderGame.roundIndex).toBe(1);
+    expect(orderGame.getCompletedSteps()).toBe(1);
+
+    // 2. PairMatchGame : reprend directement à la manche 2 (index 1)
+    const pairNpc = npcByKind('pair_match');
+    const pairGame = new PairMatchGame(pairNpc.challenge as PairMatchChallengeConfig, 1);
+    expect(pairGame.roundIndex).toBe(1);
+    expect(pairGame.getCompletedSteps()).toBe(1);
+
+    // 3. IntruderHuntGame : reprend directement à la manche 3 (index 2)
+    const intruderNpc = npcByKind('intruder_hunt');
+    const intruderGame = new IntruderHuntGame(
+      intruderNpc.challenge as IntruderHuntChallengeConfig,
+      2
+    );
+    expect(intruderGame.roundIndex).toBe(2);
+    expect(intruderGame.getCompletedSteps()).toBe(2);
+
+    // 4. CategorySortGame : reprend à la carte 4 avec les 3 premières validées
+    const sortNpc = npcByKind('category_sort');
+    const sortGame = new CategorySortGame(sortNpc.challenge as CategorySortChallengeConfig, 3);
+    expect(sortGame.itemIndex).toBe(3);
+    expect(sortGame.getCompletedSteps()).toBe(3);
+
+    // 5. Quiz & Riddle : reprend avec enemyHp réduit du nombre de bonnes réponses déjà validées
+    const quizNpc = npcByKind('quiz');
+    const quizGame = new QuizRiddleGame(
+      quizNpc.challenge as QuizChallengeConfig,
+      leader,
+      quizNpc,
+      2
+    );
+    expect(quizGame.getCompletedSteps()).toBe(2);
+
+    const riddleNpc = npcByKind('riddle_word');
+    const riddleGame = new QuizRiddleGame(
+      riddleNpc.challenge as RiddleChallengeConfig,
+      leader,
+      riddleNpc,
+      2
+    );
+    expect(riddleGame.getCompletedSteps()).toBe(2);
+  });
+
+  it('sauvegarde et restaure un checkpoint de Boss Gauntlet (Acte 2/3) via ChallengeRunner et saveSystem', () => {
+    const pmWorld = WORLDS.pm;
+    const bossNpc = pmWorld.npcs.find((n) => n.role === 'boss')!;
+    const drawnTexts: string[] = [];
+    const ctx = createMockCtx(drawnTexts);
+    const input = new InputManager();
+
+    const runner = new ChallengeRunner(
+      bossNpc,
+      pmWorld.bossBadge,
+      FAMILY_PAIRS.pm.members,
+      0,
+      bossNpc.challenge!,
+      () => {},
+      undefined,
+      undefined,
+      { bossPhaseIdx: 1, stepIndex: 2 }
+    );
+
+    // Skip vs_splash -> brief
+    runner.update(2.0, input);
+    runner.render(ctx);
+    expect(drawnTexts.some((t) => t.includes('Phase 2/3'))).toBe(true);
+    expect(drawnTexts.some((t) => t.includes('Reprise') && t.includes('Acte 2/3'))).toBe(true);
+
+    // Vérifie la persistance dans le code de sauvegarde & le nettoyage si badge déjà gagné
+    const save = createDefaultGlobalSave();
+    save.modes.pm.badges.push('pm_baudelaire');
+    save.modes.pm.challengeProgress = {
+      pm_baudelaire: { bossPhaseIdx: 0, stepIndex: 1 }, // doit être nettoyé car badge obtenu
+      pm_sand: { bossPhaseIdx: 0, stepIndex: 2 },
+      [pmWorld.bossBadge.id]: { bossPhaseIdx: 2, stepIndex: 1 },
+    };
+    const decoded = decodeSaveCode(encodeSaveCode(save));
+    expect(decoded).not.toBeNull();
+    expect(decoded!.modes.pm.challengeProgress?.pm_baudelaire).toBeUndefined();
+    expect(decoded!.modes.pm.challengeProgress?.pm_sand).toEqual({
+      bossPhaseIdx: 0,
+      stepIndex: 2,
+    });
+    expect(decoded!.modes.pm.challengeProgress?.[pmWorld.bossBadge.id]).toEqual({
+      bossPhaseIdx: 2,
+      stepIndex: 1,
+    });
+  });
+
+  it('active le Joker de Léo (1 fois par défi) dans les 6 moteurs de mini-jeux', () => {
+    const leader = FAMILY_MEMBERS.pola;
+    const pmWorld = WORLDS.pm;
+    const npcByKind = (kind: SingleChallengeConfig['kind']) =>
+      pmWorld.npcs.find((n) => n.role === 'main' && n.challenge?.kind === kind)!;
+
+    const quizGame = new QuizRiddleGame(
+      npcByKind('quiz').challenge as QuizChallengeConfig,
+      leader,
+      npcByKind('quiz')
+    );
+    expect(quizGame.useJoker()).toContain('2 mauvaises réponses');
+
+    const riddleGame = new QuizRiddleGame(
+      npcByKind('riddle_word').challenge as RiddleChallengeConfig,
+      leader,
+      npcByKind('riddle_word')
+    );
+    expect(riddleGame.useJoker()).toContain('2 mauvaises réponses');
+
+    const intruderGame = new IntruderHuntGame(
+      npcByKind('intruder_hunt').challenge as IntruderHuntChallengeConfig
+    );
+    expect(intruderGame.useJoker()).toContain('2 fausses pistes');
+
+    const orderGame = new OrderPuzzleGame(
+      npcByKind('order_puzzle').challenge as OrderPuzzleChallengeConfig
+    );
+    expect(orderGame.useJoker()).toContain('verrouillé une carte');
+    expect(orderGame.slots.some((s) => s.locked)).toBe(true);
+
+    const pairGame = new PairMatchGame(
+      npcByKind('pair_match').challenge as PairMatchChallengeConfig
+    );
+    expect(pairGame.useJoker()).toContain('bonne paire');
+    expect(pairGame.matchedLinks.length).toBe(1);
+
+    const sortGame = new CategorySortGame(
+      npcByKind('category_sort').challenge as CategorySortChallengeConfig
+    );
+    expect(sortGame.useJoker()).toContain('bonne catégorie');
   });
 });

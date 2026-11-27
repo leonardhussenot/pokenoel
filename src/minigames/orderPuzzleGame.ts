@@ -61,10 +61,53 @@ export class OrderPuzzleGame implements MiniGameInstance {
     return [...this.mistakes];
   }
 
-  constructor(private cfg: OrderPuzzleChallengeConfig) {
+  getCompletedSteps(): number {
+    return this.roundIndex;
+  }
+
+  useJoker(): string | null {
+    if (this.result !== 'playing' || this.feedbackTimer > 0) return null;
+    // Pick the first unlocked slot whose item is not yet in its target position (or any unlocked slot)
+    let targetPos = this.slots.findIndex((s, i) => !s.locked && s.correctPos !== i);
+    if (targetPos === -1) {
+      targetPos = this.slots.findIndex((s) => !s.locked);
+    }
+    if (targetPos === -1) return null;
+
+    const sourceIdx = this.slots.findIndex((s) => s.correctPos === targetPos);
+    if (sourceIdx === -1) return null;
+
+    if (sourceIdx !== targetPos) {
+      const tmp = this.slots[targetPos];
+      this.slots[targetPos] = this.slots[sourceIdx];
+      this.slots[sourceIdx] = tmp;
+    }
+    this.slots[targetPos].locked = true;
+    this.slots[targetPos].hintDir = 0;
+    this.slots[targetPos].flashWrong = 0;
+    this.selectedSlot = null;
+
+    const layout = this.getLayout();
+    const cy = layout.slotStartY + targetPos * layout.slotStep + layout.slotH / 2;
+    this.spawnSparkles(MG_W / 2, cy, '#ffe066', 14);
+
+    if (this.slots.every((s, i) => s.correctPos === i)) {
+      for (const s of this.slots) {
+        s.locked = true;
+        s.hintDir = 0;
+      }
+      soundEngine.playHitPerfect();
+      this.feedbackTimer = 2.6;
+      this.feedbackElapsed = 0;
+    }
+    return 'Léo a placé et verrouillé une carte !';
+  }
+
+  constructor(private cfg: OrderPuzzleChallengeConfig, startStep = 0) {
     this.rounds = cfg.rounds;
     this.lives = Math.max(1, cfg.lives);
-    this.loadRound(0);
+    const startRound = Math.max(0, Math.min(Math.floor(startStep), Math.max(0, this.rounds.length - 1)));
+    this.loadRound(startRound);
   }
 
   private getLayout(): OrderLayout {
@@ -136,6 +179,7 @@ export class OrderPuzzleGame implements MiniGameInstance {
   }
 
   private loadRound(idx: number): void {
+    this.roundIndex = idx;
     const round = this.rounds[idx];
     if (!round) {
       this.result = 'won';
